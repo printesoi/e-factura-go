@@ -12,6 +12,10 @@ type Decimal struct {
 	decimal.Decimal
 }
 
+func NewFromDecimal(d decimal.Decimal) Decimal {
+	return Decimal{Decimal: d}
+}
+
 func (d Decimal) Ptr() *Decimal {
 	return &d
 }

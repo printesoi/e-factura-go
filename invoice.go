@@ -5,22 +5,6 @@ import (
 )
 
 type Invoice struct {
-	// These need to be first fields, because apparently the validators care
-	// about the order of xml nodes.
-	// Conditional / Identifies the earliest version of the UBL 2 schema for
-	// this document type that defines all of the elements that might be
-	// encountered in the current instance.
-	// Path: /Invoice/cbc:UBLVersionID
-	UBLVersionID string `xml:"cbc:UBLVersionID"`
-	// ID: BT-24
-	// Term: Identificatorul specificaţiei
-	// Description: O identificare a specificaţiei care conţine totalitatea
-	//     regulilor privind conţinutul semantic, cardinalităţile şi regulile
-	//     operaţionale cu care datele conţinute în instanţa de factură sunt
-	//     conforme.
-	// Cardinality: 1..1
-	CustomizationID string `xml:"cbc:CustomizationID"`
-
 	// ID: BT-1
 	// Term: Numărul facturii
 	// Description: O identificare unică a facturii.
@@ -102,11 +86,43 @@ type Invoice struct {
 	// Term: LINIE A FACTURII
 	// Cardinality: 1..n
 	InvoiceLines []InvoiceLine `xml:"cac:InvoiceLine"`
+}
 
-	XMLName  xml.Name `xml:"Invoice"`
-	XMLNS    string   `xml:"xmlns,attr"`
-	XMLNScac string   `xml:"xmlns:cac,attr"`
-	XMLNScbc string   `xml:"xmlns:cbc,attr"`
+func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type invoice Invoice
+	var xmliv struct {
+		// These need to be first fields, because apparently the validators care
+		// about the order of xml nodes.
+		// Conditional / Identifies the earliest version of the UBL 2 schema for
+		// this document type that defines all of the elements that might be
+		// encountered in the current instance.
+		// Path: /Invoice/cbc:UBLVersionID
+		UBLVersionID string `xml:"cbc:UBLVersionID"`
+		// ID: BT-24
+		// Term: Identificatorul specificaţiei
+		// Description: O identificare a specificaţiei care conţine totalitatea
+		//     regulilor privind conţinutul semantic, cardinalităţile şi regulile
+		//     operaţionale cu care datele conţinute în instanţa de factură sunt
+		//     conforme.
+		// Cardinality: 1..1
+		CustomizationID string `xml:"cbc:CustomizationID"`
+
+		invoice
+
+		XMLName  xml.Name `xml:"Invoice"`
+		XMLNS    string   `xml:"xmlns,attr"`
+		XMLNScac string   `xml:"xmlns:cac,attr"`
+		XMLNScbc string   `xml:"xmlns:cbc,attr"`
+	}
+
+	xmliv.XMLNS = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+	xmliv.XMLNScac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+	xmliv.XMLNScbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+	xmliv.UBLVersionID = "2.1"
+	xmliv.CustomizationID = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
+	xmliv.invoice = invoice(iv)
+
+	return e.EncodeElement(xmliv, start)
 }
 
 type InvoiceSupplier struct {
