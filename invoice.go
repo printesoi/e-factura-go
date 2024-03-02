@@ -53,6 +53,10 @@ type Invoice struct {
 	//     despre perioada de facturare.
 	// Cardinality: 0..1
 	InvoicePeriod *InvoicePeriod `xml:"cac:InvoicePeriod,omitempty"`
+	// ID: BG-3
+	// Term: REFERINŢĂ LA O FACTURĂ ANTERIOARĂ
+	// Cardinality: 0..n
+	BillingReference []InvoiceBillingReference `xml:"cac:BillingReference,omitempty"`
 	// ID: BG-4
 	// Term: VÂNZĂTOR
 	// Description: Un grup de termeni operaţionali care furnizează informaţii
@@ -125,11 +129,28 @@ func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(xmliv, start)
 }
 
+type InvoiceBillingReference struct {
+	InvoiceDocumentReference InvoiceDocumentReference `xml:"cac:InvoiceDocumentReference"`
+}
+
+type InvoiceDocumentReference struct {
+	// ID: BT-25
+	// Term: Identificatorul Vânzătorului
+	// Cardinality: 1..1
+	ID string `xml:"cbc:ID"`
+	// ID: BT-26
+	// Term: Data de emitere a facturii anterioare
+	// Description: Data emiterii facturii anterioare trebuie furnizată în
+	//     cazul în care identificatorul facturii anterioare nu este unic.
+	// Cardinality: 0..1
+	// TODO:
+}
+
 type InvoiceSupplier struct {
 	// ID: BT-29
 	// Term: Identificatorul Vânzătorului
 	// Cardinality: 0..n
-	SellerID []InvoiceSupplierIdentification `xml:"cac:PartyIdentification,omitempty"`
+	SellerID []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
 	// ID: BT-28
 	// Term: Denumirea comercială a Vânzătorului
 	// Description: Un nume sub care este cunoscut Vânzătorul, altul decât
@@ -180,28 +201,15 @@ type InvoiceSupplierLegalEntity struct {
 	//     înregistrare care identifică Vânzătorul ca o entitate sau persoană
 	//     juridică.
 	// Cardinality: 1..1
-	CompanyID *ValueWithScheme `xml:"cbc:CompanyID,omitempty"`
+	CompanyID *ValueWithAttrs `xml:"cbc:CompanyID,omitempty"`
 	// ID: BT-33
 	// Term: Informaţii juridice suplimentare despre Vânzător
 	// Cardinality: 0..1
 	CompanyLegalForm string `xml:"cbc:CompanyLegalForm,omitempty"`
 }
 
-type InvoiceSupplierIdentification struct {
-	ID ValueWithScheme `xml:"cbc:ID"`
-}
-
-type InvoiceSupplierIdentification_ struct {
-	// ID: BT-29
-	// Term: Identificatorul Vânzătorului
-	// Cardinality: 0..n
-	ID string `xml:"cbc:ID"`
-	// ID: BT-29
-	// Term: Identificatorul schemei
-	// Cardinality: 0..1
-	SchemeID string `xml:"cbc:ID>schemeID,attr,omitempty"`
-
-	XMLName xml.Name `xml:"Invoice"`
+type InvoicePartyIdentification struct {
+	ID ValueWithAttrs `xml:"cbc:ID"`
 }
 
 type InvoiceSupplierPostalAddress struct {
@@ -266,7 +274,7 @@ type InvoiceCustomer struct {
 	// ID: BT-46
 	// Term: Identificatorul Cumpărătorului
 	// Cardinality: 0..n
-	SellerID []InvoiceSupplierIdentification `xml:"cac:PartyIdentification,omitempty"`
+	SellerID []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
 	// ID: BT-45
 	// Term: Denumirea comercială a Cumpărătorului
 	// Description: Un nume sub care este cunoscut Cumpărătorul, altul decât
@@ -306,7 +314,7 @@ type InvoiceCustomerLegalEntity struct {
 	//     înregistrare care identifică Cumpărătorul ca o entitate sau persoană
 	//     juridică.
 	// Cardinality: 1..1
-	CompanyID *ValueWithScheme `xml:"cbc:CompanyID,omitempty"`
+	CompanyID *ValueWithAttrs `xml:"cbc:CompanyID,omitempty"`
 }
 
 type InvoiceCustomerPostalAddress struct {
@@ -469,7 +477,7 @@ type InvoiceTaxCategory struct {
 	// Term: Codul motivului scutirii de TVA
 	// Cardinality: 0..1
 	TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"cbc:TaxExemptionReasonCode,omitempty"`
-	TaxSchemeID            ValueWithScheme            `xml:"cac:TaxScheme>cbc:ID,omitempty"`
+	TaxSchemeID            *TaxScheme                 `xml:"cac:TaxScheme,omitempty"`
 }
 
 type InvoiceLegalMonetaryTotal struct {
@@ -643,7 +651,7 @@ type InvoiceLineItem struct {
 	// ID: BT-155
 	// Term: BT-155
 	// Cardinality: 0..1
-	SellerItemID string `xml:"cac:SellersItemIdentification>cbc:ID"`
+	SellerItemID string `xml:"cac:SellersItemIdentification>cbc:ID,omitempty"`
 	// ID: BT-157/BT-157-1
 	// Term: Identificatorul standard al articolului / Identificatorul schemei
 	StandardItemIdentification *ItemStandardIdentificationCode `xml:"cac:StandardItemIdentification,omitempty"`
@@ -669,14 +677,18 @@ type InvoicePartyName struct {
 	Name string `xml:"cbc:Name"`
 }
 
+type TaxScheme struct {
+	ID string `xml:"cbc:ID"`
+}
+
 type InvoicePartyTaxScheme struct {
-	CompanyID   string          `xml:"cbc:CompanyID,omitempty"`
-	TaxSchemeID ValueWithScheme `xml:"cac:TaxScheme>cbc:ID,omitempty"`
+	CompanyID   string     `xml:"cbc:CompanyID,omitempty"`
+	TaxSchemeID *TaxScheme `xml:"cac:TaxScheme,omitempty"`
 }
 
 // TODO: document
 type InvoiceClassifiedTaxCategory struct {
 	ID          TaxCategoryCodeType `xml:"cbc:ID"`
 	Percent     *Decimal            `xml:"cbc:Percent,omitempty"`
-	TaxSchemeID ValueWithScheme     `xml:"cac:TaxScheme>cbc:ID,omitempty"`
+	TaxSchemeID *TaxScheme          `xml:"cac:TaxScheme,omitempty"`
 }
