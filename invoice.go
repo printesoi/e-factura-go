@@ -243,11 +243,11 @@ type InvoiceSupplierPostalAddress struct {
 	// ID: BT-39
 	// Term: Subdiviziunea ţării Vânzătorului
 	// Cardinality: 0..1
-	CountrySubentity string `xml:"cbc:CountrySubentity,omitempty"`
+	CountrySubentity CountrySubentityType `xml:"cbc:CountrySubentity,omitempty"`
 	// ID: BT-40
 	// Term: Subdiviziunea ţării Vânzătorului
 	// Cardinality: 1..1
-	CountryIdentificationCode string `xml:"cac:Country>cbc:IdentificationCode"`
+	CountryIdentificationCode CountryCodeType `xml:"cac:Country>cbc:IdentificationCode"`
 }
 
 type InvoiceSupplierContact struct {
@@ -348,11 +348,11 @@ type InvoiceCustomerPostalAddress struct {
 	// ID: BT-54
 	// Term: Subdiviziunea ţării Cumpărătorului
 	// Cardinality: 0..1
-	CountrySubentity string `xml:"cbc:CountrySubentity,omitempty"`
+	CountrySubentity CountrySubentityType `xml:"cbc:CountrySubentity,omitempty"`
 	// ID: BT-55
 	// Term: Subdiviziunea ţării Cumpărătorului
 	// Cardinality: 1..1
-	CountryIdentificationCode string `xml:"cac:Country>cbc:IdentificationCode"`
+	CountryIdentificationCode CountryCodeType `xml:"cac:Country>cbc:IdentificationCode"`
 }
 
 type InvoiceCustomerContact struct {
