@@ -3,10 +3,19 @@ package efactura
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"io"
 	"mime"
 	"net/http"
 	"net/url"
+
+	"golang.org/x/oauth2"
+)
+
+var (
+	ErrInvalidClientOAuth2Config = errors.New("Invalid OAuth2Config provided")
+	ErrInvalidClientOAuth2Token  = errors.New("Invalid Auth token provided")
 )
 
 const (
@@ -33,11 +42,14 @@ type Client struct {
 	sandbox    bool
 	apiBaseUrl *url.URL
 
-	apiClient http.Client
+	oauth2Cfg OAuth2Config
+	token     oauth2.Token
+
+	apiClient *http.Client
 }
 
 // NewClient creates a new client using the provided config options.
-func NewClient(opts ...ClientConfigOption) (*Client, error) {
+func NewClient(ctx context.Context, opts ...ClientConfigOption) (*Client, error) {
 	cfg := ClientConfig{}
 	for _, opt := range opts {
 		opt(&cfg)
@@ -50,8 +62,16 @@ func NewClient(opts ...ClientConfigOption) (*Client, error) {
 		baseUrl = getApiBase(cfg.Sandbox)
 	}
 
+	if !cfg.OAuth2Config.Valid() {
+		return nil, ErrInvalidClientOAuth2Config
+	}
+	if cfg.Token == nil || !cfg.Token.Valid() {
+		return nil, ErrInvalidClientOAuth2Token
+	}
+
 	return (&Client{
-		sandbox: cfg.Sandbox,
+		sandbox:   cfg.Sandbox,
+		apiClient: cfg.OAuth2Config.Client(ctx, cfg.Token),
 	}).withApiBaseURL(baseUrl, cfg.InsecureSkipVerify)
 }
 

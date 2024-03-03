@@ -1,7 +1,17 @@
 package efactura
 
+import (
+	"golang.org/x/oauth2"
+)
+
 // ClientConfig is the config used to create a Client
 type ClientConfig struct {
+	// OAuth2Config is the OAuth2 config used for creating the http.Client that
+	// autorefreshes the Token.
+	OAuth2Config OAuth2Config
+	// Token is the starting oauth2 Token, until this library will support
+	// authentication with the SPV certificate, this must always be provided.
+	Token *oauth2.Token
 	// Unless BaseUrl is set, Sandbox controlls whether to use production
 	// endpoints (if set to false) or test endpoints (if set to true).
 	Sandbox bool
@@ -14,8 +24,22 @@ type ClientConfig struct {
 	InsecureSkipVerify bool
 }
 
-// ClientConfigOption allows gradually modifying the config
+// ClientConfigOption allows gradually modifying a ClientConfig
 type ClientConfigOption func(*ClientConfig)
+
+// ClientOAuth2Config sets the OAuth2 config
+func ClientOAuth2Config(oauth2Cfg OAuth2Config) ClientConfigOption {
+	return func(c *ClientConfig) {
+		c.OAuth2Config = oauth2Cfg
+	}
+}
+
+// ClientOAuth2Token sets the initial OAuth2 Token
+func ClientOAuth2Token(token *oauth2.Token) ClientConfigOption {
+	return func(c *ClientConfig) {
+		c.Token = token
+	}
+}
 
 // ClientSandboxEnvironment(true) set the BaseURL to the sandbox URL
 func ClientSandboxEnvironment(sandbox bool) ClientConfigOption {
