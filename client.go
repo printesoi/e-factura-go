@@ -1,0 +1,168 @@
+package efactura
+
+import (
+	"bytes"
+	"context"
+	"io"
+	"mime"
+	"net/http"
+	"net/url"
+)
+
+const (
+	// apiBaseSandbox points to the sandbox (testing) version of the API
+	apiBaseSandbox           = "https://api.anaf.ro/test/FCTEL/rest/"
+	webserviceAppBaseSandbox = "https://webserviceapl.anaf.ro/test/FCTEL/rest/"
+	// apiBaseProd points to the production version of the API
+	apiBaseProd           = "https://api.anaf.ro/prod/FCTEL/rest/"
+	webserviceAppBaseProd = "https://webserviceapl.anaf.ro/prod/FCTEL/rest/"
+	webserviceSpBaseProd  = "https://webservicesp.anaf.ro/prod/FCTEL/rest/"
+
+	apiPathUpload                = "/upload"
+	apiPathMessageStatus         = "/stareMesaj"
+	apiPathMessageList           = "/listaMesajeFactura"
+	apiPathMessagePaginationList = "/listaMesajePaginatieFactura"
+	apiPathDownload              = "/descarcare"
+
+	webserviceAppPathValidate = "/validare/%s"
+	webserviceAppPathXmlToPdf = "/transformare/%s"
+)
+
+// Client is a client for the ANAF e-factura APIs using OAuth2 credentials.
+type Client struct {
+	sandbox    bool
+	apiBaseUrl *url.URL
+
+	client http.Client
+}
+
+// NewClient creates a new client using the provided config options.
+func NewClient(opts ...ClientConfigOption) (*Client, error) {
+	cfg := ClientConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	var baseUrl string
+	if cfg.BaseUrl != nil {
+		baseUrl = *cfg.BaseUrl
+	} else {
+		baseUrl = getApiBase(cfg.Sandbox)
+	}
+
+	return (&Client{
+		sandbox: cfg.Sandbox,
+	}).withApiBaseURL(baseUrl, cfg.InsecureSkipVerify)
+}
+
+// GetApiBaseUrl returns the base URL as string used by this client.
+func (c *Client) GetApiBaseUrl() string {
+	return c.apiBaseUrl.String()
+}
+
+func (c *Client) withApiBaseURL(baseURL string, insecureSkipVerify bool) (*Client, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return c, err
+	}
+
+	c.apiBaseUrl = base
+	return c, nil
+}
+
+func (c *Client) buildApiUrl(path string, query url.Values) string {
+	return buildUrl(c.apiBaseUrl, path, query)
+}
+
+func (c *Client) do(req *http.Request) (body []byte, statusCode int, headers http.Header, err error) {
+	var resp *http.Response
+	resp, err = c.client.Do(req)
+	if resp != nil {
+		statusCode = resp.StatusCode
+		headers = resp.Header
+
+		if resp.Body != nil {
+			defer resp.Body.Close()
+			body, err = io.ReadAll(resp.Body)
+		}
+
+		if err == nil && !(statusCode >= 200 && statusCode < 300) {
+			err = NewErrorResponse(resp, nil)
+			return
+		}
+	}
+	return
+}
+
+func getApiBase(sandbox bool) string {
+	if sandbox {
+		return apiBaseSandbox
+	}
+	return apiBaseProd
+}
+
+func buildUrl(base *url.URL, path string, query url.Values) string {
+	u := base
+	u.Path, _ = url.JoinPath(base.Path, path)
+	u.RawQuery = query.Encode()
+	return u.String()
+}
+
+func buildParseUrl(base string, path string, query url.Values) (string, error) {
+	baseUrl, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+
+	retUrl := buildUrl(baseUrl, path, query)
+	return retUrl, nil
+}
+
+func newRequest(ctx context.Context, method, url string, payload []byte) (*http.Request, error) {
+	var buf io.Reader
+	if payload != nil {
+		buf = bytes.NewReader(payload)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, buf)
+	if err != nil {
+		return req, err
+	}
+
+	return req, nil
+}
+
+// This is a copy of the drainBody from src/net/http/httputil/dump.go
+func drainBody(b io.ReadCloser) (body []byte, r2 io.ReadCloser, err error) {
+	if b == nil || b == http.NoBody {
+		return nil, http.NoBody, nil
+	}
+	var buf bytes.Buffer
+	if _, err = buf.ReadFrom(b); err != nil {
+		return nil, b, err
+	}
+	if err = b.Close(); err != nil {
+		return nil, b, err
+	}
+	return buf.Bytes(), io.NopCloser(bytes.NewReader(buf.Bytes())), nil
+}
+
+func peekResponseBody(r *http.Response) (body []byte, err error) {
+	body, r.Body, err = drainBody(r.Body)
+	return
+}
+
+func peekRequestBody(r *http.Request) (body []byte, err error) {
+	body, r.Body, err = drainBody(r.Body)
+	return
+}
+
+func responseBodyIsJSON(headers http.Header) bool {
+	contentType := headers.Get("Content-Type")
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return false
+	}
+
+	return mediaType == "application/json"
+}
