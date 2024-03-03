@@ -69,16 +69,20 @@ func (c *Client) ValidateXML(ctx context.Context, xml []byte, st Standard) (Vali
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
-	body, _, headers, err := c.do(req)
+	resp, err := c.apiClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return response, err
 	}
-	if !responseBodyIsJSON(headers) {
-		// TODO: return error
+	if !responseBodyIsJSON(resp.Header) {
+		return response, NewErrorResponse(resp,
+			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
-		return response, err
+	if err := jsonUnmarshalReader(resp.Body, &response); err != nil {
+		return response, NewErrorResponse(resp,
+			fmt.Errorf("failed to decode JSON body: %v", err))
 	}
 
 	return response, nil
@@ -112,7 +116,7 @@ func (c *Client) XmlToPdf(ctx context.Context, xml []byte, st Standard, noValida
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
-	body, _, headers, er := c.do(req)
+	body, _, headers, er := c.doApi(req)
 	if err = er; err != nil {
 		return
 	}

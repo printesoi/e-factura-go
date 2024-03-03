@@ -33,7 +33,7 @@ type Client struct {
 	sandbox    bool
 	apiBaseUrl *url.URL
 
-	client http.Client
+	apiClient http.Client
 }
 
 // NewClient creates a new client using the provided config options.
@@ -74,9 +74,9 @@ func (c *Client) buildApiUrl(path string, query url.Values) string {
 	return buildUrl(c.apiBaseUrl, path, query)
 }
 
-func (c *Client) do(req *http.Request) (body []byte, statusCode int, headers http.Header, err error) {
+func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers http.Header, err error) {
 	var resp *http.Response
-	resp, err = c.client.Do(req)
+	resp, err = c.apiClient.Do(req)
 	if resp != nil {
 		statusCode = resp.StatusCode
 		headers = resp.Header
@@ -86,7 +86,7 @@ func (c *Client) do(req *http.Request) (body []byte, statusCode int, headers htt
 			body, err = io.ReadAll(resp.Body)
 		}
 
-		if err == nil && !(statusCode >= 200 && statusCode < 300) {
+		if err == nil && !responseIsSuccess(resp.StatusCode) {
 			err = NewErrorResponse(resp, nil)
 			return
 		}
@@ -157,12 +157,23 @@ func peekRequestBody(r *http.Request) (body []byte, err error) {
 	return
 }
 
-func responseBodyIsJSON(headers http.Header) bool {
-	contentType := headers.Get("Content-Type")
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		return false
-	}
+func responseMediaType(headers http.Header) (mediaType string) {
+	mediaType, _, _ = mime.ParseMediaType(headers.Get("Content-Type"))
+	return
+}
 
-	return mediaType == "application/json"
+func responseBodyIsJSON(headers http.Header) bool {
+	return responseMediaType(headers) == "application/json"
+}
+
+func responseIsSuccess(status int) bool {
+	return status >= 200 && status < 300
+}
+
+func jsonUnmarshalReader(r io.Reader, v any) error {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, v)
 }
