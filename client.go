@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -28,7 +30,7 @@ const (
 	webserviceSpBaseProd  = "https://webservicesp.anaf.ro/prod/FCTEL/rest/"
 
 	apiPathUpload                = "/upload"
-	apiPathMessageStatus         = "/stareMesaj"
+	apiPathMessageState          = "/stareMesaj"
 	apiPathMessageList           = "/listaMesajeFactura"
 	apiPathMessagePaginationList = "/listaMesajePaginatieFactura"
 	apiPathDownload              = "/descarcare"
@@ -114,6 +116,22 @@ func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers 
 	return
 }
 
+func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
+	resp, err := c.apiClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return err
+	}
+
+	if !responseBodyIsXML(resp.Header) {
+		return NewErrorResponse(resp,
+			fmt.Errorf("expected application/xml, got %s", responseMediaType(resp.Header)))
+	}
+	return xmlUnmarshalReader(resp.Body, response)
+}
+
 func getApiBase(sandbox bool) string {
 	if sandbox {
 		return apiBaseSandbox
@@ -186,6 +204,14 @@ func responseBodyIsJSON(headers http.Header) bool {
 	return responseMediaType(headers) == "application/json"
 }
 
+func responseBodyIsXML(headers http.Header) bool {
+	switch responseMediaType(headers) {
+	case "application/xml", "text/xml":
+		return true
+	}
+	return false
+}
+
 func responseIsSuccess(status int) bool {
 	return status >= 200 && status < 300
 }
@@ -196,4 +222,12 @@ func jsonUnmarshalReader(r io.Reader, v any) error {
 		return err
 	}
 	return json.Unmarshal(data, v)
+}
+
+func xmlUnmarshalReader(r io.Reader, v any) error {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return xml.Unmarshal(data, v)
 }
