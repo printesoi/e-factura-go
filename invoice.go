@@ -119,11 +119,11 @@ func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		XMLNScbc string   `xml:"xmlns:cbc,attr"`
 	}
 
-	xmliv.XMLNS = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-	xmliv.XMLNScac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-	xmliv.XMLNScbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
-	xmliv.UBLVersionID = "2.1"
-	xmliv.CustomizationID = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
+	xmliv.XMLNS = XMLNSInvoice2
+	xmliv.XMLNScac = XMLNSUBLcac
+	xmliv.XMLNScbc = XMLNSUBLcbc
+	xmliv.UBLVersionID = UBLVersionID
+	xmliv.CustomizationID = CIUSRO_v101
 	xmliv.invoice = invoice(iv)
 
 	return e.EncodeElement(xmliv, start)
