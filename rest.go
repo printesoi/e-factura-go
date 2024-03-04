@@ -77,11 +77,11 @@ func (c *Client) ValidateXML(ctx context.Context, xml []byte, st Standard) (Vali
 		return response, err
 	}
 	if !responseBodyIsJSON(resp.Header) {
-		return response, NewErrorResponse(resp,
+		return response, newErrorResponse(resp,
 			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
 	}
 	if err := jsonUnmarshalReader(resp.Body, &response); err != nil {
-		return response, NewErrorResponse(resp,
+		return response, newErrorResponse(resp,
 			fmt.Errorf("failed to decode JSON body: %v", err))
 	}
 

@@ -7,17 +7,21 @@ import (
 	"net/url"
 )
 
+// ErrorResponse is an error returns if the HTTP requests was finished (we got
+// a *http.Response from the HTTP client, but it was not a successful response,
+// or it was an error parsing the response.
 type ErrorResponse struct {
 	StatusCode   int
 	Status       string
 	Method       string
 	Url          *url.URL
 	ResponseBody []byte
-	TraceID      *string
 	Err          error
+	TraceID      *string
+	Message      *string
 }
 
-func NewErrorResponse(resp *http.Response, err error) *ErrorResponse {
+func newErrorResponse(resp *http.Response, err error) *ErrorResponse {
 	errResp := &ErrorResponse{
 		StatusCode: resp.StatusCode,
 		Status:     resp.Status,
@@ -31,9 +35,12 @@ func NewErrorResponse(resp *http.Response, err error) *ErrorResponse {
 	if err == nil && len(data) > 0 && responseBodyIsJSON(resp.Header) {
 		var b struct {
 			TraceID *string `json:"trace_id,omitempty"`
+			Message *string `json:"message,omitempty"`
 		}
-		_ = json.Unmarshal(data, &b)
+		// Don't care if we get an error here.
+		json.Unmarshal(data, &b)
 		errResp.TraceID = b.TraceID
+		errResp.Message = b.Message
 	}
 
 	return errResp
@@ -46,6 +53,9 @@ func (r *ErrorResponse) Error() string {
 	}
 	if r.Err != nil {
 		m += fmt.Sprintf("; error=%s", r.Err.Error())
+	}
+	if r.Message != nil {
+		m += fmt.Sprintf("; message=%s", *r.Message)
 	}
 	return m
 }

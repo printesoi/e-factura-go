@@ -109,7 +109,7 @@ func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers 
 		}
 
 		if err == nil && !responseIsSuccess(resp.StatusCode) {
-			err = NewErrorResponse(resp, nil)
+			err = newErrorResponse(resp, nil)
 			return
 		}
 	}
@@ -126,7 +126,7 @@ func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
 	}
 
 	if !responseBodyIsXML(resp.Header) {
-		return NewErrorResponse(resp,
+		return newErrorResponse(resp,
 			fmt.Errorf("expected application/xml, got %s", responseMediaType(resp.Header)))
 	}
 	return xmlUnmarshalReader(resp.Body, response)
