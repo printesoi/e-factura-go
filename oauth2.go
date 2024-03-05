@@ -94,9 +94,9 @@ func (c OAuth2Config) validEndpoint() bool {
 }
 
 // Valid returns true if the config is valid (ie. is non-nil, has non-empty
-// credentials and non-empty endpoint).
+// credentials, non-empty endpoint, and non-empty redirect URL).
 func (c *OAuth2Config) Valid() bool {
-	return c != nil && c.validCredentials() && c.validEndpoint()
+	return c != nil && c.validCredentials() && c.validEndpoint() && c.RedirectURL != ""
 }
 
 // AuthCodeURL generates the code authorization URL.
