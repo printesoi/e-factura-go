@@ -148,7 +148,10 @@ func (c *Client) GetApiPublicBaseUrl() string {
 
 func (c *Client) do(req *http.Request) (resp *http.Response, err error) {
 	resp, err = c.apiClient.Do(req)
-	c.debugRequest(req, resp)
+	if err == nil && !responseIsSuccess(resp.StatusCode) {
+		err = newErrorResponse(resp, nil)
+		return
+	}
 	return
 }
 
