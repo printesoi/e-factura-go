@@ -44,8 +44,8 @@ type Client struct {
 	sandbox    bool
 	apiBaseUrl *url.URL
 
-	oauth2Cfg OAuth2Config
-	token     oauth2.Token
+	oauth2Cfg    OAuth2Config
+	initialToken *oauth2.Token
 
 	apiClient *http.Client
 }
@@ -67,19 +67,25 @@ func NewClient(ctx context.Context, opts ...ClientConfigOption) (*Client, error)
 	if !cfg.OAuth2Config.Valid() {
 		return nil, ErrInvalidClientOAuth2Config
 	}
-	if cfg.Token == nil || !cfg.Token.Valid() {
+	if !cfg.InitialToken.Valid() {
 		return nil, ErrInvalidClientOAuth2Token
 	}
 
 	return (&Client{
-		sandbox:   cfg.Sandbox,
-		apiClient: cfg.OAuth2Config.Client(ctx, cfg.Token),
+		sandbox:      cfg.Sandbox,
+		oauth2Cfg:    cfg.OAuth2Config,
+		initialToken: cfg.InitialToken,
+		apiClient:    cfg.OAuth2Config.Client(ctx, cfg.InitialToken),
 	}).withApiBaseURL(baseUrl, cfg.InsecureSkipVerify)
 }
 
 // GetApiBaseUrl returns the base URL as string used by this client.
 func (c *Client) GetApiBaseUrl() string {
 	return c.apiBaseUrl.String()
+}
+
+func (c *Client) GetOAuth2Config() OAuth2Config {
+	return c.oauth2Cfg
 }
 
 func (c *Client) withApiBaseURL(baseURL string, insecureSkipVerify bool) (*Client, error) {

@@ -11,7 +11,7 @@ type ClientConfig struct {
 	OAuth2Config OAuth2Config
 	// Token is the starting oauth2 Token, until this library will support
 	// authentication with the SPV certificate, this must always be provided.
-	Token *oauth2.Token
+	InitialToken *oauth2.Token
 	// Unless BaseUrl is set, Sandbox controlls whether to use production
 	// endpoints (if set to false) or test endpoints (if set to true).
 	Sandbox bool
@@ -34,10 +34,10 @@ func ClientOAuth2Config(oauth2Cfg OAuth2Config) ClientConfigOption {
 	}
 }
 
-// ClientOAuth2Token sets the initial OAuth2 Token
-func ClientOAuth2Token(token *oauth2.Token) ClientConfigOption {
+// ClientOAuth2InitialToken sets the initial OAuth2 Token
+func ClientOAuth2InitialToken(token *oauth2.Token) ClientConfigOption {
 	return func(c *ClientConfig) {
-		c.Token = token
+		c.InitialToken = token
 	}
 }
 
