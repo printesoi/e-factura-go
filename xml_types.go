@@ -16,11 +16,63 @@ package efactura
 
 import (
 	"encoding/xml"
+	"fmt"
+	"time"
+
+	"github.com/shopspring/decimal"
 )
 
+// Date is a wrapper of the time.Time type which marshals to XML in the
+// YYYY-MM-DDD.
+type Date struct {
+	time.Time
+}
+
+func MakeDateLocal(year int, month time.Month, day int) Date {
+	return Date{Time: time.Date(year, month, day, 0, 0, 0, 0, time.Local)}
+}
+
+func MakeDateUTC(year int, month time.Month, day int) Date {
+	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.UTC)}
+}
+
+func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	dy, dm, dd := d.Time.Date()
+	v := fmt.Sprintf("%04d-%02d-%02d", dy, dm, dd)
+	return e.EncodeElement(v, start)
+}
+
+func (d Date) Ptr() *Date {
+	return &d
+}
+
+// Decimal is a wrapper of the github.com/shopspring/decimal.Decimal type in
+// order to ensure type safety and lossless computation.
+type Decimal struct {
+	decimal.Decimal
+}
+
+func NewFromDecimal(d decimal.Decimal) Decimal {
+	return Decimal{Decimal: d}
+}
+
+func (d Decimal) Ptr() *Decimal {
+	return &d
+}
+
+func (d Decimal) String() string {
+	return d.Decimal.StringFixed(2)
+}
+
+func (d Decimal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement(d.String(), start)
+}
+
+// AmountWithCurrency represents an embeddable type that stores an amount as
+// chardata and the currency ID as the currencyID attribute. The name of the
+// node must be controlled by the parent type.
 type AmountWithCurrency struct {
-	Amount Decimal
-	// Term: Codul monedei
+	Amount     Decimal
 	CurrencyID CurrencyCodeType
 }
 
@@ -36,6 +88,9 @@ func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) e
 	return e.EncodeElement(xa, start)
 }
 
+// ValueWithAttrs represents and embeddable type that stores a string as
+// chardata and a list of attributes. The name of the XML name must be
+// controlled by the parent type.
 type ValueWithAttrs struct {
 	Value      string     `xml:",chardata"`
 	Attributes []xml.Attr `xml:",any,attr,omitempty"`
