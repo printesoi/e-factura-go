@@ -1,16 +1,13 @@
 package efactura
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"golang.org/x/oauth2"
 )
@@ -21,28 +18,39 @@ var (
 )
 
 const (
+	Version = "v0.0.1"
+
+	defaultUserAgent     = "e-factura-go" + "/" + Version
+	defaultApiANAF       = "https://api.anaf.ro"
+	defaultApiPublicANAF = "https://webservicesp.anaf.ro"
+
 	// apiBaseSandbox points to the sandbox (testing) version of the API
-	apiBaseSandbox           = "https://api.anaf.ro/test/FCTEL/rest/"
-	webserviceAppBaseSandbox = "https://webserviceapl.anaf.ro/test/FCTEL/rest/"
+	apiBasePathSandbox = "/test/FCTEL/rest/"
+	apiBaseSandbox     = defaultApiANAF + apiBasePathSandbox
 	// apiBaseProd points to the production version of the API
-	apiBaseProd           = "https://api.anaf.ro/prod/FCTEL/rest/"
-	webserviceAppBaseProd = "https://webserviceapl.anaf.ro/prod/FCTEL/rest/"
-	webserviceSpBaseProd  = "https://webservicesp.anaf.ro/prod/FCTEL/rest/"
+	apiBasePathProd = "/prod/FCTEL/rest/"
+	apiBaseProd     = defaultApiANAF + apiBasePathProd
+	// apiPublicBaseProd points to the production version of the public
+	// (unprotected) API.
+	apiPublicBasePathProd = "/prod/FCTEL/rest/"
+	apiPublicBaseProd     = defaultApiPublicANAF + "/prod/FCTEL/rest/"
 
-	apiPathUpload                = "/upload"
-	apiPathMessageState          = "/stareMesaj"
-	apiPathMessageList           = "/listaMesajeFactura"
-	apiPathMessagePaginationList = "/listaMesajePaginatieFactura"
-	apiPathDownload              = "/descarcare"
+	apiPathUpload                = "upload"
+	apiPathMessageState          = "stareMesaj"
+	apiPathMessageList           = "listaMesajeFactura"
+	apiPathMessagePaginationList = "listaMesajePaginatieFactura"
+	apiPathDownload              = "descarcare"
 
-	webserviceAppPathValidate = "/validare/%s"
-	webserviceAppPathXmlToPdf = "/transformare/%s"
+	webserviceAppPathValidate = "validare/%s"
+	webserviceAppPathXmlToPdf = "transformare/%s"
 )
 
-// Client is a client for the ANAF e-factura APIs using OAuth2 credentials.
+// A Client manages communication with the ANAF e-factura APIs using OAuth2
+// credentials.
 type Client struct {
-	sandbox    bool
-	apiBaseUrl *url.URL
+	apiBaseURL       *url.URL
+	apiPublicBaseURL *url.URL
+	userAgent        string
 
 	oauth2Cfg    OAuth2Config
 	initialToken *oauth2.Token
@@ -57,11 +65,16 @@ func NewClient(ctx context.Context, opts ...ClientConfigOption) (*Client, error)
 		opt(&cfg)
 	}
 
-	var baseUrl string
-	if cfg.BaseUrl != nil {
-		baseUrl = *cfg.BaseUrl
+	var apiBaseURL, apiPublicBaseURL string
+	if cfg.BaseURL != nil {
+		apiBaseURL = *cfg.BaseURL
 	} else {
-		baseUrl = getApiBase(cfg.Sandbox)
+		apiBaseURL = getApiBase(cfg.Sandbox)
+	}
+	if cfg.BasePublicURL != nil {
+		apiPublicBaseURL = *cfg.BasePublicURL
+	} else {
+		apiPublicBaseURL = apiPublicBaseProd
 	}
 
 	if !cfg.OAuth2Config.Valid() {
@@ -71,21 +84,22 @@ func NewClient(ctx context.Context, opts ...ClientConfigOption) (*Client, error)
 		return nil, ErrInvalidClientOAuth2Token
 	}
 
-	return (&Client{
-		sandbox:      cfg.Sandbox,
-		oauth2Cfg:    cfg.OAuth2Config,
-		initialToken: cfg.InitialToken,
-		apiClient:    cfg.OAuth2Config.Client(ctx, cfg.InitialToken),
-	}).withApiBaseURL(baseUrl, cfg.InsecureSkipVerify)
-}
+	client := new(Client)
+	client.userAgent = defaultUserAgent
+	client.oauth2Cfg = cfg.OAuth2Config
+	client.initialToken = cfg.InitialToken
+	client.apiClient = cfg.OAuth2Config.Client(ctx, cfg.InitialToken)
+	if cfg.UserAgent != nil {
+		client.userAgent = *cfg.UserAgent
+	}
+	if _, err := client.withApiBaseURL(apiBaseURL, cfg.InsecureSkipVerify); err != nil {
+		return client, err
+	}
+	if _, err := client.withApiPublicBaseURL(apiPublicBaseURL, cfg.InsecureSkipVerify); err != nil {
+		return client, err
+	}
 
-// GetApiBaseUrl returns the base URL as string used by this client.
-func (c *Client) GetApiBaseUrl() string {
-	return c.apiBaseUrl.String()
-}
-
-func (c *Client) GetOAuth2Config() OAuth2Config {
-	return c.oauth2Cfg
+	return client, nil
 }
 
 func (c *Client) withApiBaseURL(baseURL string, insecureSkipVerify bool) (*Client, error) {
@@ -94,36 +108,33 @@ func (c *Client) withApiBaseURL(baseURL string, insecureSkipVerify bool) (*Clien
 		return c, err
 	}
 
-	c.apiBaseUrl = base
+	c.apiBaseURL = base
 	return c, nil
 }
 
-func (c *Client) buildApiUrl(path string, query url.Values) string {
-	return buildUrl(c.apiBaseUrl, path, query)
+func (c *Client) withApiPublicBaseURL(baseURL string, insecureSkipVerify bool) (*Client, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return c, err
+	}
+
+	c.apiPublicBaseURL = base
+	return c, nil
+}
+
+// GetApiBaseUrl returns the base URL as string used by this client.
+func (c *Client) GetApiBaseUrl() string {
+	return c.apiBaseURL.String()
+}
+
+// GetApiPublicBaseUrl returns the base URL as string used by this client.
+func (c *Client) GetApiPublicBaseUrl() string {
+	return c.apiPublicBaseURL.String()
 }
 
 func (c *Client) do(req *http.Request) (resp *http.Response, err error) {
 	resp, err = c.apiClient.Do(req)
-	return
-}
-
-func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers http.Header, err error) {
-	var resp *http.Response
-	resp, err = c.do(req)
-	if resp != nil {
-		statusCode = resp.StatusCode
-		headers = resp.Header
-
-		if resp.Body != nil {
-			defer resp.Body.Close()
-			body, err = io.ReadAll(resp.Body)
-		}
-
-		if err == nil && !responseIsSuccess(resp.StatusCode) {
-			err = newErrorResponse(resp, nil)
-			return
-		}
-	}
+	c.debugRequest(req, resp)
 	return
 }
 
@@ -143,102 +154,53 @@ func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
 	return xmlUnmarshalReader(resp.Body, response)
 }
 
-func getApiBase(sandbox bool) string {
-	if sandbox {
-		return apiBaseSandbox
+// RequestOption represents an option that can modify an http.Request.
+type RequestOption func(req *http.Request)
+
+// newRequest creates an API request. refURL is resolved relative to the given
+// baseURL. The base URL should always has a trailing slash, while the relative
+// URL should always be specified without a preceding slash.
+func (c *Client) newRequest(ctx context.Context, method string, baseURL *url.URL,
+	refURL string, query url.Values, body io.Reader, opts ...RequestOption,
+) (*http.Request, error) {
+	if !strings.HasSuffix(baseURL.Path, "/") {
+		return nil, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", baseURL)
 	}
-	return apiBaseProd
-}
 
-func buildUrl(base *url.URL, path string, query url.Values) string {
-	u := base
-	u.Path, _ = url.JoinPath(base.Path, path)
-	u.RawQuery = query.Encode()
-	return u.String()
-}
-
-func buildParseUrl(base string, path string, query url.Values) (string, error) {
-	baseUrl, err := url.Parse(base)
+	urlStr, err := buildURL(baseURL, refURL, query)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	retUrl := buildUrl(baseUrl, path, query)
-	return retUrl, nil
-}
-
-func newRequest(ctx context.Context, method, url string, payload []byte) (*http.Request, error) {
-	var buf io.Reader
-	if payload != nil {
-		buf = bytes.NewReader(payload)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, url, buf)
+	req, err := http.NewRequestWithContext(ctx, method, urlStr, body)
 	if err != nil {
 		return req, err
+	}
+
+	for _, opt := range opts {
+		opt(req)
 	}
 
 	return req, nil
 }
 
-// This is a copy of the drainBody from src/net/http/httputil/dump.go
-func drainBody(b io.ReadCloser) (body []byte, r2 io.ReadCloser, err error) {
-	if b == nil || b == http.NoBody {
-		return nil, http.NoBody, nil
+// newApiRequest create an API request for the protected ANAF API.
+func (c *Client) newApiRequest(ctx context.Context, method, refURL string,
+	query url.Values, body io.Reader, opts ...RequestOption,
+) (*http.Request, error) {
+	return c.newRequest(ctx, method, c.apiBaseURL, refURL, query, body, opts...)
+}
+
+// newApiPublicRequest create an API request for the public ANAF API.
+func (c *Client) newApiPublicRequest(ctx context.Context, method, refURL string,
+	query url.Values, body io.Reader, opts ...RequestOption,
+) (*http.Request, error) {
+	return c.newRequest(ctx, method, c.apiPublicBaseURL, refURL, query, body, opts...)
+}
+
+func getApiBase(sandbox bool) string {
+	if sandbox {
+		return apiBaseSandbox
 	}
-	var buf bytes.Buffer
-	if _, err = buf.ReadFrom(b); err != nil {
-		return nil, b, err
-	}
-	if err = b.Close(); err != nil {
-		return nil, b, err
-	}
-	return buf.Bytes(), io.NopCloser(bytes.NewReader(buf.Bytes())), nil
-}
-
-func peekResponseBody(r *http.Response) (body []byte, err error) {
-	body, r.Body, err = drainBody(r.Body)
-	return
-}
-
-func peekRequestBody(r *http.Request) (body []byte, err error) {
-	body, r.Body, err = drainBody(r.Body)
-	return
-}
-
-func responseMediaType(headers http.Header) (mediaType string) {
-	mediaType, _, _ = mime.ParseMediaType(headers.Get("Content-Type"))
-	return
-}
-
-func responseBodyIsJSON(headers http.Header) bool {
-	return responseMediaType(headers) == "application/json"
-}
-
-func responseBodyIsXML(headers http.Header) bool {
-	switch responseMediaType(headers) {
-	case "application/xml", "text/xml":
-		return true
-	}
-	return false
-}
-
-func responseIsSuccess(status int) bool {
-	return status >= 200 && status < 300
-}
-
-func jsonUnmarshalReader(r io.Reader, v any) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, v)
-}
-
-func xmlUnmarshalReader(r io.Reader, v any) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	return xml.Unmarshal(data, v)
+	return apiBaseProd
 }

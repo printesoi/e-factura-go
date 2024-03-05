@@ -9,18 +9,24 @@ type ClientConfig struct {
 	// OAuth2Config is the OAuth2 config used for creating the http.Client that
 	// autorefreshes the Token.
 	OAuth2Config OAuth2Config
-	// Token is the starting oauth2 Token, until this library will support
-	// authentication with the SPV certificate, this must always be provided.
+	// Token is the starting oauth2 Token (including the refresh token).
+	// Until this library will support authentication with the SPV certificate,
+	// this must always be provided.
 	InitialToken *oauth2.Token
-	// Unless BaseUrl is set, Sandbox controlls whether to use production
+	// Unless BaseURL is set, Sandbox controlls whether to use production
 	// endpoints (if set to false) or test endpoints (if set to true).
 	Sandbox bool
-	// Base URL of the ANAF e-factura APIs. It is only useful in
+	// User agent used when communicating with the ANAF API.
+	UserAgent *string
+	// Base URL of the ANAF e-factura protected APIs. It is only useful in
 	// development/testing environments.
-	BaseUrl *string
+	BaseURL *string
+	// Base URL of the ANAF e-factura public(unprotected) APIs. It is only
+	// useful in development/testing environments.
+	BasePublicURL *string
 	// Whether to skip the verification of the SSL certificate (default false).
 	// Since this is a security risk, it should only be use with a custom
-	// BaseUrl in development/testing environments.
+	// BaseURL in development/testing environments.
 	InsecureSkipVerify bool
 }
 
@@ -55,11 +61,26 @@ func ClientProductionEnvironment(prod bool) ClientConfigOption {
 	}
 }
 
-// ClientBaseUrl sets the BaseURL to the given url. This should only be used
+// ClientBaseURL sets the BaseURL to the given url. This should only be used
 // when testing or using a custom endpoint for debugging.
-func ClientBaseUrl(baseUrl string) ClientConfigOption {
+func ClientBaseURL(baseURL string) ClientConfigOption {
 	return func(c *ClientConfig) {
-		c.BaseUrl = &baseUrl
+		c.BaseURL = ptrfyString(baseURL)
+	}
+}
+
+// ClientBasePublicURL sets the BaseURL to the given url. This should only be
+// used when testing or using a custom endpoint for debugging.
+func ClientBasePublicURL(baseURL string) ClientConfigOption {
+	return func(c *ClientConfig) {
+		c.BasePublicURL = ptrfyString(baseURL)
+	}
+}
+
+// ClientUserAgent sets the user agent used to communicate with the ANAF API.
+func ClientUserAgent(userAgent string) ClientConfigOption {
+	return func(c *ClientConfig) {
+		c.UserAgent = ptrfyString(userAgent)
 	}
 }
 

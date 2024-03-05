@@ -169,17 +169,13 @@ func (r DownloadInvoiceResponse) IsOk() bool {
 }
 
 // ValidateXML call the validate endpoint with the given standard and xml body
-func (c *Client) ValidateXML(ctx context.Context, xml []byte, st ValidateStandard) (ValidationResponse, error) {
-	var response ValidationResponse
+func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStandard) (*ValidationResponse, error) {
+	var response *ValidationResponse
 
 	path := fmt.Sprintf(webserviceAppPathValidate, st)
-	url, err := buildParseUrl(webserviceSpBaseProd, path, nil)
+	req, err := c.newApiPublicRequest(ctx, http.MethodPost, path, nil, xml)
 	if err != nil {
-		return response, err
-	}
-	req, err := newRequest(ctx, http.MethodPost, url, xml)
-	if err != nil {
-		return response, err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
@@ -188,14 +184,16 @@ func (c *Client) ValidateXML(ctx context.Context, xml []byte, st ValidateStandar
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return response, err
+		return nil, err
 	}
 	if !responseBodyIsJSON(resp.Header) {
-		return response, newErrorResponse(resp,
+		return nil, newErrorResponse(resp,
 			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
 	}
-	if err := jsonUnmarshalReader(resp.Body, &response); err != nil {
-		return response, newErrorResponse(resp,
+
+	response = new(ValidationResponse)
+	if err := jsonUnmarshalReader(resp.Body, response); err != nil {
+		return nil, newErrorResponse(resp,
 			fmt.Errorf("failed to decode JSON body: %v", err))
 	}
 
@@ -203,28 +201,24 @@ func (c *Client) ValidateXML(ctx context.Context, xml []byte, st ValidateStandar
 }
 
 // ValidateInvoice validate the provided Invoice
-func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (ValidationResponse, error) {
-	xmlInvoice, err := xml.Marshal(invoice)
+func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*ValidationResponse, error) {
+	xmlReader, err := xmlMarshalReader(invoice)
 	if err != nil {
-		return ValidationResponse{}, err
+		return nil, err
 	}
 
-	return c.ValidateXML(ctx, xmlInvoice, ValidateStandardFACT1)
+	return c.ValidateXML(ctx, xmlReader, ValidateStandardFACT1)
 }
 
 // XmlToPdf convert the given XML to PDF. To check if the generation is indeed
 // successful and no validation or other invalid request error occured, check
 // if response.IsOk() == true.
-func (c *Client) XmlToPdf(ctx context.Context, xml []byte, st ValidateStandard, noValidate bool) (response GeneratePdfResponse, err error) {
+func (c *Client) XmlToPdf(ctx context.Context, xml io.Reader, st ValidateStandard, noValidate bool) (response *GeneratePdfResponse, err error) {
 	path := fmt.Sprintf(webserviceAppPathXmlToPdf, st)
 	if noValidate {
 		path, _ = url.JoinPath(path, "DA")
 	}
-	url, er := buildParseUrl(webserviceSpBaseProd, path, nil)
-	if err = er; err != nil {
-		return
-	}
-	req, er := newRequest(ctx, http.MethodPost, url, xml)
+	req, er := c.newApiPublicRequest(ctx, http.MethodPost, path, nil, xml)
 	if err = er; err != nil {
 		return
 	}
@@ -242,13 +236,16 @@ func (c *Client) XmlToPdf(ctx context.Context, xml []byte, st ValidateStandard, 
 	// failed, otherwise we got the PDF in response body
 	switch mediaType := responseMediaType(resp.Header); mediaType {
 	case "application/json":
-		response.Error = new(GeneratePdfResponseError)
+		response = &GeneratePdfResponse{
+			Error: &GeneratePdfResponseError{},
+		}
 		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
 			err = newErrorResponse(resp,
 				fmt.Errorf("failed to unmarshal response body: %v", err))
 			return
 		}
 	case "application/pdf":
+		response = &GeneratePdfResponse{}
 		if response.PDF, err = io.ReadAll(resp.Body); err != nil {
 			err = newErrorResponse(resp,
 				fmt.Errorf("failed to read body: %v", err))
@@ -263,13 +260,13 @@ func (c *Client) XmlToPdf(ctx context.Context, xml []byte, st ValidateStandard, 
 
 // InvoiceToPdf convert the given Invoice to PDF. See XmlToPdf for return
 // values.
-func (c *Client) InvoiceToPdf(ctx context.Context, invoice Invoice, noValidate bool) (response GeneratePdfResponse, err error) {
-	xmlInvoice, er := xml.Marshal(invoice)
-	if err = er; err != nil {
-		return
+func (c *Client) InvoiceToPdf(ctx context.Context, invoice Invoice, noValidate bool) (response *GeneratePdfResponse, err error) {
+	xmlReader, err := xmlMarshalReader(invoice)
+	if err != nil {
+		return nil, err
 	}
 
-	return c.XmlToPdf(ctx, xmlInvoice, ValidateStandardFACT1, noValidate)
+	return c.XmlToPdf(ctx, xmlReader, ValidateStandardFACT1, noValidate)
 }
 
 func ptrfyString(s string) *string {
@@ -298,8 +295,8 @@ func UploadOptionAutofactura() uploadOption {
 // UploadXML uploads and invoice or message XML. Optional upload options can be
 // provided via call params.
 func (c *Client) UploadXML(
-	ctx context.Context, xml []byte, st UploadStandard, cif string, opts ...uploadOption,
-) (response UploadResponse, err error) {
+	ctx context.Context, xml io.Reader, st UploadStandard, cif string, opts ...uploadOption,
+) (response *UploadResponse, err error) {
 
 	uploadOptions := uploadOptions{}
 	for _, opt := range opts {
@@ -317,25 +314,26 @@ func (c *Client) UploadXML(
 		query.Set("extern", *uploadOptions.extern)
 	}
 
-	url := c.buildApiUrl(apiPathUpload, query)
-	req, er := newRequest(ctx, http.MethodPost, url, xml)
+	req, er := c.newApiRequest(ctx, http.MethodPost, apiPathUpload, query, xml)
 	if err = er; err != nil {
 		return
 	}
 
-	err = c.doApiUnmarshalXML(req, &response)
+	response = new(UploadResponse)
+	err = c.doApiUnmarshalXML(req, response)
 	return
 }
 
 // UploadInvoice uploads the given Invoice with the provided optional options.
 func (c *Client) UploadInvoice(
 	ctx context.Context, invoice Invoice, cif string, opts ...uploadOption,
-) (response UploadResponse, err error) {
-	xmlInvoice, err := xml.Marshal(invoice)
+) (response *UploadResponse, err error) {
+	xmlReader, err := xmlMarshalReader(invoice)
 	if err != nil {
-		return UploadResponse{}, err
+		return nil, err
 	}
-	return c.UploadXML(ctx, xmlInvoice, UploadStandardUBL, cif, opts...)
+
+	return c.UploadXML(ctx, xmlReader, UploadStandardUBL, cif, opts...)
 }
 
 func (m MessageRASP) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -358,29 +356,29 @@ func (m MessageRASP) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 // options.
 func (c *Client) UploadRASPMessage(
 	ctx context.Context, msg MessageRASP, cif string, opts ...uploadOption,
-) (response UploadResponse, err error) {
-	xmlMsg, err := xml.Marshal(msg)
+) (response *UploadResponse, err error) {
+	xmlReader, err := xmlMarshalReader(msg)
 	if err != nil {
-		return UploadResponse{}, err
+		return nil, err
 	}
-	return c.UploadXML(ctx, xmlMsg, UploadStandardRASP, cif, opts...)
+	return c.UploadXML(ctx, xmlReader, UploadStandardRASP, cif, opts...)
 }
 
 // GetMessageState fetch the state of a message. The uploadIndex must a result
 // from an upload operation.
 func (c *Client) GetMessageState(
 	ctx context.Context, uploadIndex int,
-) (response GetMessageStateResponse, err error) {
+) (response *GetMessageStateResponse, err error) {
 	query := url.Values{
 		"id_incarcare": {strconv.Itoa(uploadIndex)},
 	}
-	url := c.buildApiUrl(apiPathMessageState, query)
-	req, er := newRequest(ctx, http.MethodGet, url, nil)
+	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessageState, query, nil)
 	if err = er; err != nil {
 		return
 	}
 
-	err = c.doApiUnmarshalXML(req, &response)
+	response = new(GetMessageStateResponse)
+	err = c.doApiUnmarshalXML(req, response)
 	return
 }
 
@@ -389,7 +387,7 @@ func (c *Client) GetMessageState(
 // for msgType.
 func (c *Client) GetMessagesList(
 	ctx context.Context, cif string, numDays int, msgType MessageFilterType,
-) (response MessagesListResponse, err error) {
+) (response *MessagesListResponse, err error) {
 	query := url.Values{
 		"cif":  {cif},
 		"zile": {strconv.Itoa(numDays)},
@@ -397,14 +395,13 @@ func (c *Client) GetMessagesList(
 	if msgType != MessageFilterAll {
 		query.Set("filter", msgType.String())
 	}
-
-	url := c.buildApiUrl(apiPathMessageList, query)
-	req, er := newRequest(ctx, http.MethodGet, url, nil)
+	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessageList, query, nil)
 	if err = er; err != nil {
 		return
 	}
 
-	err = c.doApiUnmarshalXML(req, &response)
+	response = new(MessagesListResponse)
+	err = c.doApiUnmarshalXML(req, response)
 	return
 }
 
@@ -414,7 +411,7 @@ func (c *Client) GetMessagesList(
 // for msgType.
 func (c *Client) GetMessagesListPagination(
 	ctx context.Context, cif string, startTs, endTs int64, msgType MessageFilterType,
-) (response MessagesListPaginationResponse, err error) {
+) (response *MessagesListPaginationResponse, err error) {
 	query := url.Values{
 		"cif":       {cif},
 		"startTime": {strconv.FormatInt(startTs, 10)},
@@ -424,8 +421,7 @@ func (c *Client) GetMessagesListPagination(
 		query.Set("filter", msgType.String())
 	}
 
-	url := c.buildApiUrl(apiPathMessagePaginationList, query)
-	req, er := newRequest(ctx, http.MethodGet, url, nil)
+	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
 	if err = er; err != nil {
 		return
 	}
@@ -437,11 +433,11 @@ func (c *Client) GetMessagesListPagination(
 // DownloadInvoice download an invoice zip for a given download index
 func (c *Client) DownloadInvoice(
 	ctx context.Context, downloadIndex int,
-) (response DownloadInvoiceResponse, err error) {
-	url := c.buildApiUrl(apiPathMessagePaginationList, url.Values{
+) (response *DownloadInvoiceResponse, err error) {
+	query := url.Values{
 		"id": {strconv.Itoa(downloadIndex)},
-	})
-	req, er := newRequest(ctx, http.MethodGet, url, nil)
+	}
+	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
 	if err = er; err != nil {
 		return
 	}
@@ -458,13 +454,16 @@ func (c *Client) DownloadInvoice(
 	// failed, otherwise we got the zip in response body
 	switch mediaType := responseMediaType(resp.Header); mediaType {
 	case "application/json":
-		response.Error = new(DownloadInvoiceResponseError)
+		response = &DownloadInvoiceResponse{
+			Error: &DownloadInvoiceResponseError{},
+		}
 		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
 			err = newErrorResponse(resp,
 				fmt.Errorf("failed to unmarshal response body: %v", err))
 			return
 		}
 	case "application/zip":
+		response = &DownloadInvoiceResponse{}
 		if response.Zip, err = io.ReadAll(resp.Body); err != nil {
 			err = newErrorResponse(resp,
 				fmt.Errorf("failed to read body: %v", err))
