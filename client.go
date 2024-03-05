@@ -96,9 +96,14 @@ func (c *Client) buildApiUrl(path string, query url.Values) string {
 	return buildUrl(c.apiBaseUrl, path, query)
 }
 
+func (c *Client) do(req *http.Request) (resp *http.Response, err error) {
+	resp, err = c.apiClient.Do(req)
+	return
+}
+
 func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers http.Header, err error) {
 	var resp *http.Response
-	resp, err = c.apiClient.Do(req)
+	resp, err = c.do(req)
 	if resp != nil {
 		statusCode = resp.StatusCode
 		headers = resp.Header
@@ -117,7 +122,7 @@ func (c *Client) doApi(req *http.Request) (body []byte, statusCode int, headers 
 }
 
 func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
-	resp, err := c.apiClient.Do(req)
+	resp, err := c.do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}

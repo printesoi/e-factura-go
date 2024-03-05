@@ -2,9 +2,9 @@ package efactura
 
 import (
 	"context"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -183,7 +183,7 @@ func (c *Client) ValidateXML(ctx context.Context, xml []byte, st ValidateStandar
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
-	resp, err := c.apiClient.Do(req)
+	resp, err := c.do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
@@ -230,21 +230,34 @@ func (c *Client) XmlToPdf(ctx context.Context, xml []byte, st ValidateStandard, 
 	}
 
 	req.Header.Set("Content-Type", "text/plain")
-	body, _, headers, er := c.doApi(req)
+	resp, er := c.do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err = er; err != nil {
 		return
 	}
 
 	// If the response content type is application/json, then the validation
 	// failed, otherwise we got the PDF in response body
-	if responseBodyIsJSON(headers) {
+	switch mediaType := responseMediaType(resp.Header); mediaType {
+	case "application/json":
 		response.Error = new(GeneratePdfResponseError)
-		if err = json.Unmarshal(body, response.Error); err != nil {
+		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
+			err = newErrorResponse(resp,
+				fmt.Errorf("failed to unmarshal response body: %v", err))
 			return
 		}
+	case "application/pdf":
+		if response.PDF, err = io.ReadAll(resp.Body); err != nil {
+			err = newErrorResponse(resp,
+				fmt.Errorf("failed to read body: %v", err))
+			return
+		}
+	default:
+		err = newErrorResponse(resp,
+			fmt.Errorf("expected application/json or application/pdf, got %s", mediaType))
 	}
-
-	response.PDF = body
 	return
 }
 
@@ -433,20 +446,33 @@ func (c *Client) DownloadInvoice(
 		return
 	}
 
-	body, _, headers, er := c.doApi(req)
+	resp, er := c.do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err = er; err != nil {
 		return
 	}
 
 	// If the response content type is application/json, then the download
 	// failed, otherwise we got the zip in response body
-	if responseBodyIsJSON(headers) {
+	switch mediaType := responseMediaType(resp.Header); mediaType {
+	case "application/json":
 		response.Error = new(DownloadInvoiceResponseError)
-		if err = json.Unmarshal(body, response.Error); err != nil {
+		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
+			err = newErrorResponse(resp,
+				fmt.Errorf("failed to unmarshal response body: %v", err))
 			return
 		}
+	case "application/zip":
+		if response.Zip, err = io.ReadAll(resp.Body); err != nil {
+			err = newErrorResponse(resp,
+				fmt.Errorf("failed to read body: %v", err))
+			return
+		}
+	default:
+		err = newErrorResponse(resp,
+			fmt.Errorf("expected application/json or application/pdf, got %s", mediaType))
 	}
-
-	response.Zip = body
 	return
 }
