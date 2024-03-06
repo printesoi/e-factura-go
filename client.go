@@ -34,7 +34,9 @@ var (
 const (
 	Version = "v0.0.1"
 
-	defaultUserAgent     = "e-factura-go" + "/" + Version
+	efacturaVersion  = "e-factura-go" + "/" + Version
+	defaultUserAgent = efacturaVersion
+
 	defaultApiANAF       = "https://api.anaf.ro"
 	defaultApiPublicANAF = "https://webservicesp.anaf.ro"
 
@@ -194,6 +196,7 @@ func (c *Client) newRequest(ctx context.Context, method string, baseURL *url.URL
 		return req, err
 	}
 
+	req.Header.Set("User-Agent", c.userAgent)
 	for _, opt := range opts {
 		opt(req)
 	}

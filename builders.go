@@ -27,7 +27,15 @@ type InvoiceAllowanceChargeBuilder struct {
 func NewInvoiceAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
 	f := new(InvoiceAllowanceChargeBuilder)
 	return f.WithChargeIndicator(chargeIndicator).
-		WithCurrencyID(currencyID)
+		WithCurrencyID(currencyID).WithAmount(amount)
+}
+
+func NewInvoiceAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
+	return NewInvoiceAllowanceChargeBuilder(false, currencyID, amount)
+}
+
+func NewInvoiceChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
+	return NewInvoiceAllowanceChargeBuilder(true, currencyID, amount)
 }
 
 func (f *InvoiceAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceAllowanceChargeBuilder {
@@ -91,10 +99,14 @@ type InvoiceLineBuilder struct {
 	unitCode         UnitCodeType
 	invoicedQuantity Decimal
 	baseQuantity     *Decimal
-	priceAmount      Decimal
-	invoicePeriod    *InvoiceLinePeriod
-	allowanceCharges []InvoiceAllowanceCharge
-	item             InvoiceLineItem
+
+	grossPriceAmount Decimal
+	itemAllowance    Decimal
+
+	invoicePeriod *InvoiceLinePeriod
+	lineAllowance *InvoiceAllowanceCharge
+	lineCharge    *InvoiceAllowanceCharge
+	item          InvoiceLineItem
 }
 
 func NewInvoiceLineBuilder(id string, currencyID CurrencyCodeType) (b *InvoiceLineBuilder) {
@@ -132,8 +144,13 @@ func (b *InvoiceLineBuilder) WithBaseQuantity(quantity Decimal) *InvoiceLineBuil
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithPriceAmount(priceAmount Decimal) *InvoiceLineBuilder {
-	b.priceAmount = priceAmount
+func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount Decimal) *InvoiceLineBuilder {
+	b.grossPriceAmount = priceAmount
+	return b
+}
+
+func (b *InvoiceLineBuilder) WithPriceDeduction(allowance Decimal) *InvoiceLineBuilder {
+	b.itemAllowance = allowance
 	return b
 }
 
@@ -142,13 +159,14 @@ func (b *InvoiceLineBuilder) WithInvoicePeriod(invoicePeriod *InvoiceLinePeriod)
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithAllowanceCharges(allowanceCharges []InvoiceAllowanceCharge) *InvoiceLineBuilder {
-	b.allowanceCharges = allowanceCharges
+func (b *InvoiceLineBuilder) WithAllowance(allowance InvoiceAllowanceCharge) *InvoiceLineBuilder {
+	b.lineAllowance = &allowance
 	return b
 }
 
-func (b *InvoiceLineBuilder) AppendAllowanceCharges(allowanceCharge InvoiceAllowanceCharge) *InvoiceLineBuilder {
-	return b.WithAllowanceCharges(append(b.allowanceCharges, allowanceCharge))
+func (b *InvoiceLineBuilder) WithCharge(charge InvoiceAllowanceCharge) *InvoiceLineBuilder {
+	b.lineCharge = &charge
+	return b
 }
 
 func (b *InvoiceLineBuilder) WithItem(item InvoiceLineItem) *InvoiceLineBuilder {
@@ -157,14 +175,42 @@ func (b *InvoiceLineBuilder) WithItem(item InvoiceLineItem) *InvoiceLineBuilder 
 }
 
 func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
+	if b.id == "" || !b.invoicedQuantity.IsInitialized() ||
+		b.unitCode == "" || !b.grossPriceAmount.IsInitialized() ||
+		b.item.Name == "" || b.item.ClassifiedTaxCategory.ID == "" ||
+		b.item.ClassifiedTaxCategory.TaxSchemeID == "" {
+		return
+	}
+
 	line.ID = b.id
 	line.Note = b.note
 	line.InvoicedQuantity = InvoicedQuantity{
 		Quantity: b.invoicedQuantity,
 		UnitCode: b.unitCode,
 	}
+	var netPriceAmount Decimal
+	if b.itemAllowance.IsZero() {
+		netPriceAmount = b.grossPriceAmount
+	} else {
+		netPriceAmount = b.grossPriceAmount.Sub(b.itemAllowance)
+		line.Price.PriceAmount = AmountWithCurrency{
+			Amount:     netPriceAmount,
+			CurrencyID: b.currencyID,
+		}
+		line.Price.AllowanceCharge = &InvoiceLinePriceAllowanceCharge{
+			ChargeIndicator: false,
+			Amount: AmountWithCurrency{
+				Amount:     b.itemAllowance,
+				CurrencyID: b.currencyID,
+			},
+			BaseAmount: AmountWithCurrency{
+				Amount:     b.grossPriceAmount,
+				CurrencyID: b.currencyID,
+			},
+		}
+	}
 	line.Price.PriceAmount = AmountWithCurrency{
-		Amount:     b.priceAmount,
+		Amount:     netPriceAmount,
 		CurrencyID: b.currencyID,
 	}
 	if b.baseQuantity != nil {
@@ -174,15 +220,37 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		}
 	}
 	line.InvoicePeriod = b.invoicePeriod
-	line.AllowanceCharge = b.allowanceCharges
+	if b.lineAllowance != nil {
+		line.AllowanceCharges = append(line.AllowanceCharges, *b.lineAllowance)
+	}
+	if b.lineCharge != nil {
+		line.AllowanceCharges = append(line.AllowanceCharges, *b.lineCharge)
+	}
 	line.Item = b.item
 
-	// TODO: compute net amount
-	// (Invoiced quantity * (Item net price/item price base quantity) + Sum of invoice line charge amount - sum of invoice line allowance amount
-	netAmount := line.InvoicedQuantity.Quantity
+	// Invoiced quantity * (Item net price / item price base quantity)
+	//  + Sum of invoice line charge amount
+	//  - Sum of invoice line allowance amount
+	baseQuantity := D(1)
+	if b.baseQuantity != nil {
+		baseQuantity = *b.baseQuantity
+	}
+	if baseQuantity.IsZero() {
+		return line, false
+	}
+	netAmount := b.invoicedQuantity.Mul(netPriceAmount).Div(baseQuantity)
+	for _, charge := range line.AllowanceCharges {
+		if charge.ChargeIndicator {
+			netAmount = netAmount.Add(charge.Amount.Amount)
+		} else {
+			netAmount = netAmount.Sub(charge.Amount.Amount)
+		}
+	}
+
 	line.LineExtensionAmount = AmountWithCurrency{
-		Amount:     netAmount,
+		Amount:     netAmount.AsAmount(),
 		CurrencyID: b.currencyID,
 	}
+	ok = true
 	return
 }

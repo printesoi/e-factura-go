@@ -18,8 +18,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 // Date is a wrapper of the time.Time type which marshals to XML in the
@@ -44,34 +42,6 @@ func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 func (d Date) Ptr() *Date {
 	return &d
-}
-
-// Decimal is a wrapper of the github.com/shopspring/decimal.Decimal type in
-// order to ensure type safety and lossless computation.
-type Decimal struct {
-	decimal.Decimal
-}
-
-var Zero Decimal = D(0)
-
-func D(d float64) Decimal {
-	return NewFromDecimal(decimal.NewFromFloat(d))
-}
-
-func NewFromDecimal(d decimal.Decimal) Decimal {
-	return Decimal{Decimal: d}
-}
-
-func (d Decimal) Ptr() *Decimal {
-	return &d
-}
-
-func (d Decimal) String() string {
-	return d.Decimal.StringFixed(2)
-}
-
-func (d Decimal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return e.EncodeElement(d.String(), start)
 }
 
 // AmountWithCurrency represents an embeddable type that stores an amount as
@@ -141,7 +111,7 @@ type InvoicedQuantity struct {
 func (a InvoicedQuantity) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	type xmlInvoicedQuantity struct {
 		Quantity               Decimal      `xml:",chardata"`
-		UnitCode               UnitCodeType `xml:"unitCode,attr,omitempty"`
+		UnitCode               UnitCodeType `xml:"unitCode,attr"`
 		UnitCodeListID         string       `xml:"unitCodeListID,attr,omitempty"`
 		UnitCodeListAgencyID   string       `xml:"unitCodeListAgencyID,attr,omitempty"`
 		UnitCodeListAgencyName string       `xml:"unitCodeListAgencyName,attr,omitempty"`

@@ -51,12 +51,17 @@ type Invoice struct {
 	//     aşa cum se acceptă sau se cere în ţara Vânzătorului.
 	// Cardinality: 0..1
 	TaxCurrencyCode CurrencyCodeType `xml:"cbc:TaxCurrencyCode,omitempty"`
+	// ID: BT-19
+	// Term: Referinţa contabilă a cumpărătorului
+	// Cardinality: 0..1
+	AccountingCost string `xml:"cbc:AccountingCost,omitempty"`
 	// ID: BT-10
 	// Term: Referinţa Cumpărătorului
 	// Description: Un identificator atribuit de către Cumpărător utilizat
 	//     pentru circuitul intern al facturii.
 	// Cardinality: 0..1
-	BuyerReference string `xml:"cbc:BuyerReference,omitempty"`
+	BuyerReference string                 `xml:"cbc:BuyerReference,omitempty"`
+	OrderReference *InvoiceOrderReference `xml:"cac:OrderReference,omitempty"`
 	// Conditional / Free-form text pertinent to this document, conveying
 	// information that is not contained explicitly in other structures.
 	// Cardinality: 0..1
@@ -70,7 +75,34 @@ type Invoice struct {
 	// ID: BG-3
 	// Term: REFERINŢĂ LA O FACTURĂ ANTERIOARĂ
 	// Cardinality: 0..n
-	BillingReference []InvoiceBillingReference `xml:"cac:BillingReference,omitempty"`
+	BillingReferences []InvoiceBillingReference `xml:"cac:BillingReference,omitempty"`
+	// ID: BT-16
+	// Term: Referinţa avizului de expediție
+	// Cardinality: 0..1
+	DespatchDocumentReference *IDNode `xml:"cac:DespatchDocumentReference,omitempty"`
+	// ID: BT-15
+	// Term: Referinţa avizului de recepție
+	// Cardinality: 0..1
+	ReceiptDocumentReference *IDNode `xml:"cac:ReceiptDocumentReference>cbc:ID,omitempty"`
+	// ID: BT-17
+	// Term: Referinţa avizului de ofertă sau a lotului
+	// Cardinality: 0..1
+	OriginatorDocumentReference *IDNode `xml:"cac:OriginatorDocumentReference>cbc:ID,omitempty"`
+	// ID: BT-12
+	// Term: Referinţa contractului
+	// Cardinality: 0..1
+	ContractDocumentReference *IDNode `xml:"cac:ContractDocumentReference>cbc:ID,omitempty"`
+	// ID: BT-18-1
+	// Term: Identificatorul obiectului facturat
+	// Cardinality: 0..1
+	// ID: BT-18-2
+	// Term: Identificatorul obiectului schemei
+	// Cardinality: 0..1
+	AdditionalDocumentReference *ValueWithAttrs `xml:"cac:AdditionalDocumentReference,omitempty"`
+	// ID: BT-11
+	// Term: Referinţa proiectului
+	// Cardinality: 0..1
+	ProjectReference *IDNode `xml:"cac:ProjectReference>cbc:ID,omitempty"`
 	// ID: BG-4
 	// Term: VÂNZĂTOR
 	// Description: Un grup de termeni operaţionali care furnizează informaţii
@@ -83,23 +115,37 @@ type Invoice struct {
 	//     despre Cumpărător.
 	// Cardinality: 1..1
 	Customer InvoiceCustomer `xml:"cac:AccountingCustomerParty>cac:Party"`
+	// ID: BG-10
+	// Term: BENEFICIAR
+	// Cardinality: 0..1
+	Payee *InvoicePayee `xml:"cac:PayeeParty,omitempty"`
+	// ID: BG-11
+	// Term: REPREZENTANTUL FISCAL AL VÂNZĂTORULUI
+	// Cardinality: 0..1
+	TaxRepresentative *InvoiceTaxRepresentative `xml:"cac:TaxRepresentativeParty,omitempty"`
+	// ID: BG-13
+	// Term: INFORMAȚII REFERITOARE LA LIVRARE
+	// Cardinality: 0..1
+	Delivery *InvoiceDelivery `xml:"cac:Delivery,omitempty"`
 	// ID: BG-16
 	// Term: INSTRUCŢIUNI DE PLATĂ
 	// Description: Un grup de termeni operaţionali care furnizează informaţii
 	//     despre plată.
 	// Cardinality: 0..1
 	PaymentMeans *InvoicePaymentMeans `xml:"cac:PaymentMeans,omitempty"`
+	// ID: BT-20
+	// Term: Termeni de plată
+	// Cardinality: 0..n
+	PaymentTerms []PaymentTerms `xml:"cac:PaymentTerms,omitempty"`
 	// ID: BG-20
 	// Term: DEDUCERI LA NIVELUL DOCUMENTULUI
 	// Cardinality: 0..n
 	// TODO:
 	TaxTotal *InvoiceTaxTotal `xml:"cac:TaxTotal"`
-
 	// ID: BG-22
 	// Term: TOTALURILE DOCUMENTULUI
 	// Cardinality: 1..1
 	LegalMonetaryTotal InvoiceLegalMonetaryTotal `xml:"cac:LegalMonetaryTotal"`
-
 	// ID: BG-25
 	// Term: LINIE A FACTURII
 	// Cardinality: 1..n
@@ -131,6 +177,8 @@ func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		XMLNS    string   `xml:"xmlns,attr"`
 		XMLNScac string   `xml:"xmlns:cac,attr"`
 		XMLNScbc string   `xml:"xmlns:cbc,attr"`
+
+		Comment string `xml:",comment"`
 	}
 
 	xmliv.XMLNS = XMLNSInvoice2
@@ -139,6 +187,7 @@ func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	xmliv.UBLVersionID = UBLVersionID
 	xmliv.CustomizationID = CIUSRO_v101
 	xmliv.invoice = invoice(iv)
+	xmliv.Comment = "Generated with " + efacturaVersion
 
 	return e.EncodeElement(xmliv, start)
 }
@@ -157,14 +206,14 @@ type InvoiceDocumentReference struct {
 	// Description: Data emiterii facturii anterioare trebuie furnizată în
 	//     cazul în care identificatorul facturii anterioare nu este unic.
 	// Cardinality: 0..1
-	// TODO:
+	IssueDate *Date `xml:"cbc:IssueDate,omitempty"`
 }
 
 type InvoiceSupplier struct {
 	// ID: BT-29
 	// Term: Identificatorul Vânzătorului
 	// Cardinality: 0..n
-	SellerID []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
+	Identifications []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
 	// ID: BT-28
 	// Term: Denumirea comercială a Vânzătorului
 	// Description: Un nume sub care este cunoscut Vânzătorul, altul decât
@@ -227,40 +276,65 @@ type InvoicePartyIdentification struct {
 }
 
 type InvoiceSupplierPostalAddress struct {
+	// Field: InvoicePostalAddress.Line1
 	// ID: BT-35
 	// Term: Adresa Vânzătorului - Linia 1
-	// Description: Linia principală a unei adrese.
 	// Cardinality: 0..1
-	Line1 string `xml:"cbc:StreetName,omitempty"`
+
+	// Field: InvoicePostalAddress.Line2
 	// ID: BT-36
 	// Term: Adresa Vânzătorului - Linia 2
-	// Description: O linie suplimentară într-o adresă care poate fi utilizată
-	//     pentru informaţii suplimentare şi completări la linia principală.
 	// Cardinality: 0..1
-	Line2 string `xml:"cbc:AdditionalStreetName,omitempty"`
+
+	// Field: InvoicePostalAddress.Line3
 	// ID: BT-162
 	// Term: Adresa Vânzătorului - Linia 3
-	// Description: O linie suplimentară într-o adresă care poate fi utilizată
-	//     pentru informaţii suplimentare şi completări la linia principală.
 	// Cardinality: 0..1
-	Line3 string `xml:"cbc:AddressLine,omitempty"`
+
+	// Field: InvoicePostalAddress.CityName
 	// ID: BT-37
 	// Term: Localitatea Vânzătorului
-	// Description: Numele uzual al municipiului, oraşului sau satului, în care
-	//     se află adresa Vânzătorului.
 	// Cardinality: 0..1
-	CityName string `xml:"cbc:CityName,omitempty"`
+
+	// Field: InvoicePostalAddress.PostalZone
 	// ID: BT-38
 	// Term: Codul poştal al Vânzătorului
 	// Cardinality: 0..1
-	PostalZone string `xml:"cbc:PostalZone,omitempty"`
+
+	// Field: InvoicePostalAddress.CountrySubentity
 	// ID: BT-39
 	// Term: Subdiviziunea ţării Vânzătorului
 	// Cardinality: 0..1
-	CountrySubentity CountrySubentityType `xml:"cbc:CountrySubentity,omitempty"`
+
+	// Feild: InvoicePostalAddress.CountryIdentificationCode
 	// ID: BT-40
-	// Term: Subdiviziunea ţării Vânzătorului
+	// Term: Codul țării Vânzătorului
 	// Cardinality: 1..1
+
+	InvoicePostalAddress
+}
+
+func MakeInvoiceSupplierPostalAddress(postalAddress InvoicePostalAddress) InvoiceSupplierPostalAddress {
+	return InvoiceSupplierPostalAddress{InvoicePostalAddress: postalAddress}
+}
+
+// InvoicePostalAddress represents a generic postal address
+type InvoicePostalAddress struct {
+	// Adresă - Linia 1
+	Line1 string `xml:"cbc:StreetName,omitempty"`
+	// Adresă - Linia 2
+	Line2 string `xml:"cbc:AdditionalStreetName,omitempty"`
+	// Adresă - Linia 3
+	// Description: O linie suplimentară într-o adresă care poate fi utilizată
+	//     pentru informaţii suplimentare şi completări la linia principală.
+	Line3 string `xml:"cbc:AddressLine,omitempty"`
+	// Numele uzual al municipiului, oraşului sau satului, în care se află adresa.
+	CityName string `xml:"cbc:CityName,omitempty"`
+	// Codul poştal
+	PostalZone string `xml:"cbc:PostalZone,omitempty"`
+	// Subdiviziunea ţării
+	CountrySubentity CountrySubentityType `xml:"cbc:CountrySubentity,omitempty"`
+	// Codul țării
 	CountryIdentificationCode CountryCodeType `xml:"cac:Country>cbc:IdentificationCode"`
 }
 
@@ -288,7 +362,7 @@ type InvoiceCustomer struct {
 	// ID: BT-46
 	// Term: Identificatorul Cumpărătorului
 	// Cardinality: 0..n
-	SellerID []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
+	Identifications []InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
 	// ID: BT-45
 	// Term: Denumirea comercială a Cumpărătorului
 	// Description: Un nume sub care este cunoscut Cumpărătorul, altul decât
@@ -332,41 +406,45 @@ type InvoiceCustomerLegalEntity struct {
 }
 
 type InvoiceCustomerPostalAddress struct {
+	// Field: InvoicePostalAddress.Line1
 	// ID: BT-50
 	// Term: Adresa Cumpărătorului - Linia 1
-	// Description: Linia principală a unei adrese.
 	// Cardinality: 0..1
-	Line1 string `xml:"cbc:StreetName,omitempty"`
+
+	// Field: InvoicePostalAddress.Line2
 	// ID: BT-51
 	// Term: Adresa Cumpărătorului - Linia 2
-	// Description: O linie suplimentară într-o adresă care poate fi utilizată
-	//     pentru informaţii suplimentare şi completări la linia principală.
 	// Cardinality: 0..1
-	Line2 string `xml:"cbc:AdditionalStreetName,omitempty"`
+
+	// Field: InvoicePostalAddress.Line3
 	// ID: BT-163
 	// Term: Adresa Cumpărătorului - Linia 3
-	// Description: O linie suplimentară într-o adresă care poate fi utilizată
-	//     pentru informaţii suplimentare şi completări la linia principală.
-	// Cardinality: 0..1
-	Line3 string `xml:"cbc:AddressLine,omitempty"`
+
+	// Field: InvoicePostalAddress.CityName
 	// ID: BT-52
 	// Term: Localitatea Cumpărătorului
-	// Description: Numele uzual al municipiului, oraşului sau satului, în care
-	//     se află adresa Cumpărătorului.
 	// Cardinality: 0..1
-	CityName string `xml:"cbc:CityName,omitempty"`
+
+	// Field: InvoicePostalAddress.PostalZone
 	// ID: BT-53
 	// Term: Codul poştal al Cumpărătorului
 	// Cardinality: 0..1
-	PostalZone string `xml:"cbc:PostalZone,omitempty"`
+
+	// Field: InvoicePostalAddress.CountrySubentity
 	// ID: BT-54
 	// Term: Subdiviziunea ţării Cumpărătorului
 	// Cardinality: 0..1
-	CountrySubentity CountrySubentityType `xml:"cbc:CountrySubentity,omitempty"`
+
+	// Feild: InvoicePostalAddress.CountryIdentificationCode
 	// ID: BT-55
-	// Term: Subdiviziunea ţării Cumpărătorului
+	// Term: Codul ţării Cumpărătorului
 	// Cardinality: 1..1
-	CountryIdentificationCode CountryCodeType `xml:"cac:Country>cbc:IdentificationCode"`
+
+	InvoicePostalAddress
+}
+
+func MakeInvoiceCustomerPostalAddress(postalAddress InvoicePostalAddress) InvoiceCustomerPostalAddress {
+	return InvoiceCustomerPostalAddress{InvoicePostalAddress: postalAddress}
 }
 
 type InvoiceCustomerContact struct {
@@ -387,6 +465,149 @@ type InvoiceCustomerContact struct {
 	// Description: O adresă de e-mail pentru punctul de contact.
 	// Cardinality: 0..1
 	Email string `xml:"cbc:ElectronicMail,omitempty"`
+}
+
+type InvoicePayee struct {
+	// ID: BT-59
+	// Term: Numele Beneficiarului
+	// Cardinality: 1..1
+	Name string `xml:"cac:PartyName>cbc:Name"`
+	// ID: BT-60 / BT-60-1
+	// Term: Identificatorul Beneficiarului / Identificatorul schemei
+	// Cardinality: 0..1 / 0..1
+	Identification *InvoicePartyIdentification `xml:"cac:PartyIdentification,omitempty"`
+	// ID: BT-61
+	// Term: Identificatorul înregistrării legale a Beneficiarului
+	// Cardinality: 0..1
+	// ID: BT-61-1
+	// Term: Identificatorul schemei
+	// Cardinality: 0..1
+	CompanyID *ValueWithAttrs `xml:"cbc:CompanyID,omitempty"`
+}
+
+type InvoiceTaxRepresentative struct {
+	// ID: BT-62
+	// Term: Numele reprezentantului fiscal al Vânzătorului
+	// Cardinality: 1..1
+	Name string `xml:"cac:PartyName>cbc:Name"`
+	// ID: BT-63
+	// Term: Identificatorul de TVA al reprezentantului fiscal al Vânzătorului
+	// Cardinality: 1..1
+	TaxScheme InvoicePartyTaxScheme `xml:"cac:PartyTaxScheme"`
+	// ID: BG-12
+	// Term: ADRESA POŞTALĂ A REPREZENTANTULUI FISCAL AL VÂNZĂTORULUI
+	// Cardinality: 1..1
+	PostalAddress InvoiceTaxRepresentativePostalAddress `xml:"cac:PostalAddress"`
+}
+
+type InvoiceTaxRepresentativePostalAddress struct {
+	// Field: InvoicePostalAddress.Line1
+	// ID: BT-64
+	// Term: Adresa reprezentantului fiscal - Linia 1
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.Line2
+	// ID: BT-64
+	// Term: Adresa reprezentantului fiscal - Linia 2
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.Line3
+	// ID: BT-164
+	// Term: Adresa reprezentantului fiscal - Linia 3
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.CityName
+	// ID: BT-66
+	// Term: Localitatea reprezentantului fiscal
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.PostalZone
+	// ID: BT-67
+	// Term: Codul poştal al reprezentantului fiscal
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.CountrySubentity
+	// ID: BT-68
+	// Term: Subdiviziunea ţării reprezentantului fiscal
+	// Cardinality: 0..1
+
+	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// ID: BT-69
+	// Term: Codul ţării reprezentantului fiscal
+	// Cardinality: 1..1
+
+	InvoicePostalAddress
+}
+
+func MakeInvoiceTaxRepresentativePostalAddress(postalAddress InvoicePostalAddress) InvoiceTaxRepresentativePostalAddress {
+	return InvoiceTaxRepresentativePostalAddress{InvoicePostalAddress: postalAddress}
+}
+
+type InvoiceDelivery struct {
+	// ID: BT-70
+	// Term: Numele părţii către care se face livrarea
+	// Cardinality: 0..1
+	Name *InvoicePartyName `xml:"cac:DeliveryParty>cac:PartyName,omitempty"`
+	// ID: BT-72
+	// Term: Data reală a livrării
+	// Cardinality: 0..1
+	ActualDeliveryDate *Date `xml:"cbc:ActualDeliveryDate,omitempty"`
+}
+
+type InvoiceDeliveryLocation struct {
+	// ID: BT-71
+	// Term: Identificatorul locului către care se face livrarea
+	// Cardinality: 0..1
+	// ID: BT-71-1
+	// Term: Identificatorul schemei
+	// Cardinality: 0..1
+	ID *ValueWithAttrs `xml:"cbc:ID,omitempty"`
+	// ID: BG-15
+	// Term: ADRESA DE LIVRARE
+	// Cardinality: 0..1
+	DeliveryAddress *InvoiceDeliveryAddress `xml:"cac:Address,omitempty"`
+}
+
+type InvoiceDeliveryAddress struct {
+	// Field: InvoicePostalAddress.Line1
+	// ID: BT-75
+	// Term: Adresa de livrare - Linia 1
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.Line2
+	// ID: BT-76
+	// Term: Adresa de livrare - Linia 2
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.Line3
+	// ID: BT-165
+	// Term: Adresa de livrare - Linia 3
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.CityName
+	// ID: BT-77
+	// Term: Localitatea de livrare
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.PostalZone
+	// ID: BT-78
+	// Term: Codul poştal al de livrare
+	// Cardinality: 0..1
+
+	// Field: InvoicePostalAddress.CountrySubentity
+	// ID: BT-79
+	// Term: Subdiviziunea ţării de livrare
+	// Cardinality: 0..1
+
+	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// ID: BT-80
+	// Term: Codul țării de livrare
+	// Cardinality: 1..1
+	InvoicePostalAddress
+}
+
+func MakeInvoiceDeliveryAddress(postalAddress InvoicePostalAddress) InvoiceDeliveryAddress {
+	return InvoiceDeliveryAddress{InvoicePostalAddress: postalAddress}
 }
 
 type InvoicePeriod struct {
@@ -418,7 +639,7 @@ type InvoicePaymentMeans struct {
 	// ID: BG-17
 	// Term: VIRAMENT
 	// Cardinality: 0..n
-	PayeeFinancialAccount []PayeeFinancialAccount `xml:"cac:PayeeFinancialAccount,omitempty"`
+	PayeeFinancialAccounts []PayeeFinancialAccount `xml:"cac:PayeeFinancialAccount,omitempty"`
 }
 
 type PaymentMeansCode struct {
@@ -445,7 +666,11 @@ type PayeeFinancialAccount struct {
 	// ID: BT-86
 	// Term: Identificatorul furnizorului de servicii de plată.
 	// Cardinality: 0..1
-	// TODO:
+	FinancialInstitutionBranch *IDNode `xml:"cac:FinancialInstitutionBranch,omitempty"`
+}
+
+type PaymentTerms struct {
+	Note string `xml:"cbc:Note"`
 }
 
 type InvoiceTaxTotal struct {
@@ -459,7 +684,7 @@ type InvoiceTaxTotal struct {
 	// ID: BG-23
 	// Term: DETALIEREA TVA
 	// Cardinality: 1..n
-	TaxSubtotal []InvoiceTaxSubtotal `xml:"cac:TaxSubtotal"`
+	TaxSubtotals []InvoiceTaxSubtotal `xml:"cac:TaxSubtotal"`
 }
 
 type InvoiceTaxSubtotal struct {
@@ -491,7 +716,7 @@ type InvoiceTaxCategory struct {
 	// Term: Codul motivului scutirii de TVA
 	// Cardinality: 0..1
 	TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"cbc:TaxExemptionReasonCode,omitempty"`
-	TaxSchemeID            *TaxScheme                 `xml:"cac:TaxScheme,omitempty"`
+	TaxSchemeID            TaxSchemeIDType            `xml:"cac:TaxScheme>cbc:ID"`
 }
 
 type InvoiceLegalMonetaryTotal struct {
@@ -515,6 +740,16 @@ type InvoiceLegalMonetaryTotal struct {
 	// Term: Valoarea totală a facturii cu TVA
 	// Cardinality: 1..1
 	TaxInclusiveAmount AmountWithCurrency `xml:"cbc:TaxInclusiveAmount"`
+	// ID: BT-113
+	// Term: Sumă plătită
+	// Cardinality: 0..1
+	PrepaidAmount *AmountWithCurrency `xml:"cbc:PrepaidAmount,omitempty"`
+	// ID: BT-114
+	// Term: Valoare de rotunjire
+	// Description: Valoarea care trebuie adunată la totalul facturii pentru a
+	//     rotunji suma de plată.
+	// Cardinality: 0..1
+	PayableRoundingAmount *AmountWithCurrency `xml:"cbc:PayableRoundingAmount,omitempty"`
 	// ID: BT-115
 	// Term: Suma de plată
 	// Cardinality: 1..1
@@ -552,8 +787,10 @@ type InvoiceLine struct {
 	// ID: BG-27 / BG-28
 	// Term: DEDUCERI LA LINIA FACTURII / TAXE SUPLIMENTARE LA LINIA FACTURII
 	// Cardinality: 0..n / 0..n
-	AllowanceCharge []InvoiceAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
-	Item            InvoiceLineItem          `xml:"cac:Item"`
+	AllowanceCharges []InvoiceAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
+	// ID: BG-31
+	// Term: INFORMAȚII PRIVIND ARTICOLUL
+	Item InvoiceLineItem `xml:"cac:Item"`
 	// ID: BG-29
 	// Term: DETALII ALE PREŢULUI
 	// Cardinality: 1..1
@@ -619,7 +856,7 @@ type InvoiceAllowanceCharge struct {
 	// Cardinality: 0..1
 	// }}}
 	// cbc:ChargeIndicator = true  ==>  {{{
-	// ID: BT-137
+	// ID: BT-142
 	// Term: Valoarea de bază a taxei suplimentare la linia facturii
 	// Description: Valoarea de bază care poate fi utilizată, împreună cu
 	//     procentajul taxei suplimentare la linia facturii, pentru a calcula
@@ -642,13 +879,11 @@ type InvoiceLinePrice struct {
 	// ID: BT-150
 	// Term: Codul unităţii de măsură a cantităţii de bază a preţului articolului
 	// Cardinality: 0..1
-	BaseQuantity *InvoicedQuantity `xml:"cbc:BaseQuantity,omitempty"`
+	BaseQuantity    *InvoicedQuantity                `xml:"cbc:BaseQuantity,omitempty"`
+	AllowanceCharge *InvoiceLinePriceAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
 }
 
 type InvoiceLineItem struct {
-	// ID: BG-31
-	// Term: INFORMAȚII PRIVIND ARTICOLUL
-
 	// ID: BT-153
 	// Term: Numele articolului
 	// Cardinality: 1..1
@@ -669,7 +904,7 @@ type InvoiceLineItem struct {
 	ItemClassificationCode *ItemClassificationCode `xml:"cac:CommodityClassification>cbc:ItemClassificationCode,omitempty"`
 	// ID: BG-30
 	// Term: INFORMAŢII PRIVIND TVA A LINIEI
-	ClassifiedTaxCategory *InvoiceClassifiedTaxCategory `xml:"cac:ClassifiedTaxCategory,omitempty"`
+	ClassifiedTaxCategory InvoiceClassifiedTaxCategory `xml:"cac:ClassifiedTaxCategory"`
 }
 
 type ItemStandardIdentificationCode struct {
@@ -686,18 +921,48 @@ type InvoicePartyName struct {
 	Name string `xml:"cbc:Name"`
 }
 
-type TaxScheme struct {
-	ID string `xml:"cbc:ID"`
-}
-
 type InvoicePartyTaxScheme struct {
-	CompanyID   string     `xml:"cbc:CompanyID,omitempty"`
-	TaxSchemeID *TaxScheme `xml:"cac:TaxScheme,omitempty"`
+	CompanyID   string          `xml:"cbc:CompanyID"`
+	TaxSchemeID TaxSchemeIDType `xml:"cac:TaxScheme>cbc:ID"`
 }
 
-// TODO: document
 type InvoiceClassifiedTaxCategory struct {
-	ID          TaxCategoryCodeType `xml:"cbc:ID"`
-	Percent     *Decimal            `xml:"cbc:Percent,omitempty"`
-	TaxSchemeID *TaxScheme          `xml:"cac:TaxScheme,omitempty"`
+	// ID: BT-151
+	// Term: Codul categoriei de TVA a articolului facturat
+	// Cardinality: 1..1
+	ID TaxCategoryCodeType `xml:"cbc:ID"`
+	// ID: BT-152
+	// Term: Cota TVA pentru articolul facturat
+	// Cardinality: 0..1
+	Percent     *Decimal        `xml:"cbc:Percent,omitempty"`
+	TaxSchemeID TaxSchemeIDType `xml:"cac:TaxScheme>cbc:ID"`
+}
+
+type InvoiceLinePriceAllowanceCharge struct {
+	// cbc:ChargeIndicator = false  ==>  deducere
+	// cbc:ChargeIndicator = true   ==>  taxă suplimentară
+	ChargeIndicator bool `xml:"cbc:ChargeIndicator"`
+	// ID: BT-148
+	// Term: Preţul brut al articolului
+	// Cardinality: 0..1
+	BaseAmount AmountWithCurrency `xml:"cbc:BaseAmount"`
+	// ID: BT-147
+	// Term: Reducere la prețul articolului
+	// Cardinality: 0..1
+	Amount AmountWithCurrency `xml:"cbc:Amount"`
+}
+
+type InvoiceOrderReference struct {
+	// ID: BT-13
+	// Term: Referinţa comenzii
+	// Cardinality: 0..1
+	OrderID string `xml:"cbc:ID,omitempty"`
+	// ID: BT-13
+	// Term: Referinţa comenzii
+	// Cardinality: 0..1
+	SalesOrderID string `xml:"cbc:SalesOrderID,omitempty"`
+}
+
+type IDNode struct {
+	ID string `xml:"cbc:ID"`
 }

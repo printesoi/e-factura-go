@@ -27,13 +27,21 @@ type CurrencyCodeType string
 
 const (
 	CurrencyRON CurrencyCodeType = "RON"
+	CurrencyEUR CurrencyCodeType = "EUR"
+	CurrencyUSD CurrencyCodeType = "USD"
+)
+
+type TaxSchemeIDType string
+
+const (
+	TaxSchemeVAT TaxSchemeIDType = "VAT"
 )
 
 type TaxCategoryCodeType string
 
 const (
 	TaxCategoryTVACotaNormalaRedusa      TaxCategoryCodeType = "S"
-	TaxCategoryTVACotaZero               TaxCategoryCodeType = "S"
+	TaxCategoryTVACotaZero               TaxCategoryCodeType = "Z"
 	TaxCategoryScutireTVA                TaxCategoryCodeType = "E"
 	TaxCategoryTVATaxareInversa          TaxCategoryCodeType = "AE"
 	TaxCategoryTVALivrariIntracomunitare TaxCategoryCodeType = "K"
@@ -42,6 +50,15 @@ const (
 	TaxCategoryTaxeInsuleCanare          TaxCategoryCodeType = "L"
 	TaxCategoryTaxeCeutaMelilla          TaxCategoryCodeType = "M"
 )
+
+func (c TaxCategoryCodeType) TaxRateExempted() bool {
+	switch c {
+	case TaxCategoryTVACotaZero, TaxCategoryScutireTVA, TaxCategoryTVATaxareInversa,
+		TaxCategoryTVALivrariIntracomunitare, TaxCategoryTVAExporturi:
+		return true
+	}
+	return false
+}
 
 type TaxExemptionReasonCodeType string
 
@@ -768,3 +785,10 @@ const (
 )
 
 type UnitCodeType string
+
+type PaymentMeansCodeType string
+
+const (
+	PaymentMeansCash         PaymentMeansCodeType = "10"
+	PaymentMeansBankTransfer PaymentMeansCodeType = "42"
+)
