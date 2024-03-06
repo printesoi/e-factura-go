@@ -766,3 +766,5 @@ const (
 	CityNameROBSector5 = "SECTOR5"
 	CityNameROBSector6 = "SECTOR6"
 )
+
+type UnitCodeType string

@@ -560,11 +560,6 @@ type InvoiceLine struct {
 	Price InvoiceLinePrice `xml:"cac:Price"`
 }
 
-type InvoicedQuantity struct {
-	Quantity string `xml:",chardata"`
-	UnitCode string `xml:"unitCode,attr,omitempty"`
-}
-
 type InvoiceLinePeriod struct {
 	// ID: BT-134
 	// Term: Data de început a perioadei de facturare a liniei facturii

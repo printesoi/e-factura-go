@@ -52,6 +52,12 @@ type Decimal struct {
 	decimal.Decimal
 }
 
+var Zero Decimal = D(0)
+
+func D(d float64) Decimal {
+	return NewFromDecimal(decimal.NewFromFloat(d))
+}
+
 func NewFromDecimal(d decimal.Decimal) Decimal {
 	return Decimal{Decimal: d}
 }
@@ -89,7 +95,7 @@ func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) e
 }
 
 // ValueWithAttrs represents and embeddable type that stores a string as
-// chardata and a list of attributes. The name of the XML name must be
+// chardata and a list of attributes. The name of the XML node must be
 // controlled by the parent type.
 type ValueWithAttrs struct {
 	Value      string     `xml:",chardata"`
@@ -116,4 +122,36 @@ func MakeValueWithScheme(value string, schemeID string) ValueWithAttrs {
 
 func NewValueWithAttrs(value string, attrs ...xml.Attr) *ValueWithAttrs {
 	return MakeValueWithAttrs(value, attrs...).Ptr()
+}
+
+// InvoicedQuantity represents the quantity (of items) on an invoice line.
+type InvoicedQuantity struct {
+	Quantity Decimal
+	// The unit of the quantity.
+	UnitCode UnitCodeType
+	// The quantity unit code list.
+	UnitCodeListID string
+	// The identification of the agency that maintains the quantity unit code
+	// list.
+	UnitCodeListAgencyID string
+	// The name of the agency which maintains the quantity unit code list.
+	UnitCodeListAgencyName string
+}
+
+func (a InvoicedQuantity) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type xmlInvoicedQuantity struct {
+		Quantity               Decimal      `xml:",chardata"`
+		UnitCode               UnitCodeType `xml:"unitCode,attr,omitempty"`
+		UnitCodeListID         string       `xml:"unitCodeListID,attr,omitempty"`
+		UnitCodeListAgencyID   string       `xml:"unitCodeListAgencyID,attr,omitempty"`
+		UnitCodeListAgencyName string       `xml:"unitCodeListAgencyName,attr,omitempty"`
+	}
+	xq := xmlInvoicedQuantity{
+		Quantity:               a.Quantity,
+		UnitCode:               a.UnitCode,
+		UnitCodeListID:         a.UnitCodeListID,
+		UnitCodeListAgencyID:   a.UnitCodeListAgencyID,
+		UnitCodeListAgencyName: a.UnitCodeListAgencyName,
+	}
+	return e.EncodeElement(xq, start)
 }
