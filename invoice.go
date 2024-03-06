@@ -16,6 +16,7 @@ package efactura
 
 import (
 	"encoding/xml"
+	"fmt"
 )
 
 type Invoice struct {
@@ -62,10 +63,10 @@ type Invoice struct {
 	// Cardinality: 0..1
 	BuyerReference string                 `xml:"cbc:BuyerReference,omitempty"`
 	OrderReference *InvoiceOrderReference `xml:"cac:OrderReference,omitempty"`
-	// Conditional / Free-form text pertinent to this document, conveying
-	// information that is not contained explicitly in other structures.
-	// Cardinality: 0..1
-	Note string `xml:"cbc:Note,omitempty"`
+	// ID: BG-1
+	// Term: COMENTARIU ÎN FACTURĂ
+	// Cardinality: 0..n
+	Note []InvoiceNote `xml:"cbc:Note,omitempty"`
 	// ID: BG-14
 	// Term: Perioada de facturare
 	// Description: Un grup de termeni operaţionali care furnizează informaţii
@@ -961,6 +962,28 @@ type InvoiceOrderReference struct {
 	// Term: Referinţa comenzii
 	// Cardinality: 0..1
 	SalesOrderID string `xml:"cbc:SalesOrderID,omitempty"`
+}
+
+type InvoiceNote struct {
+	// ID: BT-21
+	// Term: Codul subiectului comentariului din factură
+	// Cardinality: 0..1
+	SubjectCode InvoiceNoteSubjectCodeType
+	// ID: BT-22
+	// Term: Comentariu în factură
+	// Cardinality: 1..1
+	Note string
+}
+
+func (n InvoiceNote) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	var xmlNote struct {
+		Note string `xml:",chardata"`
+	}
+	if n.SubjectCode != "" {
+		xmlNote.Note = fmt.Sprintf("#%s#", n.SubjectCode)
+	}
+	xmlNote.Note += n.Note
+	return e.EncodeElement(xmlNote, start)
 }
 
 type IDNode struct {

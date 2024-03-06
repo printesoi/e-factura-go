@@ -792,3 +792,5 @@ const (
 	PaymentMeansCash         PaymentMeansCodeType = "10"
 	PaymentMeansBankTransfer PaymentMeansCodeType = "42"
 )
+
+type InvoiceNoteSubjectCodeType string
