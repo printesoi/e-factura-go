@@ -644,7 +644,7 @@ type InvoicePaymentMeans struct {
 }
 
 type PaymentMeansCode struct {
-	Code string `xml:",chardata"`
+	Code PaymentMeansCodeType `xml:",chardata"`
 	// ID: BT-82
 	// Term: Explicaţii privind instrumentul de plată
 	// Description: Text care indică modul în care o plată trebuie să fie sau
