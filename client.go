@@ -58,7 +58,7 @@ const (
 	apiPathDownload              = "descarcare"
 
 	webserviceAppPathValidate = "validare/%s"
-	webserviceAppPathXmlToPdf = "transformare/%s"
+	webserviceAppPathXMLToPDF = "transformare/%s"
 )
 
 // A Client manages communication with the ANAF e-factura APIs using OAuth2
@@ -171,6 +171,22 @@ func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
 			fmt.Errorf("expected application/xml, got %s", responseMediaType(resp.Header)))
 	}
 	return xmlUnmarshalReader(resp.Body, response)
+}
+
+func (c *Client) doApiUnmarshalJSON(req *http.Request, response any) error {
+	resp, err := c.do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return err
+	}
+
+	if !responseBodyIsJSON(resp.Header) {
+		return newErrorResponse(resp,
+			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
+	}
+	return jsonUnmarshalReader(resp.Body, response)
 }
 
 // RequestOption represents an option that can modify an http.Request.

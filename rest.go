@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type (
@@ -29,27 +30,28 @@ type (
 	ValidateStandard string
 	UploadStandard   string
 
-	ErrorMessage struct {
-		Message string `json:"message"`
+	// ValidateResponse is the parsed response from the validate XML endpoint
+	ValidateResponse struct {
+		State    Code   `json:"stare"`
+		TraceID  string `json:"trace_id"`
+		Messages []struct {
+			Message string `json:"message"`
+		} `json:"Messages,omitempty"`
 	}
 
-	// ValidationResponse is the response of the validate XML endpoint
-	ValidationResponse struct {
-		State    Code           `json:"stare"`
-		TraceID  string         `json:"trace_id"`
-		Messages []ErrorMessage `json:"Messages,omitempty"`
-	}
-
-	// GeneratePdfResponseError is the error response of the Xml-To-Pdf
+	// GeneratePDFResponseError is the error response of the XML-To-PDF
 	// endpoint
-	GeneratePdfResponseError struct {
-		State    Code           `json:"stare"`
-		TraceID  string         `json:"trace_id"`
-		Messages []ErrorMessage `json:"Messages,omitempty"`
+	GeneratePDFResponseError struct {
+		State    Code   `json:"stare"`
+		TraceID  string `json:"trace_id"`
+		Messages []struct {
+			Message string `json:"message"`
+		} `json:"Messages,omitempty"`
 	}
 
-	GeneratePdfResponse struct {
-		Error *GeneratePdfResponseError
+	// GeneratePDFResponse is the parsed response from the XML-To-PDF endpoint
+	GeneratePDFResponse struct {
+		Error *GeneratePDFResponseError
 		PDF   []byte
 	}
 
@@ -58,25 +60,32 @@ type (
 		Message     string `xml:"message,attr"`
 	}
 
-	ErrorMessageNode struct {
-		ErrorMessage string `xml:"errorMessage,attr"`
-	}
-
-	// UploadResponse is a parsed response from the upload endpoint
+	// UploadResponse is the parsed response from the upload endpoint
 	UploadResponse struct {
-		ResponseDate    string             `xml:"dateResponse,attr,omitempty"`
-		ExecutionStatus int                `xml:"ExecutionStatus,attr,omitempty"`
-		UploadIndex     int                `xml:"index_incarcare,attr,omitempty"`
-		Errors          []ErrorMessageNode `xml:"Errors,omitempty"`
+		ResponseDate    string `xml:"dateResponse,attr,omitempty"`
+		ExecutionStatus int    `xml:"ExecutionStatus,attr,omitempty"`
+		UploadIndex     int    `xml:"index_incarcare,attr,omitempty"`
+		Errors          []struct {
+			ErrorMessage string `xml:"errorMessage,attr"`
+		} `xml:"Errors,omitempty"`
 
 		XMLName xml.Name `xml:"header"`
 		XMLNS   string   `xml:"xmlns,attr"`
 	}
 
-	// GetMessageStateResponse is a parsed response from the get message state
-	// endoint
+	GetMessageStateCode string
+
+	// GetMessageStateResponse is the parsed response from the get message
+	// state endoint
 	GetMessageStateResponse struct {
-		State Code `json:"stare"`
+		State      GetMessageStateCode `xml:"stare"`
+		DownloadID int                 `xml:"id_descarcare,omitempty"`
+		Errors     []struct {
+			ErrorMessage string `xml:"errorMessage,attr"`
+		} `xml:"Errors,omitempty"`
+
+		XMLName xml.Name `xml:"header"`
+		XMLNS   string   `xml:"xmlns,attr"`
 	}
 
 	MessageFilterType int
@@ -92,18 +101,20 @@ type (
 		CIFCustomer  string `json:"cif_beneficiar"`
 	}
 
+	// MessagesListResponse is the parsed response from the list messages
+	// endpoint.
 	MessagesListResponse struct {
+		Error    string    `json:"eroare"`
+		Title    string    `json:"titlu"`
 		Serial   string    `json:"serial"`
 		CUI      string    `json:"cui"`
-		Title    string    `json:"titlu"`
 		Messages []Message `json:"message"`
 	}
 
+	// MessagesListPaginationResponse is the parsed response from the list
+	// messages with pagination endpoint.
 	MessagesListPaginationResponse struct {
-		Serial   string    `json:"serial"`
-		CUI      string    `json:"cui"`
-		Title    string    `json:"titlu"`
-		Messages []Message `json:"message"`
+		MessagesListResponse
 
 		RecordsInPage       int64 `json:"numar_inregistrari_in_pagina"`
 		TotalRecordsPerPage int64 `json:"numar_total_inregistrari_per_pagina"`
@@ -112,11 +123,15 @@ type (
 		CurrentPageIndex    int64 `json:"index_pagina_curenta"`
 	}
 
+	// DownloadInvoiceResponseError is the error response from the download
+	// invoice endpoint.
 	DownloadInvoiceResponseError struct {
 		Error string `json:"eroare"`
 		Title string `json:"titlu,omitempty"`
 	}
 
+	// DownloadInvoiceResponse is the parsed response from the download invoice
+	// endpoint.
 	DownloadInvoiceResponse struct {
 		Error *DownloadInvoiceResponseError
 		Zip   []byte
@@ -129,6 +144,11 @@ const (
 
 	ValidateStandardFACT1 ValidateStandard = "FACT1"
 	ValidateStandardFCN   ValidateStandard = "FCN"
+
+	GetMessageStateCodeOk         GetMessageStateCode = "ok"
+	GetMessageStateCodeNok        GetMessageStateCode = "nok"
+	GetMessageStateCodeInvalidXML GetMessageStateCode = "XML cu erori nepreluat de sistem"
+	GetMessageStateCodeProcessing GetMessageStateCode = "in prelucrare"
 
 	UploadStandardUBL  UploadStandard = "UBL"
 	UploadStandardCN   UploadStandard = "CN"
@@ -150,12 +170,14 @@ func (s UploadStandard) String() string {
 	return string(s)
 }
 
-func (r ValidationResponse) IsOk() bool {
-	return r.State == CodeOk
+// IsOk returns true if the validate response was successful.
+func (r *ValidateResponse) IsOk() bool {
+	return r != nil && r.State == CodeOk
 }
 
-func (r GeneratePdfResponse) IsOk() bool {
-	return r.Error == nil
+// IsOk returns true if the XML-To-PDF response was successful.
+func (r *GeneratePDFResponse) IsOk() bool {
+	return r != nil && r.Error == nil
 }
 
 // IsOk returns true if the response corresponding to an upload was successful.
@@ -178,13 +200,19 @@ func (t MessageFilterType) String() string {
 }
 
 // IsOk returns true if the response corresponding to a download was successful.
-func (r DownloadInvoiceResponse) IsOk() bool {
-	return r.Error == nil
+func (r *DownloadInvoiceResponse) IsOk() bool {
+	return r != nil && r.Error == nil
 }
 
-// ValidateXML call the validate endpoint with the given standard and xml body
-func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStandard) (*ValidationResponse, error) {
-	var response *ValidationResponse
+// IsOk returns true if the response corresponding to fetching messages list
+// was successful.
+func (r *MessagesListResponse) IsOk() bool {
+	return r != nil && (r.Error == "" || strings.HasPrefix(r.Error, "Nu exista mesaje in ultimele "))
+}
+
+// ValidateXML call the validate endpoint with the given standard and XML body
+func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStandard) (*ValidateResponse, error) {
+	var response *ValidateResponse
 
 	path := fmt.Sprintf(webserviceAppPathValidate, st)
 	req, err := c.newApiPublicRequest(ctx, http.MethodPost, path, nil, xml)
@@ -205,7 +233,7 @@ func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStan
 			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
 	}
 
-	response = new(ValidationResponse)
+	response = new(ValidateResponse)
 	if err := jsonUnmarshalReader(resp.Body, response); err != nil {
 		return nil, newErrorResponse(resp,
 			fmt.Errorf("failed to decode JSON body: %v", err))
@@ -215,7 +243,7 @@ func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStan
 }
 
 // ValidateInvoice validate the provided Invoice
-func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*ValidationResponse, error) {
+func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*ValidateResponse, error) {
 	xmlReader, err := xmlMarshalReader(invoice)
 	if err != nil {
 		return nil, err
@@ -224,11 +252,11 @@ func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*Validat
 	return c.ValidateXML(ctx, xmlReader, ValidateStandardFACT1)
 }
 
-// XmlToPdf convert the given XML to PDF. To check if the generation is indeed
+// XMLToPDF convert the given XML to PDF. To check if the generation is indeed
 // successful and no validation or other invalid request error occured, check
 // if response.IsOk() == true.
-func (c *Client) XmlToPdf(ctx context.Context, xml io.Reader, st ValidateStandard, noValidate bool) (response *GeneratePdfResponse, err error) {
-	path := fmt.Sprintf(webserviceAppPathXmlToPdf, st)
+func (c *Client) XMLToPDF(ctx context.Context, xml io.Reader, st ValidateStandard, noValidate bool) (response *GeneratePDFResponse, err error) {
+	path := fmt.Sprintf(webserviceAppPathXMLToPDF, st)
 	if noValidate {
 		path, _ = url.JoinPath(path, "DA")
 	}
@@ -250,8 +278,8 @@ func (c *Client) XmlToPdf(ctx context.Context, xml io.Reader, st ValidateStandar
 	// failed, otherwise we got the PDF in response body
 	switch mediaType := responseMediaType(resp.Header); mediaType {
 	case "application/json":
-		response = &GeneratePdfResponse{
-			Error: &GeneratePdfResponseError{},
+		response = &GeneratePDFResponse{
+			Error: &GeneratePDFResponseError{},
 		}
 		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
 			err = newErrorResponse(resp,
@@ -259,7 +287,7 @@ func (c *Client) XmlToPdf(ctx context.Context, xml io.Reader, st ValidateStandar
 			return
 		}
 	case "application/pdf":
-		response = &GeneratePdfResponse{}
+		response = &GeneratePDFResponse{}
 		if response.PDF, err = io.ReadAll(resp.Body); err != nil {
 			err = newErrorResponse(resp,
 				fmt.Errorf("failed to read body: %v", err))
@@ -272,15 +300,15 @@ func (c *Client) XmlToPdf(ctx context.Context, xml io.Reader, st ValidateStandar
 	return
 }
 
-// InvoiceToPdf convert the given Invoice to PDF. See XmlToPdf for return
+// InvoiceToPDF convert the given Invoice to PDF. See XMLToPDF for return
 // values.
-func (c *Client) InvoiceToPdf(ctx context.Context, invoice Invoice, noValidate bool) (response *GeneratePdfResponse, err error) {
+func (c *Client) InvoiceToPDF(ctx context.Context, invoice Invoice, noValidate bool) (response *GeneratePDFResponse, err error) {
 	xmlReader, err := xmlMarshalReader(invoice)
 	if err != nil {
 		return nil, err
 	}
 
-	return c.XmlToPdf(ctx, xmlReader, ValidateStandardFACT1, noValidate)
+	return c.XMLToPDF(ctx, xmlReader, ValidateStandardFACT1, noValidate)
 }
 
 func ptrfyString(s string) *string {
@@ -415,7 +443,7 @@ func (c *Client) GetMessagesList(
 	}
 
 	response = new(MessagesListResponse)
-	err = c.doApiUnmarshalXML(req, response)
+	err = c.doApiUnmarshalJSON(req, response)
 	return
 }
 
@@ -446,10 +474,10 @@ func (c *Client) GetMessagesListPagination(
 
 // DownloadInvoice download an invoice zip for a given download index
 func (c *Client) DownloadInvoice(
-	ctx context.Context, downloadIndex int,
+	ctx context.Context, downloadID int,
 ) (response *DownloadInvoiceResponse, err error) {
 	query := url.Values{
-		"id": {strconv.Itoa(downloadIndex)},
+		"id": {strconv.Itoa(downloadID)},
 	}
 	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
 	if err = er; err != nil {
