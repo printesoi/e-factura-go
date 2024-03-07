@@ -24,74 +24,86 @@ type InvoiceAllowanceChargeBuilder struct {
 	allowanceChargeReason     *string
 }
 
+// NewInvoiceAllowanceChargeBuilder creates a new generic
+// InvoiceAllowanceChargeBuilder.
 func NewInvoiceAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
-	f := new(InvoiceAllowanceChargeBuilder)
-	return f.WithChargeIndicator(chargeIndicator).
+	b := new(InvoiceAllowanceChargeBuilder)
+	return b.WithChargeIndicator(chargeIndicator).
 		WithCurrencyID(currencyID).WithAmount(amount)
 }
 
+// NewInvoiceAllowanceBuilder creates a new InvoiceAllowanceChargeBuilder
+// builder that will build InvoiceAllowanceCharge object correspoding to an
+// allowance (ChargeIndicator = false)
 func NewInvoiceAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
 	return NewInvoiceAllowanceChargeBuilder(false, currencyID, amount)
 }
 
+// NewInvoiceChargeBuilder creates a new InvoiceAllowanceChargeBuilder
+// builder that will build InvoiceAllowanceCharge object correspoding to a
+// charge (ChargeIndicator = true)
 func NewInvoiceChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
 	return NewInvoiceAllowanceChargeBuilder(true, currencyID, amount)
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceAllowanceChargeBuilder {
-	f.chargeIndicator = charge
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceAllowanceChargeBuilder {
+	b.chargeIndicator = charge
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCodeType) *InvoiceAllowanceChargeBuilder {
-	f.currencyID = currencyID
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCodeType) *InvoiceAllowanceChargeBuilder {
+	b.currencyID = currencyID
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
-	f.amount = amount
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
+	b.amount = amount
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
-	f.baseAmount = amount.Ptr()
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
+	b.baseAmount = amount.Ptr()
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReasonCode(allowanceChargeReasonCode string) *InvoiceAllowanceChargeBuilder {
-	f.allowanceChargeReasonCode = ptrfyString(allowanceChargeReasonCode)
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReasonCode(allowanceChargeReasonCode string) *InvoiceAllowanceChargeBuilder {
+	b.allowanceChargeReasonCode = ptrfyString(allowanceChargeReasonCode)
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceChargeReason string) *InvoiceAllowanceChargeBuilder {
-	f.allowanceChargeReason = ptrfyString(allowanceChargeReason)
-	return f
+func (b *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceChargeReason string) *InvoiceAllowanceChargeBuilder {
+	b.allowanceChargeReason = ptrfyString(allowanceChargeReason)
+	return b
 }
 
-func (f *InvoiceAllowanceChargeBuilder) Build() (InvoiceAllowanceCharge, bool) {
-	m := InvoiceAllowanceCharge{
-		ChargeIndicator: f.chargeIndicator,
-		Amount: AmountWithCurrency{
-			Amount:     f.amount,
-			CurrencyID: f.currencyID,
-		},
+func (b *InvoiceAllowanceChargeBuilder) Build() (allowanceCharge InvoiceAllowanceCharge, ok bool) {
+	if !b.amount.IsInitialized() || b.currencyID == "" {
+		return
 	}
-	if f.baseAmount != nil {
-		m.BaseAmount = &AmountWithCurrency{
-			Amount:     *f.baseAmount,
-			CurrencyID: f.currencyID,
+	allowanceCharge.ChargeIndicator = b.chargeIndicator
+	allowanceCharge.Amount = AmountWithCurrency{
+		Amount:     b.amount,
+		CurrencyID: b.currencyID,
+	}
+	if b.baseAmount != nil {
+		allowanceCharge.BaseAmount = &AmountWithCurrency{
+			Amount:     *b.baseAmount,
+			CurrencyID: b.currencyID,
 		}
 	}
-	if f.allowanceChargeReasonCode != nil {
-		m.AllowanceChargeReasonCode = *f.allowanceChargeReasonCode
+	if b.allowanceChargeReasonCode != nil {
+		allowanceCharge.AllowanceChargeReasonCode = *b.allowanceChargeReasonCode
 	}
-	if f.allowanceChargeReason != nil {
-		m.AllowanceChargeReason = *f.allowanceChargeReason
+	if b.allowanceChargeReason != nil {
+		allowanceCharge.AllowanceChargeReason = *b.allowanceChargeReason
 	}
-	return m, true
+	ok = true
+	return
 }
 
-// InvoiceLineBuilder builds an InvoiceLine object
+// InvoiceLineBuilder builds an InvoiceLine object. The only (useful) role of
+// this builder is to help build a complex InvoiceLine object while ensuring
+// the amounts are calculated correctly.
 type InvoiceLineBuilder struct {
 	id               string
 	note             string
@@ -103,15 +115,15 @@ type InvoiceLineBuilder struct {
 	grossPriceAmount Decimal
 	itemAllowance    Decimal
 
-	invoicePeriod *InvoiceLinePeriod
-	lineAllowance *InvoiceAllowanceCharge
-	lineCharge    *InvoiceAllowanceCharge
-	item          InvoiceLineItem
+	invoicePeriod     *InvoiceLinePeriod
+	allowancesCharges []InvoiceAllowanceCharge
+	item              InvoiceLineItem
 }
 
+// NewInvoiceLineBuilder creates a new InvoiceLineBuilder
 func NewInvoiceLineBuilder(id string, currencyID CurrencyCodeType) (b *InvoiceLineBuilder) {
 	b = new(InvoiceLineBuilder)
-	return b.WithID(id)
+	return b.WithID(id).WithCurrencyID(currencyID)
 }
 
 func (b *InvoiceLineBuilder) WithID(id string) *InvoiceLineBuilder {
@@ -159,14 +171,13 @@ func (b *InvoiceLineBuilder) WithInvoicePeriod(invoicePeriod *InvoiceLinePeriod)
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithAllowance(allowance InvoiceAllowanceCharge) *InvoiceLineBuilder {
-	b.lineAllowance = &allowance
+func (b *InvoiceLineBuilder) WithAllowancesCharges(allowancesCharges []InvoiceAllowanceCharge) *InvoiceLineBuilder {
+	b.allowancesCharges = allowancesCharges
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithCharge(charge InvoiceAllowanceCharge) *InvoiceLineBuilder {
-	b.lineCharge = &charge
-	return b
+func (b *InvoiceLineBuilder) AppendAllowanceCharge(allowanceCharge InvoiceAllowanceCharge) *InvoiceLineBuilder {
+	return b.WithAllowancesCharges(append(b.allowancesCharges, allowanceCharge))
 }
 
 func (b *InvoiceLineBuilder) WithItem(item InvoiceLineItem) *InvoiceLineBuilder {
@@ -175,7 +186,8 @@ func (b *InvoiceLineBuilder) WithItem(item InvoiceLineItem) *InvoiceLineBuilder 
 }
 
 func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
-	if b.id == "" || !b.invoicedQuantity.IsInitialized() ||
+	if b.id == "" || b.currencyID == "" ||
+		!b.invoicedQuantity.IsInitialized() ||
 		b.unitCode == "" || !b.grossPriceAmount.IsInitialized() ||
 		b.item.Name == "" || b.item.ClassifiedTaxCategory.ID == "" ||
 		b.item.ClassifiedTaxCategory.TaxSchemeID == "" {
@@ -219,14 +231,9 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 			UnitCode: b.unitCode,
 		}
 	}
-	line.InvoicePeriod = b.invoicePeriod
-	if b.lineAllowance != nil {
-		line.AllowanceCharges = append(line.AllowanceCharges, *b.lineAllowance)
-	}
-	if b.lineCharge != nil {
-		line.AllowanceCharges = append(line.AllowanceCharges, *b.lineCharge)
-	}
 	line.Item = b.item
+	line.AllowanceCharges = b.allowancesCharges
+	line.InvoicePeriod = b.invoicePeriod
 
 	// Invoiced quantity * (Item net price / item price base quantity)
 	//  + Sum of invoice line charge amount

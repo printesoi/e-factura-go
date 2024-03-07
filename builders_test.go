@@ -115,7 +115,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				})
 			lineCharge, ok := NewInvoiceChargeBuilder(currencyID, D(10)).Build()
 			assert.True(ok)
-			b.WithCharge(lineCharge)
+			b.AppendAllowanceCharge(lineCharge)
 			line, ok := b.Build()
 			if assert.True(ok) {
 				assert.Equal(D(222.50).String(), line.LineExtensionAmount.Amount.String())
@@ -138,7 +138,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				})
 			lineCharge, ok := NewInvoiceAllowanceBuilder(currencyID, D(3.38)).Build()
 			assert.True(ok)
-			b.WithCharge(lineCharge)
+			b.AppendAllowanceCharge(lineCharge)
 			line, ok := b.Build()
 			if assert.True(ok) {
 				assert.Equal(D(64.12).String(), line.LineExtensionAmount.Amount.String())
