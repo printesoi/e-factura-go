@@ -45,7 +45,7 @@ type Invoice struct {
 	// Description: Moneda în care sunt exprimate toate sumele din factură,
 	//    cu excepţia sumei totale a TVA care este în moneda de contabilizare.
 	// Cardinality: 1..1
-	InvoiceCurrencyCode CurrencyCodeType `xml:"cbc:DocumentCurrencyCode"`
+	DocumentCurrencyCode CurrencyCodeType `xml:"cbc:DocumentCurrencyCode"`
 	// ID: BT-6
 	// Term: Codul monedei de contabilizare a TVA
 	// Description: Moneda utilizată pentru contabilizarea şi declararea TVA
@@ -138,11 +138,16 @@ type Invoice struct {
 	// Term: Termeni de plată
 	// Cardinality: 0..n
 	PaymentTerms []PaymentTerms `xml:"cac:PaymentTerms,omitempty"`
+	// test[cbc:ChargeIndicator == false] =>
 	// ID: BG-20
 	// Term: DEDUCERI LA NIVELUL DOCUMENTULUI
 	// Cardinality: 0..n
-	// TODO:
-	TaxTotal *InvoiceTaxTotal `xml:"cac:TaxTotal"`
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BG-21
+	// Term: TAXE SUPLIMENTARE LA NIVELUL DOCUMENTULUI
+	// Cardinality: 0..n
+	AllowanceCharges []InvoiceDocumentAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
+	TaxTotal         *InvoiceTaxTotal                 `xml:"cac:TaxTotal"`
 	// ID: BG-22
 	// Term: TOTALURILE DOCUMENTULUI
 	// Cardinality: 1..1
@@ -674,6 +679,73 @@ type PaymentTerms struct {
 	Note string `xml:"cbc:Note"`
 }
 
+// InvoiceDocumentAllowanceCharge is a struct that encodes the
+// cbc:AllowanceCharge objects at invoice document level.
+type InvoiceDocumentAllowanceCharge struct {
+	// test[cbc:ChargeIndicator == false] => BG-20 deducere
+	// test[cbc:ChargeIndicator == true ] => BG-21 taxă suplimentară
+	ChargeIndicator bool `xml:"cbc:ChargeIndicator"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BT-98
+	// Term: Codul motivului deducerii la nivelul documentului
+	// Cardinality: 0..1
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BT-105
+	// Term: Codul motivului taxei suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	AllowanceChargeReasonCode string `xml:"cbc:AllowanceChargeReasonCode,omitempty"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BT-97
+	// Term: Motivul deducerii la nivelul documentului
+	// Cardinality: 0..1
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BT-104
+	// Term: Motivul taxei suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	AllowanceChargeReason string `xml:"cbc:AllowanceChargeReason,omitempty"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BT-92
+	// Term: Valoarea deducerii la nivelul documentului
+	// Description: fără TVA
+	// Cardinality: 1..1
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BT-99
+	// Term: Valoarea taxei suplimentare la nivelul documentului
+	// Description: fără TVA
+	// Cardinality: 1..1
+	Amount AmountWithCurrency `xml:"cbc:Amount"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BT-93
+	// Term: Valoarea de bază a deducerii la nivelul documentului
+	// Description: Valoarea de bază care poate fi utilizată, împreună cu
+	//     procentajul deducerii la nivelul documentului, pentru a calcula
+	//     valoarea deducerii la nivelul documentului.
+	// Cardinality: 0..1
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BT-100
+	// Term: Valoarea de bază a taxei suplimentare la nivelul documentului
+	// Description: Valoarea de bază care poate fi utilizată, împreună cu
+	//     procentajul taxei suplimentare la nivelul documentului, pentru a
+	//     calcula valoarea taxei suplimentare la nivelul documentului.
+	// Cardinality: 0..1
+	BaseAmount *AmountWithCurrency `xml:"cbc:BaseAmount,omitempty"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BT-94
+	// Term: Procentajul deducerii la nivelul documentului
+	// Cardinality: 0..1
+	// Description: Procentajul care poate fi utilizat, împreună cu valoarea
+	//     deducerii la nivelul documentului, pentru a calcula valoarea
+	//     deducerii la nivelul documentului.
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BT-101
+	// Term: Procentajul taxelor suplimentare la nivelul documentului
+	// Description: Procentajul care poate fi utilizat, împreună cu valoarea
+	//     taxei suplimentare la nivelul documentului, pentru a calcula
+	//     valoarea taxei suplimentare la nivelul documentului.
+	// Cardinality: 0..1
+	Percent *Decimal `xml:"cbc:MultiplierFactorNumeric,omitempty"`
+}
+
 type InvoiceTaxTotal struct {
 	// ID: BT-110
 	// Term: Valoarea totală a TVA a facturii
@@ -785,10 +857,15 @@ type InvoiceLine struct {
 	// Term: Perioada de facturare a liniei
 	// Cardinality: 0..1
 	InvoicePeriod *InvoiceLinePeriod `xml:"cac:InvoicePeriod,omitempty"`
-	// ID: BG-27 / BG-28
-	// Term: DEDUCERI LA LINIA FACTURII / TAXE SUPLIMENTARE LA LINIA FACTURII
-	// Cardinality: 0..n / 0..n
-	AllowanceCharges []InvoiceAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
+	// test[cbc:ChargeIndicator == false] =>
+	// ID: BG-27
+	// Term: DEDUCERI LA LINIA FACTURII
+	// Cardinality: 0..n
+	// test[cbc:ChargeIndicator == true]  =>
+	// ID: BG-28
+	// Term: TAXE SUPLIMENTARE LA LINIA FACTURII
+	// Cardinality: 0..n
+	AllowanceCharges []InvoiceLineAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
 	// ID: BG-31
 	// Term: INFORMAȚII PRIVIND ARTICOLUL
 	Item InvoiceLineItem `xml:"cac:Item"`
@@ -809,61 +886,55 @@ type InvoiceLinePeriod struct {
 	EndDate *Date `xml:"cbc:EndDate,omitempty"`
 }
 
-type InvoiceAllowanceCharge struct {
-	// cbc:ChargeIndicator = false  ==>  BG-27 deducere
-	// cbc:ChargeIndicator = true   ==>  BG-28 taxă suplimentară
+// InvoiceLineAllowanceCharge is a struct that encodes the cbc:AllowanceCharge
+// objects for at invoice line level.
+type InvoiceLineAllowanceCharge struct {
+	// test[cbc:ChargeIndicator == false] => BG-27 deducere
+	// test[cbc:ChargeIndicator == true ] => BG-28 taxă suplimentară
 	ChargeIndicator bool `xml:"cbc:ChargeIndicator"`
-	// cbc:ChargeIndicator = false  ==>  {{{
+	// test[cbc:ChargeIndicator == false] =>
 	// ID: BT-140
 	// Term: Codul motivului deducerii la linia facturii
 	// Cardinality: 0..1
-	// }}}
-	// cbc:ChargeIndicator = true  ==>  {{{
+	// test[cbc:ChargeIndicator == true]  =>
 	// ID: BT-145
 	// Term: Codul motivului taxei suplimentare la linia facturii
 	// Cardinality: 0..1
-	// }}}
 	AllowanceChargeReasonCode string `xml:"cbc:AllowanceChargeReasonCode,omitempty"`
-	// cbc:ChargeIndicator = false  ==>  {{{
+	// test[cbc:ChargeIndicator == false] =>
 	// ID: BT-139
 	// Term: Motivul deducerii la linia facturii
 	// Cardinality: 0..1
-	// }}}
-	// cbc:ChargeIndicator = true  ==>  {{{
+	// test[cbc:ChargeIndicator == true]  =>
 	// ID: BT-144
 	// Term: Motivul taxei suplimentare la linia facturii
 	// Cardinality: 0..1
-	// }}}
 	AllowanceChargeReason string `xml:"cbc:AllowanceChargeReason,omitempty"`
-	// cbc:ChargeIndicator = false  ==>  {{{
+	// test[cbc:ChargeIndicator == false] =>
 	// ID: BT-136
 	// Term: Valoarea deducerii la linia facturii
 	// Description: fără TVA
 	// Cardinality: 1..1
-	// }}}
-	// cbc:ChargeIndicator = true  ==>  {{{
+	// test[cbc:ChargeIndicator == true]  =>
 	// ID: BT-141
 	// Term: Valoarea taxei suplimentare la linia facturii
 	// Description: fără TVA
 	// Cardinality: 1..1
-	// }}}
 	Amount AmountWithCurrency `xml:"cbc:Amount"`
-	// cbc:ChargeIndicator = false  ==>  {{{
+	// test[cbc:ChargeIndicator == false] =>
 	// ID: BT-137
 	// Term: Valoarea de bază a deducerii la linia facturii
 	// Description: Valoarea de bază care poate fi utilizată, împreună cu
 	//     procentajul deducerii la linia facturii, pentru a calcula valoarea
 	//     deducerii la linia facturii.
 	// Cardinality: 0..1
-	// }}}
-	// cbc:ChargeIndicator = true  ==>  {{{
+	// test[cbc:ChargeIndicator == true]  =>
 	// ID: BT-142
 	// Term: Valoarea de bază a taxei suplimentare la linia facturii
 	// Description: Valoarea de bază care poate fi utilizată, împreună cu
 	//     procentajul taxei suplimentare la linia facturii, pentru a calcula
 	//     valoarea taxei suplimentare la linia facturii.
 	// Cardinality: 0..1
-	// }}}
 	BaseAmount *AmountWithCurrency `xml:"cbc:BaseAmount"`
 }
 
@@ -940,8 +1011,8 @@ type InvoiceClassifiedTaxCategory struct {
 }
 
 type InvoiceLinePriceAllowanceCharge struct {
-	// cbc:ChargeIndicator = false  ==>  deducere
-	// cbc:ChargeIndicator = true   ==>  taxă suplimentară
+	// test[cbc:ChargeIndicator == false] => deducere
+	// test[cbc:ChargeIndicator == true]  => taxă suplimentară
 	ChargeIndicator bool `xml:"cbc:ChargeIndicator"`
 	// ID: BT-148
 	// Term: Preţul brut al articolului

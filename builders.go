@@ -14,8 +14,8 @@
 
 package efactura
 
-// InvoiceAllowanceChargeBuilder builds an InvoiceAllowanceCharge object
-type InvoiceAllowanceChargeBuilder struct {
+// InvoiceLineAllowanceChargeBuilder builds an InvoiceLineAllowanceCharge object
+type InvoiceLineAllowanceChargeBuilder struct {
 	chargeIndicator           bool
 	currencyID                CurrencyCodeType
 	amount                    Decimal
@@ -24,59 +24,59 @@ type InvoiceAllowanceChargeBuilder struct {
 	allowanceChargeReason     *string
 }
 
-// NewInvoiceAllowanceChargeBuilder creates a new generic
-// InvoiceAllowanceChargeBuilder.
-func NewInvoiceAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
-	b := new(InvoiceAllowanceChargeBuilder)
+// NewInvoiceLineAllowanceChargeBuilder creates a new generic
+// InvoiceLineAllowanceChargeBuilder.
+func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+	b := new(InvoiceLineAllowanceChargeBuilder)
 	return b.WithChargeIndicator(chargeIndicator).
 		WithCurrencyID(currencyID).WithAmount(amount)
 }
 
-// NewInvoiceAllowanceBuilder creates a new InvoiceAllowanceChargeBuilder
-// builder that will build InvoiceAllowanceCharge object correspoding to an
+// NewInvoiceAllowanceBuilder creates a new InvoiceLineAllowanceChargeBuilder
+// builder that will build InvoiceLineAllowanceCharge object correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
-	return NewInvoiceAllowanceChargeBuilder(false, currencyID, amount)
+func NewInvoiceAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+	return NewInvoiceLineAllowanceChargeBuilder(false, currencyID, amount)
 }
 
-// NewInvoiceChargeBuilder creates a new InvoiceAllowanceChargeBuilder
-// builder that will build InvoiceAllowanceCharge object correspoding to a
+// NewInvoiceChargeBuilder creates a new InvoiceLineAllowanceChargeBuilder
+// builder that will build InvoiceLineAllowanceCharge object correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceAllowanceChargeBuilder {
-	return NewInvoiceAllowanceChargeBuilder(true, currencyID, amount)
+func NewInvoiceChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+	return NewInvoiceLineAllowanceChargeBuilder(true, currencyID, amount)
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceLineAllowanceChargeBuilder {
 	b.chargeIndicator = charge
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCodeType) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCodeType) *InvoiceLineAllowanceChargeBuilder {
 	b.currencyID = currencyID
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceLineAllowanceChargeBuilder {
 	b.amount = amount
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceLineAllowanceChargeBuilder {
 	b.baseAmount = amount.Ptr()
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReasonCode(allowanceChargeReasonCode string) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithAllowanceChargeReasonCode(allowanceChargeReasonCode string) *InvoiceLineAllowanceChargeBuilder {
 	b.allowanceChargeReasonCode = ptrfyString(allowanceChargeReasonCode)
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceChargeReason string) *InvoiceAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceChargeReason string) *InvoiceLineAllowanceChargeBuilder {
 	b.allowanceChargeReason = ptrfyString(allowanceChargeReason)
 	return b
 }
 
-func (b *InvoiceAllowanceChargeBuilder) Build() (allowanceCharge InvoiceAllowanceCharge, ok bool) {
+func (b *InvoiceLineAllowanceChargeBuilder) Build() (allowanceCharge InvoiceLineAllowanceCharge, ok bool) {
 	if !b.amount.IsInitialized() || b.currencyID == "" {
 		return
 	}
@@ -116,7 +116,7 @@ type InvoiceLineBuilder struct {
 	itemAllowance    Decimal
 
 	invoicePeriod     *InvoiceLinePeriod
-	allowancesCharges []InvoiceAllowanceCharge
+	allowancesCharges []InvoiceLineAllowanceCharge
 	item              InvoiceLineItem
 }
 
@@ -171,12 +171,12 @@ func (b *InvoiceLineBuilder) WithInvoicePeriod(invoicePeriod *InvoiceLinePeriod)
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithAllowancesCharges(allowancesCharges []InvoiceAllowanceCharge) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithAllowancesCharges(allowancesCharges []InvoiceLineAllowanceCharge) *InvoiceLineBuilder {
 	b.allowancesCharges = allowancesCharges
 	return b
 }
 
-func (b *InvoiceLineBuilder) AppendAllowanceCharge(allowanceCharge InvoiceAllowanceCharge) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) AppendAllowanceCharge(allowanceCharge InvoiceLineAllowanceCharge) *InvoiceLineBuilder {
 	return b.WithAllowancesCharges(append(b.allowancesCharges, allowanceCharge))
 }
 
