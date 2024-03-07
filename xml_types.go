@@ -44,6 +44,13 @@ func (d Date) Ptr() *Date {
 	return &d
 }
 
+// IsInitialized if the Date is initialized (ie is created explicitly with a
+// constructor or initialized by setting the Time, not implicitly via var
+// declaration with no initialization).
+func (d Date) IsInitialized() bool {
+	return d.Time != time.Time{}
+}
+
 // AmountWithCurrency represents an embeddable type that stores an amount as
 // chardata and the currency ID as the currencyID attribute. The name of the
 // node must be controlled by the parent type.

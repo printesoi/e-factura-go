@@ -147,7 +147,7 @@ type Invoice struct {
 	// Term: TAXE SUPLIMENTARE LA NIVELUL DOCUMENTULUI
 	// Cardinality: 0..n
 	AllowanceCharges []InvoiceDocumentAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
-	TaxTotal         *InvoiceTaxTotal                 `xml:"cac:TaxTotal"`
+	TaxTotal         InvoiceTaxTotal                  `xml:"cac:TaxTotal"`
 	// ID: BG-22
 	// Term: TOTALURILE DOCUMENTULUI
 	// Cardinality: 1..1
@@ -282,50 +282,43 @@ type InvoicePartyIdentification struct {
 }
 
 type InvoiceSupplierPostalAddress struct {
-	// Field: InvoicePostalAddress.Line1
+	// Field: PostalAddress.Line1
 	// ID: BT-35
 	// Term: Adresa Vânzătorului - Linia 1
 	// Cardinality: 0..1
-
-	// Field: InvoicePostalAddress.Line2
+	// Field: PostalAddress.Line2
 	// ID: BT-36
 	// Term: Adresa Vânzătorului - Linia 2
 	// Cardinality: 0..1
-
-	// Field: InvoicePostalAddress.Line3
+	// Field: PostalAddress.Line3
 	// ID: BT-162
 	// Term: Adresa Vânzătorului - Linia 3
 	// Cardinality: 0..1
-
-	// Field: InvoicePostalAddress.CityName
+	// Field: PostalAddress.CityName
 	// ID: BT-37
 	// Term: Localitatea Vânzătorului
 	// Cardinality: 0..1
-
-	// Field: InvoicePostalAddress.PostalZone
+	// Field: PostalAddress.PostalZone
 	// ID: BT-38
 	// Term: Codul poştal al Vânzătorului
 	// Cardinality: 0..1
-
-	// Field: InvoicePostalAddress.CountrySubentity
+	// Field: PostalAddress.CountrySubentity
 	// ID: BT-39
 	// Term: Subdiviziunea ţării Vânzătorului
 	// Cardinality: 0..1
-
-	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-40
 	// Term: Codul țării Vânzătorului
 	// Cardinality: 1..1
-
-	InvoicePostalAddress
+	PostalAddress
 }
 
-func MakeInvoiceSupplierPostalAddress(postalAddress InvoicePostalAddress) InvoiceSupplierPostalAddress {
-	return InvoiceSupplierPostalAddress{InvoicePostalAddress: postalAddress}
+func MakeInvoiceSupplierPostalAddress(postalAddress PostalAddress) InvoiceSupplierPostalAddress {
+	return InvoiceSupplierPostalAddress{PostalAddress: postalAddress}
 }
 
-// InvoicePostalAddress represents a generic postal address
-type InvoicePostalAddress struct {
+// PostalAddress represents a generic postal address
+type PostalAddress struct {
 	// Adresă - Linia 1
 	Line1 string `xml:"cbc:StreetName,omitempty"`
 	// Adresă - Linia 2
@@ -412,45 +405,45 @@ type InvoiceCustomerLegalEntity struct {
 }
 
 type InvoiceCustomerPostalAddress struct {
-	// Field: InvoicePostalAddress.Line1
+	// Field: PostalAddress.Line1
 	// ID: BT-50
 	// Term: Adresa Cumpărătorului - Linia 1
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line2
+	// Field: PostalAddress.Line2
 	// ID: BT-51
 	// Term: Adresa Cumpărătorului - Linia 2
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line3
+	// Field: PostalAddress.Line3
 	// ID: BT-163
 	// Term: Adresa Cumpărătorului - Linia 3
 
-	// Field: InvoicePostalAddress.CityName
+	// Field: PostalAddress.CityName
 	// ID: BT-52
 	// Term: Localitatea Cumpărătorului
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.PostalZone
+	// Field: PostalAddress.PostalZone
 	// ID: BT-53
 	// Term: Codul poştal al Cumpărătorului
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.CountrySubentity
+	// Field: PostalAddress.CountrySubentity
 	// ID: BT-54
 	// Term: Subdiviziunea ţării Cumpărătorului
 	// Cardinality: 0..1
 
-	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-55
 	// Term: Codul ţării Cumpărătorului
 	// Cardinality: 1..1
 
-	InvoicePostalAddress
+	PostalAddress
 }
 
-func MakeInvoiceCustomerPostalAddress(postalAddress InvoicePostalAddress) InvoiceCustomerPostalAddress {
-	return InvoiceCustomerPostalAddress{InvoicePostalAddress: postalAddress}
+func MakeInvoiceCustomerPostalAddress(postalAddress PostalAddress) InvoiceCustomerPostalAddress {
+	return InvoiceCustomerPostalAddress{PostalAddress: postalAddress}
 }
 
 type InvoiceCustomerContact struct {
@@ -507,46 +500,46 @@ type InvoiceTaxRepresentative struct {
 }
 
 type InvoiceTaxRepresentativePostalAddress struct {
-	// Field: InvoicePostalAddress.Line1
+	// Field: PostalAddress.Line1
 	// ID: BT-64
 	// Term: Adresa reprezentantului fiscal - Linia 1
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line2
+	// Field: PostalAddress.Line2
 	// ID: BT-64
 	// Term: Adresa reprezentantului fiscal - Linia 2
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line3
+	// Field: PostalAddress.Line3
 	// ID: BT-164
 	// Term: Adresa reprezentantului fiscal - Linia 3
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.CityName
+	// Field: PostalAddress.CityName
 	// ID: BT-66
 	// Term: Localitatea reprezentantului fiscal
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.PostalZone
+	// Field: PostalAddress.PostalZone
 	// ID: BT-67
 	// Term: Codul poştal al reprezentantului fiscal
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.CountrySubentity
+	// Field: PostalAddress.CountrySubentity
 	// ID: BT-68
 	// Term: Subdiviziunea ţării reprezentantului fiscal
 	// Cardinality: 0..1
 
-	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-69
 	// Term: Codul ţării reprezentantului fiscal
 	// Cardinality: 1..1
 
-	InvoicePostalAddress
+	PostalAddress
 }
 
-func MakeInvoiceTaxRepresentativePostalAddress(postalAddress InvoicePostalAddress) InvoiceTaxRepresentativePostalAddress {
-	return InvoiceTaxRepresentativePostalAddress{InvoicePostalAddress: postalAddress}
+func MakeInvoiceTaxRepresentativePostalAddress(postalAddress PostalAddress) InvoiceTaxRepresentativePostalAddress {
+	return InvoiceTaxRepresentativePostalAddress{PostalAddress: postalAddress}
 }
 
 type InvoiceDelivery struct {
@@ -575,45 +568,45 @@ type InvoiceDeliveryLocation struct {
 }
 
 type InvoiceDeliveryAddress struct {
-	// Field: InvoicePostalAddress.Line1
+	// Field: PostalAddress.Line1
 	// ID: BT-75
 	// Term: Adresa de livrare - Linia 1
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line2
+	// Field: PostalAddress.Line2
 	// ID: BT-76
 	// Term: Adresa de livrare - Linia 2
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.Line3
+	// Field: PostalAddress.Line3
 	// ID: BT-165
 	// Term: Adresa de livrare - Linia 3
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.CityName
+	// Field: PostalAddress.CityName
 	// ID: BT-77
 	// Term: Localitatea de livrare
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.PostalZone
+	// Field: PostalAddress.PostalZone
 	// ID: BT-78
 	// Term: Codul poştal al de livrare
 	// Cardinality: 0..1
 
-	// Field: InvoicePostalAddress.CountrySubentity
+	// Field: PostalAddress.CountrySubentity
 	// ID: BT-79
 	// Term: Subdiviziunea ţării de livrare
 	// Cardinality: 0..1
 
-	// Feild: InvoicePostalAddress.CountryIdentificationCode
+	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-80
 	// Term: Codul țării de livrare
 	// Cardinality: 1..1
-	InvoicePostalAddress
+	PostalAddress
 }
 
-func MakeInvoiceDeliveryAddress(postalAddress InvoicePostalAddress) InvoiceDeliveryAddress {
-	return InvoiceDeliveryAddress{InvoicePostalAddress: postalAddress}
+func MakeInvoiceDeliveryAddress(postalAddress PostalAddress) InvoiceDeliveryAddress {
+	return InvoiceDeliveryAddress{PostalAddress: postalAddress}
 }
 
 type InvoicePeriod struct {
@@ -744,6 +737,24 @@ type InvoiceDocumentAllowanceCharge struct {
 	//     valoarea taxei suplimentare la nivelul documentului.
 	// Cardinality: 0..1
 	Percent *Decimal `xml:"cbc:MultiplierFactorNumeric,omitempty"`
+	// Field: TaxCategory.ID
+	// ID: BT-102
+	// Term: Codul categoriei de TVA pentru taxe suplimentare la nivelul
+	//     documentului
+	// Cardinality: 1..1
+	// Field: TaxCategory.Percent
+	// ID: BT-103
+	// Term: Cota TVA pentru taxe suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	// Field: TaxCategory.TaxExemptionReason
+	// ID: BT-104
+	// Term: Motivul taxei suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	// Field: TaxCategory.TaxExemptionReasonCode
+	// ID: BT-105
+	// Term: Codul motivului taxei suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	TaxCategory InvoiceTaxCategory `xml:"cac:TaxCategory"`
 }
 
 type InvoiceTaxTotal struct {
@@ -768,26 +779,30 @@ type InvoiceTaxSubtotal struct {
 	// ID: BT-117
 	// Term: Valoarea TVA pentru fiecare categorie de TVA
 	// Cardinality: 1..1
-	TaxAmount   AmountWithCurrency `xml:"cbc:TaxAmount"`
+	TaxAmount AmountWithCurrency `xml:"cbc:TaxAmount"`
+	// Field: TaxCategory.ID
+	// ID: BT-118
+	// Term: Codul categoriei de TVA
+	// Cardinality: 1..1
+	// Field: TaxCategory.Percent
+	// ID: BT-119
+	// Term: Cota categoriei de TVA
+	// Cardinality: 0..1
+	// Field: TaxCategory.TaxExemptionReason
+	// ID: BT-120
+	// Term: Motivul scutirii de TVA
+	// Cardinality: 0..1
+	// Field: TaxCategory.TaxExemptionReasonCode
+	// ID: BT-121
+	// Term: Codul motivului scutirii de TVA
+	// Cardinality: 0..1
 	TaxCategory InvoiceTaxCategory `xml:"cac:TaxCategory"`
 }
 
 type InvoiceTaxCategory struct {
-	// ID: BT-118
-	// Term: Codul categoriei de TVA
-	// Cardinality: 1..1
-	ID TaxCategoryCodeType `xml:"cbc:ID"`
-	// ID: BT-119
-	// Term: Cota categoriei de TVA
-	// Cardinality: 0..1
-	Percent *Decimal `xml:"cbc:Percent,omitempty"`
-	// ID: BT-120
-	// Term: Motivul scutirii de TVA
-	// Cardinality: 0..1
-	TaxExemptionReason string `xml:"cbc:TaxExemptionReason,omitempty"`
-	// ID: BT-121
-	// Term: Codul motivului scutirii de TVA
-	// Cardinality: 0..1
+	ID                     TaxCategoryCodeType        `xml:"cbc:ID"`
+	Percent                Decimal                    `xml:"cbc:Percent"`
+	TaxExemptionReason     string                     `xml:"cbc:TaxExemptionReason,omitempty"`
 	TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"cbc:TaxExemptionReasonCode,omitempty"`
 	TaxSchemeID            TaxSchemeIDType            `xml:"cac:TaxScheme>cbc:ID"`
 }
@@ -797,14 +812,6 @@ type InvoiceLegalMonetaryTotal struct {
 	// Term: Suma valorilor nete ale liniilor facturii
 	// Cardinality: 1..1
 	LineExtensionAmount AmountWithCurrency `xml:"cbc:LineExtensionAmount"`
-	// ID: BT-107
-	// Term: Suma deducerilor la nivelul documentului
-	// Cardinality: 0..1
-	AllowanceTotalAmount *AmountWithCurrency `xml:"cbc:AllowanceTotalAmount"`
-	// ID: BT-108
-	// Term: Suma taxelor suplimentare la nivelul documentului
-	// Cardinality: 0..1
-	ChargeTotalAmount *AmountWithCurrency `xml:"cbc:ChargeTotalAmount"`
 	// ID: BT-109
 	// Term: Valoarea totală a facturii fără TVA
 	// Cardinality: 1..1
@@ -813,6 +820,14 @@ type InvoiceLegalMonetaryTotal struct {
 	// Term: Valoarea totală a facturii cu TVA
 	// Cardinality: 1..1
 	TaxInclusiveAmount AmountWithCurrency `xml:"cbc:TaxInclusiveAmount"`
+	// ID: BT-107
+	// Term: Suma deducerilor la nivelul documentului
+	// Cardinality: 0..1
+	AllowanceTotalAmount *AmountWithCurrency `xml:"cbc:AllowanceTotalAmount"`
+	// ID: BT-108
+	// Term: Suma taxelor suplimentare la nivelul documentului
+	// Cardinality: 0..1
+	ChargeTotalAmount *AmountWithCurrency `xml:"cbc:ChargeTotalAmount"`
 	// ID: BT-113
 	// Term: Sumă plătită
 	// Cardinality: 0..1
@@ -967,7 +982,7 @@ type InvoiceLineItem struct {
 	// ID: BT-155
 	// Term: BT-155
 	// Cardinality: 0..1
-	SellerItemID string `xml:"cac:SellersItemIdentification>cbc:ID,omitempty"`
+	SellerItemID *IDNode `xml:"cac:SellersItemIdentification,omitempty"`
 	// ID: BT-157/BT-157-1
 	// Term: Identificatorul standard al articolului / Identificatorul schemei
 	StandardItemIdentification *ItemStandardIdentificationCode `xml:"cac:StandardItemIdentification,omitempty"`
@@ -976,7 +991,7 @@ type InvoiceLineItem struct {
 	ItemClassificationCode *ItemClassificationCode `xml:"cac:CommodityClassification>cbc:ItemClassificationCode,omitempty"`
 	// ID: BG-30
 	// Term: INFORMAŢII PRIVIND TVA A LINIEI
-	ClassifiedTaxCategory InvoiceClassifiedTaxCategory `xml:"cac:ClassifiedTaxCategory"`
+	TaxCategory InvoiceLineTaxCategory `xml:"cac:ClassifiedTaxCategory"`
 }
 
 type ItemStandardIdentificationCode struct {
@@ -998,7 +1013,7 @@ type InvoicePartyTaxScheme struct {
 	TaxSchemeID TaxSchemeIDType `xml:"cac:TaxScheme>cbc:ID"`
 }
 
-type InvoiceClassifiedTaxCategory struct {
+type InvoiceLineTaxCategory struct {
 	// ID: BT-151
 	// Term: Codul categoriei de TVA a articolului facturat
 	// Cardinality: 1..1
@@ -1006,7 +1021,7 @@ type InvoiceClassifiedTaxCategory struct {
 	// ID: BT-152
 	// Term: Cota TVA pentru articolul facturat
 	// Cardinality: 0..1
-	Percent     *Decimal        `xml:"cbc:Percent,omitempty"`
+	Percent     Decimal         `xml:"cbc:Percent"`
 	TaxSchemeID TaxSchemeIDType `xml:"cac:TaxScheme>cbc:ID"`
 }
 

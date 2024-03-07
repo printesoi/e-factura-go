@@ -32,17 +32,17 @@ func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID Curre
 		WithCurrencyID(currencyID).WithAmount(amount)
 }
 
-// NewInvoiceAllowanceBuilder creates a new InvoiceLineAllowanceChargeBuilder
+// NewInvoiceLineAllowanceBuilder creates a new InvoiceLineAllowanceChargeBuilder
 // builder that will build InvoiceLineAllowanceCharge object correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(false, currencyID, amount)
 }
 
-// NewInvoiceChargeBuilder creates a new InvoiceLineAllowanceChargeBuilder
+// NewInvoiceLineChargeBuilder creates a new InvoiceLineAllowanceChargeBuilder
 // builder that will build InvoiceLineAllowanceCharge object correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(true, currencyID, amount)
 }
 
@@ -189,8 +189,8 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 	if b.id == "" || b.currencyID == "" ||
 		!b.invoicedQuantity.IsInitialized() ||
 		b.unitCode == "" || !b.grossPriceAmount.IsInitialized() ||
-		b.item.Name == "" || b.item.ClassifiedTaxCategory.ID == "" ||
-		b.item.ClassifiedTaxCategory.TaxSchemeID == "" {
+		b.item.Name == "" || b.item.TaxCategory.ID == "" ||
+		b.item.TaxCategory.TaxSchemeID == "" {
 		return
 	}
 
@@ -259,5 +259,452 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		CurrencyID: b.currencyID,
 	}
 	ok = true
+	return
+}
+
+// InvoiceDocumentAllowanceChargeBuilder builds an InvoiceDocumentAllowanceCharge object
+type InvoiceDocumentAllowanceChargeBuilder struct {
+	chargeIndicator           bool
+	currencyID                CurrencyCodeType
+	amount                    Decimal
+	taxCategory               InvoiceTaxCategory
+	baseAmount                *Decimal
+	allowanceChargeReasonCode *string
+	allowanceChargeReason     *string
+}
+
+// NewInvoiceDocumentAllowanceChargeBuilder creates a new generic
+// InvoiceDocumentAllowanceChargeBuilder.
+func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+	b := new(InvoiceDocumentAllowanceChargeBuilder)
+	return b.WithChargeIndicator(chargeIndicator).WithCurrencyID(currencyID).
+		WithAmount(amount).WithTaxCategory(taxCategory)
+}
+
+// NewInvoiceDocumentAllowanceBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
+// builder that will build InvoiceDocumentAllowanceCharge object correspoding to an
+// allowance (ChargeIndicator = false)
+func NewInvoiceDocumentAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+	return NewInvoiceDocumentAllowanceChargeBuilder(false, currencyID, amount, taxCategory)
+}
+
+// NewInvoiceDocumentChargeBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
+// builder that will build InvoiceDocumentAllowanceCharge object correspoding to a
+// charge (ChargeIndicator = true)
+func NewInvoiceDocumentChargeBuilder(currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+	return NewInvoiceDocumentAllowanceChargeBuilder(true, currencyID, amount, taxCategory)
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithChargeIndicator(charge bool) *InvoiceDocumentAllowanceChargeBuilder {
+	b.chargeIndicator = charge
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCodeType) *InvoiceDocumentAllowanceChargeBuilder {
+	b.currencyID = currencyID
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+	b.amount = amount
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithTaxCategory(taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+	b.taxCategory = taxCategory
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+	b.baseAmount = amount.Ptr()
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithAllowanceChargeReasonCode(allowanceChargeReasonCode string) *InvoiceDocumentAllowanceChargeBuilder {
+	b.allowanceChargeReasonCode = ptrfyString(allowanceChargeReasonCode)
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceChargeReason string) *InvoiceDocumentAllowanceChargeBuilder {
+	b.allowanceChargeReason = ptrfyString(allowanceChargeReason)
+	return b
+}
+
+func (b *InvoiceDocumentAllowanceChargeBuilder) Build() (allowanceCharge InvoiceDocumentAllowanceCharge, ok bool) {
+	if !b.amount.IsInitialized() || b.currencyID == "" ||
+		b.taxCategory.ID == "" || b.taxCategory.TaxSchemeID == "" {
+		return
+	}
+	allowanceCharge.ChargeIndicator = b.chargeIndicator
+	allowanceCharge.Amount = AmountWithCurrency{
+		Amount:     b.amount,
+		CurrencyID: b.currencyID,
+	}
+	allowanceCharge.TaxCategory = b.taxCategory
+	if b.baseAmount != nil {
+		allowanceCharge.BaseAmount = &AmountWithCurrency{
+			Amount:     *b.baseAmount,
+			CurrencyID: b.currencyID,
+		}
+	}
+	if b.allowanceChargeReasonCode != nil {
+		allowanceCharge.AllowanceChargeReasonCode = *b.allowanceChargeReasonCode
+	}
+	if b.allowanceChargeReason != nil {
+		allowanceCharge.AllowanceChargeReason = *b.allowanceChargeReason
+	}
+	ok = true
+	return
+}
+
+type taxExemptionReason struct {
+	reason string
+	code   TaxExemptionReasonCodeType
+}
+
+// InvoiceBuilder builds an Invoice object
+type InvoiceBuilder struct {
+	id          string
+	issueDate   Date
+	dueDate     *Date
+	invoiceType InvoiceTypeCodeType
+
+	documentCurrencyID      CurrencyCodeType
+	taxCurrencyID           CurrencyCodeType
+	taxCurrencyExchangeRate Decimal
+
+	taxExeptionReasons map[TaxCategoryCodeType]taxExemptionReason
+
+	billingReferences []InvoiceBillingReference
+	supplier          InvoiceSupplier
+	customer          InvoiceCustomer
+
+	allowancesCharges []InvoiceDocumentAllowanceCharge
+	invoiceLines      []InvoiceLine
+}
+
+func NewInvoiceBuilder(id string) (b *InvoiceBuilder) {
+	b = new(InvoiceBuilder)
+	return b.WithID(id)
+}
+
+func (b *InvoiceBuilder) WithID(id string) *InvoiceBuilder {
+	b.id = id
+	return b
+}
+
+func (b *InvoiceBuilder) WithIssueDate(date Date) *InvoiceBuilder {
+	b.issueDate = date
+	return b
+}
+
+func (b *InvoiceBuilder) WithDueDate(date Date) *InvoiceBuilder {
+	b.dueDate = &date
+	return b
+}
+
+func (b *InvoiceBuilder) WithInvoiceTypeCode(invoiceType InvoiceTypeCodeType) *InvoiceBuilder {
+	b.invoiceType = invoiceType
+	return b
+}
+
+func (b *InvoiceBuilder) WithDocumentCurrencyCode(currencyID CurrencyCodeType) *InvoiceBuilder {
+	b.documentCurrencyID = currencyID
+	return b
+}
+
+func (b *InvoiceBuilder) WithDocumentToTaxCurrencyExchangeRate(rate Decimal) *InvoiceBuilder {
+	b.taxCurrencyExchangeRate = rate
+	return b
+}
+
+func (b *InvoiceBuilder) WithTaxCurrencyCode(currencyID CurrencyCodeType) *InvoiceBuilder {
+	b.taxCurrencyID = currencyID
+	return b
+}
+
+func (b *InvoiceBuilder) WithBillingReferences(billingReferences []InvoiceBillingReference) *InvoiceBuilder {
+	b.billingReferences = billingReferences
+	return b
+}
+
+func (b *InvoiceBuilder) AppendBillingReferences(billingReference InvoiceBillingReference) *InvoiceBuilder {
+	return b.WithBillingReferences(append(b.billingReferences, billingReference))
+}
+
+func (b *InvoiceBuilder) WithSupplier(supplier InvoiceSupplier) *InvoiceBuilder {
+	b.supplier = supplier
+	return b
+}
+
+func (b *InvoiceBuilder) WithCustomer(customer InvoiceCustomer) *InvoiceBuilder {
+	b.customer = customer
+	return b
+}
+
+func (b *InvoiceBuilder) WithAllowancesCharges(allowancesCharges []InvoiceDocumentAllowanceCharge) *InvoiceBuilder {
+	b.allowancesCharges = allowancesCharges
+	return b
+}
+
+func (b *InvoiceBuilder) AppendAllowanceCharge(allowanceCharge InvoiceDocumentAllowanceCharge) *InvoiceBuilder {
+	return b.WithAllowancesCharges(append(b.allowancesCharges, allowanceCharge))
+}
+
+func (b *InvoiceBuilder) WithInvoiceLines(invoiceLines []InvoiceLine) *InvoiceBuilder {
+	b.invoiceLines = invoiceLines
+	return b
+}
+
+func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeType, reason string, exemptionCode TaxExemptionReasonCodeType) *InvoiceBuilder {
+	if b.taxExeptionReasons == nil {
+		b.taxExeptionReasons = make(map[TaxCategoryCodeType]taxExemptionReason)
+	}
+	b.taxExeptionReasons[taxCategoryCode] = taxExemptionReason{
+		reason: reason,
+		code:   exemptionCode,
+	}
+	return b
+}
+
+func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
+	if b.id == "" || !b.issueDate.IsInitialized() ||
+		b.documentCurrencyID == "" ||
+		(b.taxCurrencyID != "" && b.taxCurrencyID != b.documentCurrencyID && !b.taxCurrencyExchangeRate.IsInitialized()) {
+		return
+	}
+
+	taxCurrencyID := b.taxCurrencyID
+	if taxCurrencyID == "" {
+		taxCurrencyID = b.documentCurrencyID
+	}
+
+	invoice.ID = b.id
+	invoice.IssueDate = b.issueDate
+	invoice.DueDate = b.dueDate
+	invoice.InvoiceTypeCode = b.invoiceType
+	invoice.DocumentCurrencyCode = b.documentCurrencyID
+	invoice.TaxCurrencyCode = b.taxCurrencyID
+
+	// TODO:
+
+	invoice.BillingReferences = b.billingReferences
+
+	// TODO:
+
+	invoice.Supplier = b.supplier
+	invoice.Customer = b.customer
+
+	// amountToTaxAmount converts an Amount assumed to be in the
+	// DocumentCurrencyCode to an amount in TaxCurrencyCode
+	amountToTaxAmount := func(a Decimal) Decimal {
+		if taxCurrencyID == invoice.DocumentCurrencyCode {
+			return a
+		}
+		return a.Mul(b.taxCurrencyExchangeRate)
+	}
+
+	invoice.AllowanceCharges = b.allowancesCharges
+	invoice.InvoiceLines = b.invoiceLines
+
+	var (
+		lineExtensionAmount   = Zero
+		allowanceTotalAmount  = Zero
+		chargeTotalAmount     = Zero
+		taxExclusiveAmount    = Zero
+		taxInclusiveAmount    = Zero
+		prepaidAmount         = Zero
+		payableRoundingAmount = Zero
+		payableAmount         = Zero
+	)
+	taxCategoryMap := make(taxCategoryMap)
+
+	for _, line := range invoice.InvoiceLines {
+		if line.LineExtensionAmount.CurrencyID != invoice.DocumentCurrencyCode {
+			return
+		}
+
+		lineAmount := line.LineExtensionAmount.Amount
+		lineExtensionAmount = lineExtensionAmount.Add(lineAmount)
+		taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, amountToTaxAmount(lineAmount))
+	}
+	for _, allowanceCharge := range invoice.AllowanceCharges {
+		var amount Decimal
+		if allowanceCharge.ChargeIndicator {
+			amount = allowanceCharge.Amount.Amount
+			chargeTotalAmount = chargeTotalAmount.Add(allowanceCharge.Amount.Amount)
+		} else {
+			amount = allowanceCharge.Amount.Amount.Neg()
+			allowanceTotalAmount = allowanceTotalAmount.Add(allowanceCharge.Amount.Amount)
+		}
+		taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amountToTaxAmount(amount))
+	}
+
+	taxTotal := Zero
+	for _, taxCategorySummary := range taxCategoryMap.getSummaries() {
+		taxAmount := taxCategorySummary.getTaxAmount()
+		taxTotal = taxTotal.Add(taxAmount)
+
+		subtotal := InvoiceTaxSubtotal{
+			TaxableAmount: AmountWithCurrency{
+				Amount:     taxCategorySummary.baseAmount,
+				CurrencyID: taxCurrencyID,
+			},
+			TaxAmount: AmountWithCurrency{
+				Amount:     taxAmount,
+				CurrencyID: taxCurrencyID,
+			},
+			TaxCategory: taxCategorySummary.category,
+		}
+		if categoryCode := subtotal.TaxCategory.ID; categoryCode.TaxRateExempted() {
+			if reason, rok := b.taxExeptionReasons[categoryCode]; !rok {
+				return
+			} else {
+				subtotal.TaxCategory.TaxExemptionReason = reason.reason
+				subtotal.TaxCategory.TaxExemptionReasonCode = reason.code
+			}
+		}
+		invoice.TaxTotal.TaxSubtotals = append(invoice.TaxTotal.TaxSubtotals, subtotal)
+	}
+
+	taxExclusiveAmount = lineExtensionAmount.Add(chargeTotalAmount).Sub(allowanceTotalAmount)
+	taxInclusiveAmount = taxExclusiveAmount.Add(taxTotal)
+	payableAmount = taxInclusiveAmount.Sub(prepaidAmount)
+
+	if taxTotal.IsPositive() {
+		invoice.TaxTotal.TaxAmount = &AmountWithCurrency{
+			Amount:     taxTotal,
+			CurrencyID: taxCurrencyID,
+		}
+	}
+
+	invoice.LegalMonetaryTotal.LineExtensionAmount = AmountWithCurrency{
+		Amount:     lineExtensionAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.AllowanceTotalAmount = &AmountWithCurrency{
+		Amount:     allowanceTotalAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.ChargeTotalAmount = &AmountWithCurrency{
+		Amount:     chargeTotalAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.PrepaidAmount = &AmountWithCurrency{
+		Amount:     prepaidAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.PayableRoundingAmount = &AmountWithCurrency{
+		Amount:     payableRoundingAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.TaxExclusiveAmount = AmountWithCurrency{
+		Amount:     taxExclusiveAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.TaxInclusiveAmount = AmountWithCurrency{
+		Amount:     taxInclusiveAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+	invoice.LegalMonetaryTotal.PayableAmount = AmountWithCurrency{
+		Amount:     payableAmount,
+		CurrencyID: b.documentCurrencyID,
+	}
+
+	ok = true
+	return
+}
+
+type taxCategoryKey struct {
+	id          TaxCategoryCodeType
+	percent     float64
+	taxSchemeID TaxSchemeIDType
+}
+
+func makeTaxCategoryKey(category InvoiceTaxCategory) taxCategoryKey {
+	percent, _ := category.Percent.Value().Float64()
+	return taxCategoryKey{
+		id:          category.ID,
+		percent:     percent,
+		taxSchemeID: category.TaxSchemeID,
+	}
+}
+
+func makeTaxCategoryKeyLine(category InvoiceLineTaxCategory) taxCategoryKey {
+	percent, _ := category.Percent.Value().Float64()
+	return taxCategoryKey{
+		id:          category.ID,
+		percent:     percent,
+		taxSchemeID: category.TaxSchemeID,
+	}
+}
+
+type taxCategorySummary struct {
+	category   InvoiceTaxCategory
+	baseAmount Decimal
+}
+
+func (s taxCategorySummary) getTaxAmount() Decimal {
+	return s.baseAmount.Mul(s.category.Percent.Value()).Div(D(100)).Round(2)
+}
+
+// taxCategoryMap is not concurency-safe
+type taxCategoryMap map[taxCategoryKey]*taxCategorySummary
+
+func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amount Decimal) bool {
+	if category.TaxSchemeID == TaxSchemeVAT {
+		percent := category.Percent.Value()
+		if !category.ID.TaxRateExempted() {
+			if !percent.IsPositive() {
+				return false
+			}
+		} else if !percent.IsZero() {
+			return false
+		}
+	}
+
+	val, ok := (*m)[k]
+	if !ok {
+		(*m)[k] = &taxCategorySummary{
+			category:   category,
+			baseAmount: amount,
+		}
+	} else {
+		val.baseAmount = val.baseAmount.Add(amount)
+	}
+
+	return true
+}
+
+func (m *taxCategoryMap) addDocumentTaxCategory(category InvoiceTaxCategory, amount Decimal) bool {
+	if m == nil {
+		return false
+	}
+
+	k := makeTaxCategoryKey(category)
+	return m.add(k, category, amount)
+}
+
+func (m *taxCategoryMap) addLineTaxCategory(category InvoiceLineTaxCategory, amount Decimal) bool {
+	if m == nil {
+		return false
+	}
+
+	k := makeTaxCategoryKeyLine(category)
+	documentCategory := InvoiceTaxCategory{
+		ID:          category.ID,
+		Percent:     category.Percent,
+		TaxSchemeID: category.TaxSchemeID,
+	}
+	return m.add(k, documentCategory, amount)
+}
+
+func (m taxCategoryMap) getSummaries() (summaries []taxCategorySummary) {
+	for _, v := range m {
+		summaries = append(summaries, taxCategorySummary{
+			category:   v.category,
+			baseAmount: v.baseAmount,
+		})
+	}
 	return
 }
