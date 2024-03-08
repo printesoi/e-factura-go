@@ -63,8 +63,8 @@ type (
 	// UploadResponse is the parsed response from the upload endpoint
 	UploadResponse struct {
 		ResponseDate    string `xml:"dateResponse,attr,omitempty"`
-		ExecutionStatus int    `xml:"ExecutionStatus,attr,omitempty"`
-		UploadIndex     int    `xml:"index_incarcare,attr,omitempty"`
+		ExecutionStatus *int   `xml:"ExecutionStatus,attr,omitempty"`
+		UploadIndex     *int64 `xml:"index_incarcare,attr,omitempty"`
 		Errors          []struct {
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
@@ -179,8 +179,16 @@ func (r *GeneratePDFResponse) IsOk() bool {
 }
 
 // IsOk returns true if the response corresponding to an upload was successful.
-func (r UploadResponse) IsOk() bool {
-	return r.ExecutionStatus == 0
+func (r *UploadResponse) IsOk() bool {
+	return r != nil && r.ExecutionStatus != nil && *r.ExecutionStatus == 0
+}
+
+// Returns the upload index (should only be called when IsOk() == true).
+func (r *UploadResponse) GetUploadIndex() int64 {
+	if r == nil || r.UploadIndex == nil {
+		return 0
+	}
+	return *r.UploadIndex
 }
 
 func (t MessageFilterType) String() string {
@@ -195,6 +203,22 @@ func (t MessageFilterType) String() string {
 		return "R"
 	}
 	return ""
+}
+
+func (m Message) IsError() bool {
+	return m.Type == "ERORI FACTURA"
+}
+
+func (m Message) IsSentInvoice() bool {
+	return m.Type == "FACTURA TRIMISA"
+}
+
+func (m Message) IsReceivedInvoice() bool {
+	return m.Type == "FACTURA PRIMITA"
+}
+
+func (m Message) IsBuyerMessage() bool {
+	return m.Type == "MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS"
 }
 
 // IsOk returns true if the response corresponding to a download was successful.
@@ -320,13 +344,18 @@ type uploadOptions struct {
 
 type uploadOption func(*uploadOptions)
 
-func UploadOptionExtern() uploadOption {
+// UploadOptionForeign is an upload option specifiying that the buyer is not a
+// Romanian entity (no CUI or NIF).
+func UploadOptionForeign() uploadOption {
 	return func(o *uploadOptions) {
 		o.extern = ptrfyString("DA")
 	}
 }
 
-func UploadOptionAutofactura() uploadOption {
+// UploadOptionSelfBilled is an upload option specifying that it's a
+// self-billed invoice (the buyer is issuing the invoice on behalf of the
+// supplier.
+func UploadOptionSelfBilled() uploadOption {
 	return func(o *uploadOptions) {
 		o.autofactura = ptrfyString("DA")
 	}
