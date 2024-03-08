@@ -70,7 +70,6 @@ type (
 		} `xml:"Errors,omitempty"`
 
 		XMLName xml.Name `xml:"header"`
-		XMLNS   string   `xml:"xmlns,attr"`
 	}
 
 	GetMessageStateCode string
@@ -78,14 +77,13 @@ type (
 	// GetMessageStateResponse is the parsed response from the get message
 	// state endoint
 	GetMessageStateResponse struct {
-		State      GetMessageStateCode `xml:"stare"`
-		DownloadID int                 `xml:"id_descarcare,omitempty"`
+		State      GetMessageStateCode `xml:"stare,attr"`
+		DownloadID int                 `xml:"id_descarcare,attr,omitempty"`
 		Errors     []struct {
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
 		XMLName xml.Name `xml:"header"`
-		XMLNS   string   `xml:"xmlns,attr"`
 	}
 
 	MessageFilterType int
@@ -108,7 +106,7 @@ type (
 		Title    string    `json:"titlu"`
 		Serial   string    `json:"serial"`
 		CUI      string    `json:"cui"`
-		Messages []Message `json:"message"`
+		Messages []Message `json:"mesaje"`
 	}
 
 	// MessagesListPaginationResponse is the parsed response from the list
@@ -385,11 +383,10 @@ func (m MessageRASP) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		messageRASP
 
 		XMLName xml.Name `xml:"header"`
-		XMLNS   string   `xml:"xmlns,attr"`
 	}
 
 	xmlMsg.messageRASP = messageRASP(m)
-	xmlMsg.XMLNS = XMLNSANAFreqMesajv1
+	xmlMsg.XMLName.Space = XMLNSANAFreqMesajv1
 
 	return e.EncodeElement(xmlMsg, start)
 }
@@ -479,7 +476,7 @@ func (c *Client) DownloadInvoice(
 	query := url.Values{
 		"id": {strconv.Itoa(downloadID)},
 	}
-	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
+	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathDownload, query, nil)
 	if err = er; err != nil {
 		return
 	}
