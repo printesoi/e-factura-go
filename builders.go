@@ -113,7 +113,7 @@ type InvoiceLineBuilder struct {
 	baseQuantity     *Decimal
 
 	grossPriceAmount Decimal
-	itemAllowance    Decimal
+	priceDeduction   Decimal
 
 	invoicePeriod     *InvoiceLinePeriod
 	allowancesCharges []InvoiceLineAllowanceCharge
@@ -161,8 +161,8 @@ func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount Decimal) *InvoiceL
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithPriceDeduction(allowance Decimal) *InvoiceLineBuilder {
-	b.itemAllowance = allowance
+func (b *InvoiceLineBuilder) WithPriceDeduction(deduction Decimal) *InvoiceLineBuilder {
+	b.priceDeduction = deduction
 	return b
 }
 
@@ -201,10 +201,10 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		UnitCode: b.unitCode,
 	}
 	var netPriceAmount Decimal
-	if b.itemAllowance.IsZero() {
+	if b.priceDeduction.IsZero() {
 		netPriceAmount = b.grossPriceAmount
 	} else {
-		netPriceAmount = b.grossPriceAmount.Sub(b.itemAllowance)
+		netPriceAmount = b.grossPriceAmount.Sub(b.priceDeduction)
 		line.Price.PriceAmount = AmountWithCurrency{
 			Amount:     netPriceAmount,
 			CurrencyID: b.currencyID,
@@ -212,7 +212,7 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		line.Price.AllowanceCharge = &InvoiceLinePriceAllowanceCharge{
 			ChargeIndicator: false,
 			Amount: AmountWithCurrency{
-				Amount:     b.itemAllowance,
+				Amount:     b.priceDeduction,
 				CurrencyID: b.currencyID,
 			},
 			BaseAmount: AmountWithCurrency{
@@ -501,7 +501,7 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 		if taxCurrencyID == invoice.DocumentCurrencyCode {
 			return a
 		}
-		return a.Mul(b.taxCurrencyExchangeRate)
+		return a.Mul(b.taxCurrencyExchangeRate).AsAmount()
 	}
 
 	invoice.AllowanceCharges = b.allowancesCharges
@@ -526,7 +526,7 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 
 		lineAmount := line.LineExtensionAmount.Amount
 		lineExtensionAmount = lineExtensionAmount.Add(lineAmount)
-		taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, amountToTaxAmount(lineAmount))
+		taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, lineAmount)
 	}
 	for _, allowanceCharge := range invoice.AllowanceCharges {
 		var amount Decimal
@@ -537,45 +537,65 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 			amount = allowanceCharge.Amount.Amount.Neg()
 			allowanceTotalAmount = allowanceTotalAmount.Add(allowanceCharge.Amount.Amount)
 		}
-		taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amountToTaxAmount(amount))
+		taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amount)
 	}
 
-	taxTotal := Zero
+	taxTotal, taxTotalTaxCurrency := Zero, Zero
+	var taxSubtotals []InvoiceTaxSubtotal
+
 	for _, taxCategorySummary := range taxCategoryMap.getSummaries() {
 		taxAmount := taxCategorySummary.getTaxAmount()
+		taxAmountTaxCurrency := amountToTaxAmount(taxAmount)
+
 		taxTotal = taxTotal.Add(taxAmount)
+		taxTotalTaxCurrency = taxTotalTaxCurrency.Add(taxAmountTaxCurrency)
 
 		subtotal := InvoiceTaxSubtotal{
 			TaxableAmount: AmountWithCurrency{
 				Amount:     taxCategorySummary.baseAmount,
-				CurrencyID: taxCurrencyID,
+				CurrencyID: invoice.DocumentCurrencyCode,
 			},
 			TaxAmount: AmountWithCurrency{
 				Amount:     taxAmount,
-				CurrencyID: taxCurrencyID,
+				CurrencyID: invoice.DocumentCurrencyCode,
 			},
 			TaxCategory: taxCategorySummary.category,
 		}
+
 		if categoryCode := subtotal.TaxCategory.ID; categoryCode.TaxRateExempted() {
 			if reason, rok := b.taxExeptionReasons[categoryCode]; !rok {
 				return
 			} else {
 				subtotal.TaxCategory.TaxExemptionReason = reason.reason
 				subtotal.TaxCategory.TaxExemptionReasonCode = reason.code
+
 			}
 		}
-		invoice.TaxTotal.TaxSubtotals = append(invoice.TaxTotal.TaxSubtotals, subtotal)
+		taxSubtotals = append(taxSubtotals, subtotal)
 	}
 
 	taxExclusiveAmount = lineExtensionAmount.Add(chargeTotalAmount).Sub(allowanceTotalAmount)
 	taxInclusiveAmount = taxExclusiveAmount.Add(taxTotal)
 	payableAmount = taxInclusiveAmount.Sub(prepaidAmount)
 
-	if taxTotal.IsPositive() {
-		invoice.TaxTotal.TaxAmount = &AmountWithCurrency{
-			Amount:     taxTotal,
-			CurrencyID: taxCurrencyID,
+	if len(taxSubtotals) > 0 {
+		taxTotalNode := InvoiceTaxTotal{
+			TaxAmount: &AmountWithCurrency{
+				Amount:     taxTotal,
+				CurrencyID: invoice.DocumentCurrencyCode,
+			},
+			TaxSubtotals: taxSubtotals,
 		}
+		invoice.TaxTotal = append(invoice.TaxTotal, taxTotalNode)
+	}
+	if taxCurrencyID != invoice.DocumentCurrencyCode {
+		taxTotalNode := InvoiceTaxTotal{
+			TaxAmount: &AmountWithCurrency{
+				Amount:     taxTotalTaxCurrency,
+				CurrencyID: taxCurrencyID,
+			},
+		}
+		invoice.TaxTotal = append(invoice.TaxTotal, taxTotalNode)
 	}
 
 	invoice.LegalMonetaryTotal.LineExtensionAmount = AmountWithCurrency{

@@ -147,7 +147,7 @@ type Invoice struct {
 	// Term: TAXE SUPLIMENTARE LA NIVELUL DOCUMENTULUI
 	// Cardinality: 0..n
 	AllowanceCharges []InvoiceDocumentAllowanceCharge `xml:"cac:AllowanceCharge,omitempty"`
-	TaxTotal         InvoiceTaxTotal                  `xml:"cac:TaxTotal"`
+	TaxTotal         []InvoiceTaxTotal                `xml:"cac:TaxTotal"`
 	// ID: BG-22
 	// Term: TOTALURILE DOCUMENTULUI
 	// Cardinality: 1..1
@@ -763,6 +763,11 @@ type InvoiceTaxTotal struct {
 	// Cardinality: 0..1
 	// ID: BT-111
 	// Term: Valoarea totală a TVA a facturii în moneda de contabilizare
+	// Description: Trebuie utilizat când moneda de contabilizare a TVA (BT-6)
+	//     diferă de codul monedei facturii (BT-5) în conformitate cu articolul
+	//     230 din Directiva 2006/112/CE referitoare la TVA.
+	//     Valoarea TVA în moneda de contabilizare nu este utilizată în
+	//     calcularea totalurilor facturii.
 	// Cardinality: 0..1
 	TaxAmount *AmountWithCurrency `xml:"cbc:TaxAmount,omitempty"`
 	// ID: BG-23
