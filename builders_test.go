@@ -145,7 +145,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			UnitCode:   "XGR",
 			Quantity:   D(5),
 			GrossPrice: D(12),
-			ItemName:   "Sticle cu vin",
+			ItemName:   Transliterate("Sticle cu vin"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(25),
@@ -160,7 +160,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			UnitCode:   "XBX",
 			Quantity:   D(1),
 			GrossPrice: D(90),
-			ItemName:   "Vin - cutie de 6",
+			ItemName:   Transliterate("Vin - cutie de 6"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(25),
@@ -176,7 +176,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			Quantity:     D(10_000),
 			BaseQuantity: D(1_000),
 			GrossPrice:   D(4.5),
-			ItemName:     "Șurub",
+			ItemName:     Transliterate("Șurub"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(25),
@@ -192,7 +192,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			Quantity:       D(1.3),
 			GrossPrice:     D(10),
 			PriceDeduction: D(0.5),
-			ItemName:       "Pui",
+			ItemName:       Transliterate("Pui"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(12.5),
@@ -208,7 +208,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			Quantity:       D(25),
 			GrossPrice:     D(9.5),
 			PriceDeduction: D(1),
-			ItemName:       "Stilou",
+			ItemName:       Transliterate("Stilou"),
 			Charges: []Decimal{
 				D(10),
 			},
@@ -226,7 +226,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			UnitCode:   "RM",
 			Quantity:   D(15),
 			GrossPrice: D(4.5),
-			ItemName:   "Hârtie",
+			ItemName:   Transliterate("Hârtie"),
 			Allowances: []Decimal{
 				D(3.38),
 			},
@@ -245,7 +245,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			Quantity:       D(25),
 			GrossPrice:     D(9.5),
 			PriceDeduction: D(1),
-			ItemName:       "Stilou",
+			ItemName:       Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(25),
@@ -261,7 +261,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			Quantity:       D(-10),
 			GrossPrice:     D(9.5),
 			PriceDeduction: D(1),
-			ItemName:       "Stilou",
+			ItemName:       Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
 				ID:        TaxCategoryTVACotaNormalaRedusa,
 				Percent:   D(25),
@@ -275,7 +275,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			WithUnitCode(t.UnitCode).WithInvoicedQuantity(t.Quantity).
 			WithGrossPriceAmount(t.GrossPrice).
 			WithItem(InvoiceLineItem{
-				Name:        Transliterate(t.ItemName),
+				Name:        t.ItemName,
 				TaxCategory: t.TaxCategory,
 			})
 		if !t.BaseQuantity.IsZero() {
