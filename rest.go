@@ -189,7 +189,8 @@ func (r *UploadResponse) IsOk() bool {
 	return r != nil && r.ExecutionStatus != nil && *r.ExecutionStatus == 0
 }
 
-// Returns the upload index (should only be called when IsOk() == true).
+// GetUploadIndex returns the upload index (should only be called when
+// IsOk() == true).
 func (r *UploadResponse) GetUploadIndex() int64 {
 	if r == nil || r.UploadIndex == nil {
 		return 0
@@ -242,18 +243,22 @@ func (t MessageFilterType) String() string {
 	return ""
 }
 
+// IsError returns true if message type is ERORI FACTURA
 func (m Message) IsError() bool {
 	return m.Type == "ERORI FACTURA"
 }
 
+// IsSentInvoice returns true if message type is FACTURA TRIMISA
 func (m Message) IsSentInvoice() bool {
 	return m.Type == "FACTURA TRIMISA"
 }
 
+// IsReceivedInvoice returns true if message type is FACTURA PRIMITA
 func (m Message) IsReceivedInvoice() bool {
 	return m.Type == "FACTURA PRIMITA"
 }
 
+//IsBuyerMessage returns true if message type is MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS
 func (m Message) IsBuyerMessage() bool {
 	return m.Type == "MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS"
 }
@@ -535,12 +540,12 @@ func (c *Client) GetMessagesListPagination(
 	return
 }
 
-// DownloadInvoice download an invoice zip for a given download index
+// DownloadInvoice downloads an invoice zip for a given download index.
 func (c *Client) DownloadInvoice(
-	ctx context.Context, downloadID int,
+	ctx context.Context, downloadID int64,
 ) (response *DownloadInvoiceResponse, err error) {
 	query := url.Values{
-		"id": {strconv.Itoa(downloadID)},
+		"id": {strconv.FormatInt(downloadID, 10)},
 	}
 	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathDownload, query, nil)
 	if err = er; err != nil {

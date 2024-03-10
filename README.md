@@ -4,7 +4,7 @@ Package efactura provides a client for using the ANAF e-factura API.
 
 ## Installation ##
 
-e-factura-go is compatible with modern Go releases in module mode, with Go installed:
+e-factura-go requires Go version >= 1.20. With Go installed:
 
 ```bash
 go get github.com/printesoi/e-factura-go
@@ -34,7 +34,7 @@ go get github.com/printesoi/e-factura-go@main
 ## Usage ##
 
 This package can be use both for interacting with (calling) the ANAF e-factura
-API via the Client object and for generating an UBL Invoice XML.
+API via the Client object and for generating an Invoice UBL XML.
 
 ```go
 import "github.com/printesoi/e-factura-go"
@@ -204,13 +204,13 @@ if validateRes.IsOk() {
 }
 ```
 
+## Generating an Invoice
+
+TODO: See TestInvoiceBuilder() from builders_test.go for an example of using
+InvoiceBuilder for creating an Invoice.
+
 ## Tasks ##
 
-- [ ] Support full OAuth2 authentication flow for the client, not just passing
-  the initial token. This however will be tricky to implement properly since
-  the OAuth2 app registered in the ANAF developer profile must have a fixed
-  list of HTTPS redirect URLs and the redirect URL used for creating the OAuth2
-  config must exactly matche one of the URLs.
 - [ ] Add tests for all REST API calls and more tests for validating generated
   XML (maybe checking with the tools provided by mfinante).
 - [ ] Implement CreditNote.
@@ -220,6 +220,11 @@ if validateRes.IsOk() {
 - [ ] Check and test API limits.
 - [ ] Godoc and more code examples.
 - [ ] Test coverage
+- [ ] SuppTestInvoiceBuilderort full OAuth2 authentication flow for the client, not just passing
+  the initial token. This however will be tricky to implement properly since
+  the OAuth2 app registered in the ANAF developer profile must have a fixed
+  list of HTTPS redirect URLs and the redirect URL used for creating the OAuth2
+  config must exactly matche one of the URLs.
 
 ## Contributing ##
 

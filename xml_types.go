@@ -22,17 +22,15 @@ import (
 )
 
 // Date is a wrapper of the time.Time type which marshals to XML in the
-// YYYY-MM-DDD.
+// YYYY-MM-DD format.
 type Date struct {
 	time.Time
 }
 
+// MakeDateLocal creates a date with the provided year, month and day in the
+// Local time zone location.
 func MakeDateLocal(year int, month time.Month, day int) Date {
 	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.Local)}
-}
-
-func MakeDateUTC(year int, month time.Month, day int) Date {
-	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.UTC)}
 }
 
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -56,13 +54,14 @@ func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return nil
 }
 
+// Ptr is a helper to return a *Date in contexts where a pointer is needed.
 func (d Date) Ptr() *Date {
 	return &d
 }
 
-// IsInitialized if the Date is initialized (ie is created explicitly with a
-// constructor or initialized by setting the Time, not implicitly via var
-// declaration with no initialization).
+// IsInitialized checks if the Date is initialized (ie is created explicitly
+// with a constructor or initialized by setting the Time, not implicitly via
+// var declaration with no initialization).
 func (d Date) IsInitialized() bool {
 	return d != Date{}
 }
@@ -114,10 +113,14 @@ type ValueWithAttrs struct {
 	Attributes []xml.Attr `xml:",any,attr,omitempty"`
 }
 
+// Ptr is a helper method to return a *ValueWithAttrs from the receiver in
+// contexts where a pointer is needed.
 func (v ValueWithAttrs) Ptr() *ValueWithAttrs {
 	return &v
 }
 
+// MakeValueWithAttrs create a ValueWithAttrs using the provided chardata value
+// and attributes.
 func MakeValueWithAttrs(value string, attrs ...xml.Attr) ValueWithAttrs {
 	return ValueWithAttrs{
 		Value:      value,
@@ -125,6 +128,13 @@ func MakeValueWithAttrs(value string, attrs ...xml.Attr) ValueWithAttrs {
 	}
 }
 
+// NewValueWithAttrs same as [MakeValueWithAttrs] but a pointer is returned.
+func NewValueWithAttrs(value string, attrs ...xml.Attr) *ValueWithAttrs {
+	return MakeValueWithAttrs(value, attrs...).Ptr()
+}
+
+// MakeValueWithScheme creates ValueWithAttrs with the provided chardata value
+// and an attribute named `schemeID` with the given scheme ID.
 func MakeValueWithScheme(value string, schemeID string) ValueWithAttrs {
 	return MakeValueWithAttrs(value, xml.Attr{
 		Name:  xml.Name{Local: "schemeID"},
@@ -132,10 +142,8 @@ func MakeValueWithScheme(value string, schemeID string) ValueWithAttrs {
 	})
 }
 
-func NewValueWithAttrs(value string, attrs ...xml.Attr) *ValueWithAttrs {
-	return MakeValueWithAttrs(value, attrs...).Ptr()
-}
-
+// GetAttrByName returns the attribute by local name. If no attribute with the
+// given name exists, an empty xml.Attr is returned.
 func (v *ValueWithAttrs) GetAttrByName(name string) (attr xml.Attr) {
 	if v == nil {
 		return

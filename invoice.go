@@ -20,6 +20,9 @@ import (
 	"github.com/m29h/xml"
 )
 
+// Invoice is the object that represents an e-factura invoice. The invoice
+// object aims to be a type safe invoice that serializes to the UBL 2.1 syntax
+// with CUIS RO v1.0.1 customization ID.
 type Invoice struct {
 	// These need to be first fields, because apparently the validators care
 	// about the order of xml nodes.
@@ -114,10 +117,10 @@ type Invoice struct {
 	// Term: Referinţa contractului
 	// Cardinality: 0..1
 	ContractDocumentReference *IDNode `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 ContractDocumentReference,omitempty"`
-	// ID: BT-18-1
+	// ID: BT-18
 	// Term: Identificatorul obiectului facturat
 	// Cardinality: 0..1
-	// ID: BT-18-2
+	// ID: BT-18-1
 	// Term: Identificatorul obiectului schemei
 	// Cardinality: 0..1
 	AdditionalDocumentReference *ValueWithAttrs `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 AdditionalDocumentReference,omitempty"`
@@ -190,20 +193,24 @@ type Invoice struct {
 	Comment string `xml:",comment"`
 }
 
-func (iv *Invoice) Initialize() {
+// Prefill sets the  NS, NScac, NScbc and Comment properties for ensuring that
+// the required attributes and properties are set vor a valid UBL XML.
+func (iv *Invoice) Prefill() {
 	iv.NS = XMLNSInvoice2
 	iv.NScac = XMLNSUBLcac
 	iv.NScbc = XMLNSUBLcbc
 	iv.UBLVersionID = UBLVersionID
 	iv.CustomizationID = CIUSRO_v101
-	iv.Comment = "Generated with " + efacturaVersion
+	if iv.Comment == "" {
+		iv.Comment = "Generated with " + efacturaVersion
+	}
 }
 
 func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	// this is just to strip away methods like MarshalXML
 	type invoice Invoice
 
-	iv.Initialize()
+	iv.Prefill()
 	return e.EncodeElement(invoice(iv), start)
 }
 
@@ -445,36 +452,29 @@ type InvoiceCustomerPostalAddress struct {
 	// ID: BT-50
 	// Term: Adresa Cumpărătorului - Linia 1
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line2
 	// ID: BT-51
 	// Term: Adresa Cumpărătorului - Linia 2
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line3
 	// ID: BT-163
 	// Term: Adresa Cumpărătorului - Linia 3
-
 	// Field: PostalAddress.CityName
 	// ID: BT-52
 	// Term: Localitatea Cumpărătorului
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.PostalZone
 	// ID: BT-53
 	// Term: Codul poştal al Cumpărătorului
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.CountrySubentity
 	// ID: BT-54
 	// Term: Subdiviziunea ţării Cumpărătorului
 	// Cardinality: 0..1
-
 	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-55
 	// Term: Codul ţării Cumpărătorului
 	// Cardinality: 1..1
-
 	PostalAddress
 }
 
@@ -540,37 +540,30 @@ type InvoiceTaxRepresentativePostalAddress struct {
 	// ID: BT-64
 	// Term: Adresa reprezentantului fiscal - Linia 1
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line2
 	// ID: BT-64
 	// Term: Adresa reprezentantului fiscal - Linia 2
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line3
 	// ID: BT-164
 	// Term: Adresa reprezentantului fiscal - Linia 3
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.CityName
 	// ID: BT-66
 	// Term: Localitatea reprezentantului fiscal
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.PostalZone
 	// ID: BT-67
 	// Term: Codul poştal al reprezentantului fiscal
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.CountrySubentity
 	// ID: BT-68
 	// Term: Subdiviziunea ţării reprezentantului fiscal
 	// Cardinality: 0..1
-
 	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-69
 	// Term: Codul ţării reprezentantului fiscal
 	// Cardinality: 1..1
-
 	PostalAddress
 }
 
@@ -608,32 +601,26 @@ type InvoiceDeliveryAddress struct {
 	// ID: BT-75
 	// Term: Adresa de livrare - Linia 1
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line2
 	// ID: BT-76
 	// Term: Adresa de livrare - Linia 2
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.Line3
 	// ID: BT-165
 	// Term: Adresa de livrare - Linia 3
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.CityName
 	// ID: BT-77
 	// Term: Localitatea de livrare
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.PostalZone
 	// ID: BT-78
 	// Term: Codul poştal al de livrare
 	// Cardinality: 0..1
-
 	// Field: PostalAddress.CountrySubentity
 	// ID: BT-79
 	// Term: Subdiviziunea ţării de livrare
 	// Cardinality: 0..1
-
 	// Feild: PostalAddress.CountryIdentificationCode
 	// ID: BT-80
 	// Term: Codul țării de livrare

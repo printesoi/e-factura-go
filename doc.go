@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
-
 /*
 Package efactura provides a client for using the ANAF e-factura API.
 
@@ -21,3 +19,4 @@ Usage:
 
 	import "github.com/printesoi/e-factura-go"
 */
+package efactura
