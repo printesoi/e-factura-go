@@ -16,13 +16,14 @@ package efactura
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/m29h/xml"
 )
 
 type (

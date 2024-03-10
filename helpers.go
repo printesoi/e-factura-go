@@ -17,11 +17,12 @@ package efactura
 import (
 	"bytes"
 	"encoding/json"
-	"encoding/xml"
 	"io"
 	"mime"
 	"net/http"
 	"net/url"
+
+	xml2 "github.com/m29h/xml"
 )
 
 // This is a copy of the drainBody from src/net/http/httputil/dump.go
@@ -87,13 +88,13 @@ func xmlUnmarshalReader(r io.Reader, v any) error {
 	if err != nil {
 		return err
 	}
-	return xml.Unmarshal(data, v)
+	return xml2.Unmarshal(data, v)
 }
 
 // xmlMarshalReader returns the XML encoding of v as a io.Reader.
 func xmlMarshalReader(v any) (r io.Reader, err error) {
 	var b bytes.Buffer
-	enc := xml.NewEncoder(&b)
+	enc := xml2.NewEncoder(&b)
 	if err := enc.Encode(v); err != nil {
 		return nil, err
 	}

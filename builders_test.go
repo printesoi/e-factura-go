@@ -22,7 +22,7 @@ const (
 	defaultTestCustomerAddressCountrySubentity = CountrySubentityRO_B
 )
 
-func getInvoiceSupplierParty() InvoiceSupplier {
+func getInvoiceSupplierParty() InvoiceSupplierParty {
 	var (
 		legalName    = defaultTestSupplierLegalName
 		companyID    = defaultTestSupplierCompanyID
@@ -49,16 +49,16 @@ func getInvoiceSupplierParty() InvoiceSupplier {
 	if val := os.Getenv("EFACTURA_TEST_INVOICE_SUPPLIER_ADDRESS_COUNTRY_SUBENTITY"); val != "" {
 		subentity = CountrySubentityType(val)
 	}
-	return InvoiceSupplier{
+	return InvoiceSupplierParty{
 		PostalAddress: MakeInvoiceSupplierPostalAddress(PostalAddress{
-			CountryIdentificationCode: CountryCodeRO,
-			CountrySubentity:          subentity,
-			CityName:                  cityName,
-			Line1:                     addressLine1,
+			Country:          CountryRO,
+			CountrySubentity: subentity,
+			CityName:         cityName,
+			Line1:            addressLine1,
 		}),
 		TaxScheme: &InvoicePartyTaxScheme{
-			CompanyID:   companyID,
-			TaxSchemeID: TaxSchemeVAT,
+			CompanyID: companyID,
+			TaxScheme: TaxSchemeVAT,
 		},
 		LegalEntity: InvoiceSupplierLegalEntity{
 			Name:             legalName,
@@ -67,7 +67,7 @@ func getInvoiceSupplierParty() InvoiceSupplier {
 	}
 }
 
-func getInvoiceCustomerParty() InvoiceCustomer {
+func getInvoiceCustomerParty() InvoiceCustomerParty {
 	var (
 		legalName    = defaultTestCustomerLegalName
 		companyID    = defaultTestCustomerCompanyID
@@ -90,16 +90,16 @@ func getInvoiceCustomerParty() InvoiceCustomer {
 	if val := os.Getenv("EFACTURA_TEST_INVOICE_CUSTOMER_ADDRESS_COUNTRY_SUBENTITY"); val != "" {
 		subentity = CountrySubentityType(val)
 	}
-	return InvoiceCustomer{
+	return InvoiceCustomerParty{
 		PostalAddress: MakeInvoiceCustomerPostalAddress(PostalAddress{
-			CountryIdentificationCode: CountryCodeRO,
-			CountrySubentity:          subentity,
-			CityName:                  cityName,
-			Line1:                     addressLine1,
+			Country:          CountryRO,
+			CountrySubentity: subentity,
+			CityName:         cityName,
+			Line1:            addressLine1,
 		}),
 		TaxScheme: &InvoicePartyTaxScheme{
-			CompanyID:   companyID,
-			TaxSchemeID: TaxSchemeVAT,
+			CompanyID: companyID,
+			TaxScheme: TaxSchemeVAT,
 		},
 		LegalEntity: InvoiceCustomerLegalEntity{
 			Name: legalName,
@@ -147,9 +147,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice: D(12),
 			ItemName:   "Sticle cu vin",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(60),
 		},
@@ -162,9 +162,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice: D(90),
 			ItemName:   "Vin - cutie de 6",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(90),
 		},
@@ -178,9 +178,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice:   D(4.5),
 			ItemName:     "Șurub",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(45),
 		},
@@ -194,9 +194,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(0.5),
 			ItemName:       "Pui",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(12.5),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(12.5),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(12.35),
 		},
@@ -213,9 +213,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				D(10),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(222.50),
 		},
@@ -231,9 +231,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				D(3.38),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(64.12),
 		},
@@ -247,9 +247,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(1),
 			ItemName:       "Stilou",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(212.50),
 		},
@@ -263,9 +263,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(1),
 			ItemName:       "Stilou",
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:          TaxCategoryTVACotaNormalaRedusa,
-				Percent:     D(25),
-				TaxSchemeID: TaxSchemeVAT,
+				ID:        TaxCategoryTVACotaNormalaRedusa,
+				Percent:   D(25),
+				TaxScheme: TaxSchemeVAT,
 			},
 			ExpectedLineAmount: D(-85),
 		},
@@ -275,7 +275,7 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			WithUnitCode(t.UnitCode).WithInvoicedQuantity(t.Quantity).
 			WithGrossPriceAmount(t.GrossPrice).
 			WithItem(InvoiceLineItem{
-				Name:        t.ItemName,
+				Name:        Transliterate(t.ItemName),
 				TaxCategory: t.TaxCategory,
 			})
 		if !t.BaseQuantity.IsZero() {
@@ -342,9 +342,9 @@ func TestInvoiceBuilder(t *testing.T) {
 			WithItem(InvoiceLineItem{
 				Name: "Stilouri",
 				TaxCategory: InvoiceLineTaxCategory{
-					ID:          TaxCategoryTVACotaNormalaRedusa,
-					Percent:     D(25),
-					TaxSchemeID: TaxSchemeVAT,
+					ID:        TaxCategoryTVACotaNormalaRedusa,
+					Percent:   D(25),
+					TaxScheme: TaxSchemeVAT,
 				},
 			}).
 			Build()
@@ -360,9 +360,9 @@ func TestInvoiceBuilder(t *testing.T) {
 			WithItem(InvoiceLineItem{
 				Name: "Stilouri",
 				TaxCategory: InvoiceLineTaxCategory{
-					ID:          TaxCategoryTVACotaNormalaRedusa,
-					Percent:     D(25),
-					TaxSchemeID: TaxSchemeVAT,
+					ID:        TaxCategoryTVACotaNormalaRedusa,
+					Percent:   D(25),
+					TaxScheme: TaxSchemeVAT,
 				},
 			}).
 			Build()
@@ -428,11 +428,11 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithInvoicedQuantity(D(5)).
 				WithGrossPriceAmount(D(25.0)).
 				WithItem(InvoiceLineItem{
-					Name: "Cerneală pentru imprimantă",
+					Name: Transliterate("Cerneală pentru imprimantă"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:          TaxCategoryTVACotaNormalaRedusa,
-						Percent:     D(25),
-						TaxSchemeID: TaxSchemeVAT,
+						ID:        TaxCategoryTVACotaNormalaRedusa,
+						Percent:   D(25),
+						TaxScheme: TaxSchemeVAT,
 					},
 				}).
 				Build()
@@ -445,11 +445,11 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(24.0)).
 				WithItem(InvoiceLineItem{
-					Name: "Imprimare afiș",
+					Name: Transliterate("Imprimare afiș"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:          TaxCategoryTVACotaNormalaRedusa,
-						Percent:     D(10),
-						TaxSchemeID: TaxSchemeVAT,
+						ID:        TaxCategoryTVACotaNormalaRedusa,
+						Percent:   D(10),
+						TaxScheme: TaxSchemeVAT,
 					},
 				}).
 				Build()
@@ -462,11 +462,11 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(136.0)).
 				WithItem(InvoiceLineItem{
-					Name: "Scaun de birou",
+					Name: Transliterate("Scaun de birou"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:          TaxCategoryTVACotaNormalaRedusa,
-						Percent:     D(25),
-						TaxSchemeID: TaxSchemeVAT,
+						ID:        TaxCategoryTVACotaNormalaRedusa,
+						Percent:   D(25),
+						TaxScheme: TaxSchemeVAT,
 					},
 				}).
 				Build()
@@ -479,10 +479,10 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(95.0)).
 				WithItem(InvoiceLineItem{
-					Name: "Tastatură fără fir",
+					Name: Transliterate("Tastatură fără fir"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:          TaxCategoryScutireTVA,
-						TaxSchemeID: TaxSchemeVAT,
+						ID:        TaxCategoryScutireTVA,
+						TaxScheme: TaxSchemeVAT,
 					},
 				}).
 				Build()
@@ -495,10 +495,10 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(53.0)).
 				WithItem(InvoiceLineItem{
-					Name: "Cablu de adaptare",
+					Name: Transliterate("Cablu de adaptare"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:          TaxCategoryScutireTVA,
-						TaxSchemeID: TaxSchemeVAT,
+						ID:        TaxCategoryScutireTVA,
+						TaxScheme: TaxSchemeVAT,
 					},
 				}).
 				Build()
@@ -518,9 +518,9 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			documentAllowance, ok := NewInvoiceDocumentAllowanceBuilder(documentCurrencyID,
 				D(15), InvoiceTaxCategory{
-					ID:          TaxCategoryTVACotaNormalaRedusa,
-					Percent:     D(25),
-					TaxSchemeID: TaxSchemeVAT,
+					ID:        TaxCategoryTVACotaNormalaRedusa,
+					Percent:   D(25),
+					TaxScheme: TaxSchemeVAT,
 				}).
 				WithAllowanceChargeReason("Motivul C").
 				Build()
@@ -530,9 +530,9 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			documentCharge, ok := NewInvoiceDocumentChargeBuilder(documentCurrencyID,
 				D(35), InvoiceTaxCategory{
-					ID:          TaxCategoryTVACotaNormalaRedusa,
-					Percent:     D(25),
-					TaxSchemeID: TaxSchemeVAT,
+					ID:        TaxCategoryTVACotaNormalaRedusa,
+					Percent:   D(25),
+					TaxScheme: TaxSchemeVAT,
 				}).
 				WithAllowanceChargeReason("Motivul B").
 				Build()

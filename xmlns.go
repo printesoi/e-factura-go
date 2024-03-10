@@ -14,6 +14,11 @@
 
 package efactura
 
+import (
+	xml "github.com/m29h/xml"
+)
+
+// Constants for namespaces and versions
 const (
 	XMLNSInvoice2 = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
 	XMLNSUBLcac   = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
@@ -22,6 +27,13 @@ const (
 	XMLNSANAFreqMesajv1   = "mfp:anaf:dgti:spv:reqMesaj:v1"
 	XMLNSANAFMessageState = "mfp:anaf:dgti:efactura:stareMesajFactura:v1"
 
-	CIUSRO_v101  = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
+	// e-factura: Customization ID implemented  CIUS-RO v1.0.1
+	CIUSRO_v101 = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
+	// e-factura: UBL Version implemented
 	UBLVersionID = "2.1"
 )
+
+func init() {
+	xml.NameSpaceBinding.Add("urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2", "cac")
+	xml.NameSpaceBinding.Add("urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", "cbc")
+}

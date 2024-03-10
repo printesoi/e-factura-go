@@ -214,7 +214,7 @@ const (
 type TaxSchemeIDType string
 
 const (
-	TaxSchemeVAT TaxSchemeIDType = "VAT"
+	TaxSchemeIDVAT TaxSchemeIDType = "VAT"
 )
 
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred5305.htm

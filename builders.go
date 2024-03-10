@@ -190,7 +190,7 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		!b.invoicedQuantity.IsInitialized() ||
 		b.unitCode == "" || !b.grossPriceAmount.IsInitialized() ||
 		b.item.Name == "" || b.item.TaxCategory.ID == "" ||
-		b.item.TaxCategory.TaxSchemeID == "" {
+		b.item.TaxCategory.TaxScheme.ID == "" {
 		return
 	}
 
@@ -332,7 +332,7 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithAllowanceChargeReason(allowa
 
 func (b *InvoiceDocumentAllowanceChargeBuilder) Build() (allowanceCharge InvoiceDocumentAllowanceCharge, ok bool) {
 	if !b.amount.IsInitialized() || b.currencyID == "" ||
-		b.taxCategory.ID == "" || b.taxCategory.TaxSchemeID == "" {
+		b.taxCategory.ID == "" || b.taxCategory.TaxScheme.ID == "" {
 		return
 	}
 	allowanceCharge.ChargeIndicator = b.chargeIndicator
@@ -376,8 +376,8 @@ type InvoiceBuilder struct {
 	taxExeptionReasons map[TaxCategoryCodeType]taxExemptionReason
 
 	billingReferences []InvoiceBillingReference
-	supplier          InvoiceSupplier
-	customer          InvoiceCustomer
+	supplier          InvoiceSupplierParty
+	customer          InvoiceCustomerParty
 
 	allowancesCharges []InvoiceDocumentAllowanceCharge
 	invoiceLines      []InvoiceLine
@@ -432,12 +432,12 @@ func (b *InvoiceBuilder) AppendBillingReferences(billingReference InvoiceBilling
 	return b.WithBillingReferences(append(b.billingReferences, billingReference))
 }
 
-func (b *InvoiceBuilder) WithSupplier(supplier InvoiceSupplier) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithSupplier(supplier InvoiceSupplierParty) *InvoiceBuilder {
 	b.supplier = supplier
 	return b
 }
 
-func (b *InvoiceBuilder) WithCustomer(customer InvoiceCustomer) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithCustomer(customer InvoiceCustomerParty) *InvoiceBuilder {
 	b.customer = customer
 	return b
 }
@@ -492,8 +492,8 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 
 	// TODO:
 
-	invoice.Supplier = b.supplier
-	invoice.Customer = b.customer
+	invoice.Supplier.Party = b.supplier
+	invoice.Customer.Party = b.customer
 
 	// amountToTaxAmount converts an Amount assumed to be in the
 	// DocumentCurrencyCode to an amount in TaxCurrencyCode
@@ -646,7 +646,7 @@ func makeTaxCategoryKey(category InvoiceTaxCategory) taxCategoryKey {
 	return taxCategoryKey{
 		id:          category.ID,
 		percent:     percent,
-		taxSchemeID: category.TaxSchemeID,
+		taxSchemeID: category.TaxScheme.ID,
 	}
 }
 
@@ -655,7 +655,7 @@ func makeTaxCategoryKeyLine(category InvoiceLineTaxCategory) taxCategoryKey {
 	return taxCategoryKey{
 		id:          category.ID,
 		percent:     percent,
-		taxSchemeID: category.TaxSchemeID,
+		taxSchemeID: category.TaxScheme.ID,
 	}
 }
 
@@ -672,7 +672,7 @@ func (s taxCategorySummary) getTaxAmount() Decimal {
 type taxCategoryMap map[taxCategoryKey]*taxCategorySummary
 
 func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amount Decimal) bool {
-	if category.TaxSchemeID == TaxSchemeVAT {
+	if category.TaxScheme.ID == TaxSchemeIDVAT {
 		percent := category.Percent.Value()
 		if !category.ID.TaxRateExempted() {
 			if !percent.IsPositive() {
@@ -712,9 +712,9 @@ func (m *taxCategoryMap) addLineTaxCategory(category InvoiceLineTaxCategory, amo
 
 	k := makeTaxCategoryKeyLine(category)
 	documentCategory := InvoiceTaxCategory{
-		ID:          category.ID,
-		Percent:     category.Percent,
-		TaxSchemeID: category.TaxSchemeID,
+		ID:        category.ID,
+		Percent:   category.Percent,
+		TaxScheme: category.TaxScheme,
 	}
 	return m.add(k, documentCategory, amount)
 }

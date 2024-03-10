@@ -15,9 +15,10 @@
 package efactura
 
 import (
-	"encoding/xml"
-	"fmt"
 	"time"
+
+	"github.com/m29h/xml"
+	"github.com/shopspring/decimal"
 )
 
 // Date is a wrapper of the time.Time type which marshals to XML in the
@@ -27,7 +28,7 @@ type Date struct {
 }
 
 func MakeDateLocal(year int, month time.Month, day int) Date {
-	return Date{Time: time.Date(year, month, day, 0, 0, 0, 0, time.Local)}
+	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.Local)}
 }
 
 func MakeDateUTC(year int, month time.Month, day int) Date {
@@ -35,9 +36,24 @@ func MakeDateUTC(year int, month time.Month, day int) Date {
 }
 
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	dy, dm, dd := d.Time.Date()
-	v := fmt.Sprintf("%04d-%02d-%02d", dy, dm, dd)
+	v := d.Format(time.DateOnly)
 	return e.EncodeElement(v, start)
+}
+
+func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var sd string
+	if err := d.DecodeElement(&sd, &start); err != nil {
+		return err
+	}
+
+	// TODO: always use Romanian time zone for date in efactura
+	t, err := time.ParseInLocation(time.DateOnly, sd, time.Local)
+	if err != nil {
+		return err
+	}
+
+	*dt = Date{Time: t}
+	return nil
 }
 
 func (d Date) Ptr() *Date {
@@ -48,7 +64,7 @@ func (d Date) Ptr() *Date {
 // constructor or initialized by setting the Time, not implicitly via var
 // declaration with no initialization).
 func (d Date) IsInitialized() bool {
-	return d.Time != time.Time{}
+	return d != Date{}
 }
 
 // AmountWithCurrency represents an embeddable type that stores an amount as
@@ -59,16 +75,35 @@ type AmountWithCurrency struct {
 	CurrencyID CurrencyCodeType
 }
 
+// this type is a hack for a limitation of the encoding/xml package: it only
+// supports []byte and string for a chardata.
+type xmlAmountWithCurrency struct {
+	Amount     string           `xml:",chardata"`
+	CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
+}
+
 func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	type xmlAmount struct {
-		Amount     string           `xml:",chardata"`
-		CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
-	}
-	xa := xmlAmount{
+	xa := xmlAmountWithCurrency{
 		Amount:     a.Amount.String(),
 		CurrencyID: a.CurrencyID,
 	}
 	return e.EncodeElement(xa, start)
+}
+
+func (a *AmountWithCurrency) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var xa xmlAmountWithCurrency
+	if err := d.DecodeElement(&xa, &start); err != nil {
+		return err
+	}
+
+	amount, err := decimal.NewFromString(xa.Amount)
+	if err != nil {
+		return err
+	}
+
+	a.Amount = DD(amount)
+	a.CurrencyID = xa.CurrencyID
+	return nil
 }
 
 // ValueWithAttrs represents and embeddable type that stores a string as
@@ -101,6 +136,18 @@ func NewValueWithAttrs(value string, attrs ...xml.Attr) *ValueWithAttrs {
 	return MakeValueWithAttrs(value, attrs...).Ptr()
 }
 
+func (v *ValueWithAttrs) GetAttrByName(name string) (attr xml.Attr) {
+	if v == nil {
+		return
+	}
+	for _, a := range v.Attributes {
+		if a.Name.Local == name {
+			return a
+		}
+	}
+	return
+}
+
 // InvoicedQuantity represents the quantity (of items) on an invoice line.
 type InvoicedQuantity struct {
 	Quantity Decimal
@@ -115,20 +162,42 @@ type InvoicedQuantity struct {
 	UnitCodeListAgencyName string
 }
 
-func (a InvoicedQuantity) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	type xmlInvoicedQuantity struct {
-		Quantity               Decimal      `xml:",chardata"`
-		UnitCode               UnitCodeType `xml:"unitCode,attr"`
-		UnitCodeListID         string       `xml:"unitCodeListID,attr,omitempty"`
-		UnitCodeListAgencyID   string       `xml:"unitCodeListAgencyID,attr,omitempty"`
-		UnitCodeListAgencyName string       `xml:"unitCodeListAgencyName,attr,omitempty"`
-	}
+// this type is a hack for a limitation of the encoding/xml package: it only
+// supports []byte and string for a chardata.
+type xmlInvoicedQuantity struct {
+	Quantity               string       `xml:",chardata"`
+	UnitCode               UnitCodeType `xml:"unitCode,attr"`
+	UnitCodeListID         string       `xml:"unitCodeListID,attr,omitempty"`
+	UnitCodeListAgencyID   string       `xml:"unitCodeListAgencyID,attr,omitempty"`
+	UnitCodeListAgencyName string       `xml:"unitCodeListAgencyName,attr,omitempty"`
+}
+
+func (q InvoicedQuantity) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	xq := xmlInvoicedQuantity{
-		Quantity:               a.Quantity,
-		UnitCode:               a.UnitCode,
-		UnitCodeListID:         a.UnitCodeListID,
-		UnitCodeListAgencyID:   a.UnitCodeListAgencyID,
-		UnitCodeListAgencyName: a.UnitCodeListAgencyName,
+		Quantity:               q.Quantity.String(),
+		UnitCode:               q.UnitCode,
+		UnitCodeListID:         q.UnitCodeListID,
+		UnitCodeListAgencyID:   q.UnitCodeListAgencyID,
+		UnitCodeListAgencyName: q.UnitCodeListAgencyName,
 	}
 	return e.EncodeElement(xq, start)
+}
+
+func (q *InvoicedQuantity) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var xq xmlInvoicedQuantity
+	if err := d.DecodeElement(&xq, &start); err != nil {
+		return err
+	}
+
+	quantity, err := decimal.NewFromString(xq.Quantity)
+	if err != nil {
+		return err
+	}
+
+	q.Quantity = DD(quantity)
+	q.UnitCode = xq.UnitCode
+	q.UnitCodeListID = xq.UnitCodeListID
+	q.UnitCodeListAgencyID = xq.UnitCodeListAgencyID
+	q.UnitCodeListAgencyName = xq.UnitCodeListAgencyName
+	return nil
 }

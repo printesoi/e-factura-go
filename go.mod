@@ -3,6 +3,8 @@ module github.com/e-factura-go/e-factura-go
 go 1.20
 
 require (
+	github.com/alexsergivan/transliterator v1.0.0
+	github.com/m29h/xml v1.0.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.17.0

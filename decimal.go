@@ -1,8 +1,7 @@
 package efactura
 
 import (
-	"encoding/xml"
-
+	"github.com/m29h/xml"
 	"github.com/shopspring/decimal"
 )
 
