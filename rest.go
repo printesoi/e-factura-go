@@ -154,10 +154,15 @@ const (
 	UploadStandardCII  UploadStandard = "CII"
 	UploadStandardRASP UploadStandard = "RASP"
 
+	// A No-op filter that returns all messages
 	MessageFilterAll MessageFilterType = iota
+	// Filter that returns only the errors
 	MessageFilterErrors
+	// Filter that returns only the sent invoices
 	MessageFilterSent
+	// Filter that returns only the received invoices
 	MessageFilterReceived
+	// Filter that returns only the customer send or received messages
 	MessageFilterCustomerMessage
 )
 
