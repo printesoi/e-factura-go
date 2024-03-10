@@ -79,7 +79,7 @@ type (
 	// state endoint
 	GetMessageStateResponse struct {
 		State      GetMessageStateCode `xml:"stare,attr"`
-		DownloadID int                 `xml:"id_descarcare,attr,omitempty"`
+		DownloadID int64               `xml:"id_descarcare,attr,omitempty"`
 		Errors     []struct {
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
@@ -190,6 +190,37 @@ func (r *UploadResponse) GetUploadIndex() int64 {
 		return 0
 	}
 	return *r.UploadIndex
+}
+
+// IsOk returns true if the message state if ok (processed, and can be
+// downloaded).
+func (r *GetMessageStateResponse) IsOk() bool {
+	return r != nil && r.State == GetMessageStateCodeOk
+}
+
+// GetDownloadID returns the download ID (should only be called when IsOk() ==
+// true).
+func (r *GetMessageStateResponse) GetDownloadID() int64 {
+	if r == nil {
+		return 0
+	}
+	return r.DownloadID
+}
+
+// IsNok returns true if the message state is nok (there was an error
+// processing the invoice).
+func (r *GetMessageStateResponse) IsNok() bool {
+	return r != nil && r.State == GetMessageStateCodeNok
+}
+
+// IsProcessing returns true if the message state is processing.
+func (r *GetMessageStateResponse) IsProcessing() bool {
+	return r != nil && r.State == GetMessageStateCodeProcessing
+}
+
+// IsInvalidXML returns true if the message state is processing.
+func (r *GetMessageStateResponse) IsInvalidXML() bool {
+	return r != nil && r.State == GetMessageStateCodeInvalidXML
 }
 
 func (t MessageFilterType) String() string {
