@@ -24,9 +24,6 @@ const (
 	XMLNSUBLcac   = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
 	XMLNSUBLcbc   = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 
-	XMLNSANAFreqMesajv1   = "mfp:anaf:dgti:spv:reqMesaj:v1"
-	XMLNSANAFMessageState = "mfp:anaf:dgti:efactura:stareMesajFactura:v1"
-
 	// e-factura: Customization ID implemented  CIUS-RO v1.0.1
 	CIUSRO_v101 = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
 	// e-factura: UBL Version implemented

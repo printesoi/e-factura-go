@@ -56,9 +56,11 @@ type (
 		PDF   []byte
 	}
 
-	MessageRASP struct {
+	RASPMessage struct {
 		UploadIndex int    `xml:"index_incarcare,attr"`
 		Message     string `xml:"message,attr"`
+
+		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:reqMesaj:v1 header"`
 	}
 
 	// UploadResponse is the parsed response from the upload endpoint
@@ -70,7 +72,7 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
-		XMLName xml.Name `xml:"header"`
+		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:respUploadFisier:v1 header"`
 	}
 
 	GetMessageStateCode string
@@ -84,7 +86,7 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
-		XMLName xml.Name `xml:"header"`
+		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:stareMesajFactura:v1 header"`
 	}
 
 	MessageFilterType int
@@ -419,7 +421,7 @@ func (c *Client) UploadXML(
 		"cif":      {cif},
 	}
 	if uploadOptions.autofactura != nil {
-		query.Set("extern", *uploadOptions.autofactura)
+		query.Set("autofactura", *uploadOptions.autofactura)
 	}
 	if uploadOptions.extern != nil {
 		query.Set("extern", *uploadOptions.extern)
@@ -447,25 +449,10 @@ func (c *Client) UploadInvoice(
 	return c.UploadXML(ctx, xmlReader, UploadStandardUBL, cif, opts...)
 }
 
-func (m MessageRASP) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	// for stripping the custom MarshalXML method
-	type messageRASP MessageRASP
-	var xmlMsg struct {
-		messageRASP
-
-		XMLName xml.Name `xml:"header"`
-	}
-
-	xmlMsg.messageRASP = messageRASP(m)
-	xmlMsg.XMLName.Space = XMLNSANAFreqMesajv1
-
-	return e.EncodeElement(xmlMsg, start)
-}
-
-// UploadRASPMessage uploads the given MessageRASP with the provided optional
+// UploadRASPMessage uploads the given RASPMessage with the provided optional
 // options.
 func (c *Client) UploadRASPMessage(
-	ctx context.Context, msg MessageRASP, cif string, opts ...uploadOption,
+	ctx context.Context, msg RASPMessage, cif string, opts ...uploadOption,
 ) (response *UploadResponse, err error) {
 	xmlReader, err := xmlMarshalReader(msg)
 	if err != nil {

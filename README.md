@@ -123,7 +123,7 @@ uploadRes, err := client.UploadXML(ctx, xml, UploadStandardUBL, "123456789")
 ### Upload message ###
 
 ```go
-msg := efactura.MessageRASP{
+msg := efactura.RASPMessage{
     UploadIndex: 5008787839,
     Message: "test",
 }
