@@ -14,6 +14,8 @@
 
 package efactura
 
+import "strings"
+
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm
 type InvoiceTypeCodeType string
 
@@ -996,6 +998,98 @@ const (
 	// VN - Vrancea
 	CountrySubentityRO_VN CountrySubentityType = "RO-VN"
 )
+
+// RoCountyNameToCountrySubentity returns the country subentity code for a
+// Romanian county name. "bucurești" -> "RO-B"
+func RoCountyNameToCountrySubentity(name string) (sub CountrySubentityType, ok bool) {
+	switch strings.ToLower(Transliterate(name)) {
+	case "bucuresti", "municipiul bucuresti":
+		sub, ok = CountrySubentityRO_B, true
+	case "alba":
+		sub, ok = CountrySubentityRO_AB, true
+	case "arad":
+		sub, ok = CountrySubentityRO_AR, true
+	case "arges":
+		sub, ok = CountrySubentityRO_AG, true
+	case "bacau":
+		sub, ok = CountrySubentityRO_BC, true
+	case "bihor":
+		sub, ok = CountrySubentityRO_BH, true
+	case "bistrita-nasaud":
+		sub, ok = CountrySubentityRO_BN, true
+	case "botosani":
+		sub, ok = CountrySubentityRO_BT, true
+	case "braila":
+		sub, ok = CountrySubentityRO_BR, true
+	case "brasov":
+		sub, ok = CountrySubentityRO_BV, true
+	case "buzau":
+		sub, ok = CountrySubentityRO_BZ, true
+	case "calarasi":
+		sub, ok = CountrySubentityRO_CL, true
+	case "caras-severin":
+		sub, ok = CountrySubentityRO_CS, true
+	case "cluj":
+		sub, ok = CountrySubentityRO_CJ, true
+	case "constanta":
+		sub, ok = CountrySubentityRO_CT, true
+	case "covasna":
+		sub, ok = CountrySubentityRO_CV, true
+	case "dambovita":
+		sub, ok = CountrySubentityRO_DB, true
+	case "dolj":
+		sub, ok = CountrySubentityRO_DJ, true
+	case "galati":
+		sub, ok = CountrySubentityRO_GL, true
+	case "giurgiu":
+		sub, ok = CountrySubentityRO_GR, true
+	case "gorj":
+		sub, ok = CountrySubentityRO_GJ, true
+	case "harghita":
+		sub, ok = CountrySubentityRO_HR, true
+	case "hunedoara":
+		sub, ok = CountrySubentityRO_HD, true
+	case "ialomita":
+		sub, ok = CountrySubentityRO_IL, true
+	case "iasi":
+		sub, ok = CountrySubentityRO_IS, true
+	case "ilfov":
+		sub, ok = CountrySubentityRO_IF, true
+	case "maramures":
+		sub, ok = CountrySubentityRO_MM, true
+	case "mehedinti":
+		sub, ok = CountrySubentityRO_MH, true
+	case "mures":
+		sub, ok = CountrySubentityRO_MS, true
+	case "neamt":
+		sub, ok = CountrySubentityRO_NT, true
+	case "olt":
+		sub, ok = CountrySubentityRO_OT, true
+	case "prahova":
+		sub, ok = CountrySubentityRO_PH, true
+	case "salaj":
+		sub, ok = CountrySubentityRO_SJ, true
+	case "satu mare":
+		sub, ok = CountrySubentityRO_SM, true
+	case "sibiu":
+		sub, ok = CountrySubentityRO_SB, true
+	case "suceava":
+		sub, ok = CountrySubentityRO_SV, true
+	case "teleorman":
+		sub, ok = CountrySubentityRO_TR, true
+	case "timis":
+		sub, ok = CountrySubentityRO_TM, true
+	case "tulcea":
+		sub, ok = CountrySubentityRO_TL, true
+	case "vaslui":
+		sub, ok = CountrySubentityRO_VS, true
+	case "valcea":
+		sub, ok = CountrySubentityRO_VL, true
+	case "vrancea":
+		sub, ok = CountrySubentityRO_VN, true
+	}
+	return
+}
 
 // If the country code for a postal address is RO-B, then the City name must be
 // one of the following values.
