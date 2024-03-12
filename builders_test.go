@@ -57,8 +57,8 @@ func getInvoiceSupplierParty() InvoiceSupplierParty {
 			Line1:            addressLine1,
 		}),
 		TaxScheme: &InvoicePartyTaxScheme{
-			CompanyID: companyID,
 			TaxScheme: TaxSchemeVAT,
+			CompanyID: companyID,
 		},
 		LegalEntity: InvoiceSupplierLegalEntity{
 			Name:             legalName,
@@ -98,8 +98,8 @@ func getInvoiceCustomerParty() InvoiceCustomerParty {
 			Line1:            addressLine1,
 		}),
 		TaxScheme: &InvoicePartyTaxScheme{
-			CompanyID: companyID,
 			TaxScheme: TaxSchemeVAT,
+			CompanyID: companyID,
 		},
 		LegalEntity: InvoiceCustomerLegalEntity{
 			Name: legalName,
@@ -147,9 +147,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice: D(12),
 			ItemName:   Transliterate("Sticle cu vin"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(60),
 		},
@@ -162,9 +162,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice: D(90),
 			ItemName:   Transliterate("Vin - cutie de 6"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(90),
 		},
@@ -178,9 +178,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			GrossPrice:   D(4.5),
 			ItemName:     Transliterate("Șurub"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(45),
 		},
@@ -194,9 +194,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(0.5),
 			ItemName:       Transliterate("Pui"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(12.5),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(12.5),
 			},
 			ExpectedLineAmount: D(12.35),
 		},
@@ -213,9 +213,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				D(10),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(222.50),
 		},
@@ -231,9 +231,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 				D(3.38),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(64.12),
 		},
@@ -247,9 +247,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(1),
 			ItemName:       Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(212.50),
 		},
@@ -263,9 +263,9 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			PriceDeduction: D(1),
 			ItemName:       Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
-				ID:        TaxCategoryTVACotaNormalaRedusa,
-				Percent:   D(25),
 				TaxScheme: TaxSchemeVAT,
+				ID:        TaxCategoryVATStandardRate,
+				Percent:   D(25),
 			},
 			ExpectedLineAmount: D(-85),
 		},
@@ -342,9 +342,9 @@ func TestInvoiceBuilder(t *testing.T) {
 			WithItem(InvoiceLineItem{
 				Name: "Stilouri",
 				TaxCategory: InvoiceLineTaxCategory{
-					ID:        TaxCategoryTVACotaNormalaRedusa,
-					Percent:   D(25),
 					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
 				},
 			}).
 			Build()
@@ -360,9 +360,9 @@ func TestInvoiceBuilder(t *testing.T) {
 			WithItem(InvoiceLineItem{
 				Name: "Stilouri",
 				TaxCategory: InvoiceLineTaxCategory{
-					ID:        TaxCategoryTVACotaNormalaRedusa,
-					Percent:   D(25),
 					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
 				},
 			}).
 			Build()
@@ -394,7 +394,7 @@ func TestInvoiceBuilder(t *testing.T) {
 			if assert.Equal(1, len(invoice.TaxTotal), "Must have only one TaxTotal") {
 				if assert.Equal(1, len(invoice.TaxTotal[0].TaxSubtotals)) {
 					subtotal := invoice.TaxTotal[0].TaxSubtotals[0]
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, subtotal.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, subtotal.TaxCategory.ID)
 					assert.Equal(a(D(25)), a(subtotal.TaxCategory.Percent))
 					assert.Equal(a(D(127.5)), a(subtotal.TaxableAmount.Amount))
 					assert.Equal(a(D(31.88)), a(subtotal.TaxAmount.Amount))
@@ -430,9 +430,9 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithItem(InvoiceLineItem{
 					Name: Transliterate("Cerneală pentru imprimantă"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:        TaxCategoryTVACotaNormalaRedusa,
-						Percent:   D(25),
 						TaxScheme: TaxSchemeVAT,
+						ID:        TaxCategoryVATStandardRate,
+						Percent:   D(25),
 					},
 				}).
 				Build()
@@ -447,9 +447,9 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithItem(InvoiceLineItem{
 					Name: Transliterate("Imprimare afiș"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:        TaxCategoryTVACotaNormalaRedusa,
-						Percent:   D(10),
 						TaxScheme: TaxSchemeVAT,
+						ID:        TaxCategoryVATStandardRate,
+						Percent:   D(10),
 					},
 				}).
 				Build()
@@ -464,9 +464,9 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithItem(InvoiceLineItem{
 					Name: Transliterate("Scaun de birou"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:        TaxCategoryTVACotaNormalaRedusa,
-						Percent:   D(25),
 						TaxScheme: TaxSchemeVAT,
+						ID:        TaxCategoryVATStandardRate,
+						Percent:   D(25),
 					},
 				}).
 				Build()
@@ -481,8 +481,8 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithItem(InvoiceLineItem{
 					Name: Transliterate("Tastatură fără fir"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:        TaxCategoryScutireTVA,
 						TaxScheme: TaxSchemeVAT,
+						ID:        TaxCategoryVATExempt,
 					},
 				}).
 				Build()
@@ -497,8 +497,8 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithItem(InvoiceLineItem{
 					Name: Transliterate("Cablu de adaptare"),
 					TaxCategory: InvoiceLineTaxCategory{
-						ID:        TaxCategoryScutireTVA,
 						TaxScheme: TaxSchemeVAT,
+						ID:        TaxCategoryVATExempt,
 					},
 				}).
 				Build()
@@ -514,28 +514,30 @@ func TestInvoiceBuilder(t *testing.T) {
 				WithSupplier(getInvoiceSupplierParty()).
 				WithCustomer(getInvoiceCustomerParty()).
 				WithInvoiceLines(lines).
-				AddTaxExemptionReason(TaxCategoryScutireTVA, "MOTIVUL A", "")
+				AddTaxExemptionReason(TaxCategoryVATExempt, "MOTIVUL A", "")
 
-			documentAllowance, ok := NewInvoiceDocumentAllowanceBuilder(documentCurrencyID,
-				D(15), InvoiceTaxCategory{
-					ID:        TaxCategoryTVACotaNormalaRedusa,
-					Percent:   D(25),
+			documentAllowance, ok := NewInvoiceDocumentAllowanceBuilder(
+				documentCurrencyID,
+				D(15),
+				InvoiceTaxCategory{
 					TaxScheme: TaxSchemeVAT,
-				}).
-				WithAllowanceChargeReason("Motivul C").
-				Build()
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
+				},
+			).WithAllowanceChargeReason("Motivul C").Build()
 			if assert.True(ok) {
 				invoiceBuilder.AppendAllowanceCharge(documentAllowance)
 			}
 
-			documentCharge, ok := NewInvoiceDocumentChargeBuilder(documentCurrencyID,
-				D(35), InvoiceTaxCategory{
-					ID:        TaxCategoryTVACotaNormalaRedusa,
-					Percent:   D(25),
+			documentCharge, ok := NewInvoiceDocumentChargeBuilder(
+				documentCurrencyID,
+				D(35),
+				InvoiceTaxCategory{
 					TaxScheme: TaxSchemeVAT,
-				}).
-				WithAllowanceChargeReason("Motivul B").
-				Build()
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
+				},
+			).WithAllowanceChargeReason("Motivul B").Build()
 			if assert.True(ok) {
 				invoiceBuilder.AppendAllowanceCharge(documentCharge)
 			}
@@ -556,27 +558,27 @@ func TestInvoiceBuilder(t *testing.T) {
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]
 					assert.Equal(a(D(125.0)), a(line1.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line1.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line1.Item.TaxCategory.ID)
 					assert.Equal(d(D(25.0)), d(line1.Item.TaxCategory.Percent))
 
 					line2 := invoice.InvoiceLines[1]
 					assert.Equal(a(D(24.0)), a(line2.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line2.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line2.Item.TaxCategory.ID)
 					assert.Equal(d(D(10.0)), d(line2.Item.TaxCategory.Percent))
 
 					line3 := invoice.InvoiceLines[2]
 					assert.Equal(a(D(136.0)), a(line3.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line3.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line3.Item.TaxCategory.ID)
 					assert.Equal(d(D(25.0)), d(line3.Item.TaxCategory.Percent))
 
 					line4 := invoice.InvoiceLines[3]
 					assert.Equal(a(D(95.0)), a(line4.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryScutireTVA, line4.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATExempt, line4.Item.TaxCategory.ID)
 					assert.Equal(d(D(0.0)), d(line4.Item.TaxCategory.Percent))
 
 					line5 := invoice.InvoiceLines[4]
 					assert.Equal(a(D(53.0)), a(line5.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryScutireTVA, line5.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATExempt, line5.Item.TaxCategory.ID)
 					assert.Equal(d(D(0.0)), d(line5.Item.TaxCategory.Percent))
 				}
 
@@ -614,27 +616,27 @@ func TestInvoiceBuilder(t *testing.T) {
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]
 					assert.Equal(a(D(125.0)), a(line1.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line1.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line1.Item.TaxCategory.ID)
 					assert.Equal(d(D(25.0)), d(line1.Item.TaxCategory.Percent))
 
 					line2 := invoice.InvoiceLines[1]
 					assert.Equal(a(D(24.0)), a(line2.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line2.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line2.Item.TaxCategory.ID)
 					assert.Equal(d(D(10.0)), d(line2.Item.TaxCategory.Percent))
 
 					line3 := invoice.InvoiceLines[2]
 					assert.Equal(a(D(136.0)), a(line3.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryTVACotaNormalaRedusa, line3.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATStandardRate, line3.Item.TaxCategory.ID)
 					assert.Equal(d(D(25.0)), d(line3.Item.TaxCategory.Percent))
 
 					line4 := invoice.InvoiceLines[3]
 					assert.Equal(a(D(95.0)), a(line4.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryScutireTVA, line4.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATExempt, line4.Item.TaxCategory.ID)
 					assert.Equal(d(D(0.0)), d(line4.Item.TaxCategory.Percent))
 
 					line5 := invoice.InvoiceLines[4]
 					assert.Equal(a(D(53.0)), a(line5.LineExtensionAmount.Amount))
-					assert.Equal(TaxCategoryScutireTVA, line5.Item.TaxCategory.ID)
+					assert.Equal(TaxCategoryVATExempt, line5.Item.TaxCategory.ID)
 					assert.Equal(d(D(0.0)), d(line5.Item.TaxCategory.Percent))
 				}
 

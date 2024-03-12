@@ -827,12 +827,37 @@ type InvoiceTaxSubtotal struct {
 	TaxCategory InvoiceTaxCategory `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxCategory"`
 }
 
+// InvoiceTaxCategory is a struct that encodes a cac:TaxCategory node.
 type InvoiceTaxCategory struct {
 	ID                     TaxCategoryCodeType        `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
 	Percent                Decimal                    `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
 	TaxExemptionReason     string                     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReason,omitempty"`
 	TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReasonCode,omitempty"`
 	TaxScheme              TaxScheme                  `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
+}
+
+// MarshalXML implements the xml.Marshaler interface. We use a custom
+// marshaling function for InvoiceTaxCategory since we want to keep the Percent
+// a Decimal (not a pointer) for ease of use, be we want to ensure we remove
+// the cbc:Percent node if the category code is "Not subject to VAT".
+func (c InvoiceTaxCategory) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type invoiceTaxCategory struct {
+		ID                     TaxCategoryCodeType        `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
+		Percent                *Decimal                   `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
+		TaxExemptionReason     string                     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReason,omitempty"`
+		TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReasonCode,omitempty"`
+		TaxScheme              TaxScheme                  `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
+	}
+	xmlCat := invoiceTaxCategory{
+		ID:                     c.ID,
+		TaxScheme:              c.TaxScheme,
+		TaxExemptionReason:     c.TaxExemptionReason,
+		TaxExemptionReasonCode: c.TaxExemptionReasonCode,
+	}
+	if c.ID != TaxCategoryNotSubjectToVAT {
+		xmlCat.Percent = c.Percent.Ptr()
+	}
+	return e.EncodeElement(xmlCat, start)
 }
 
 type InvoiceLegalMonetaryTotal struct {
@@ -1047,6 +1072,8 @@ type InvoicePartyTaxScheme struct {
 	TaxScheme TaxScheme `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
 }
 
+// InvoiceTaxCategory is a struct that encodes a cac:ClassifiedTaxCategory node
+// at invoice line level.
 type InvoiceLineTaxCategory struct {
 	// ID: BT-151
 	// Term: Codul categoriei de TVA a articolului facturat
@@ -1057,6 +1084,26 @@ type InvoiceLineTaxCategory struct {
 	// Cardinality: 0..1
 	Percent   Decimal   `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
 	TaxScheme TaxScheme `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
+}
+
+// MarshalXML implements the xml.Marshaler interface. We use a custom
+// marshaling function for InvoiceLineTaxCategory since we want to keep the
+// Percent a Decimal (not a pointer) for ease of use, be we want to ensure we
+// remove the cbc:Percent node if the category code is "Not subject to VAT".
+func (c InvoiceLineTaxCategory) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type invoiceLineTaxCategory struct {
+		ID        TaxCategoryCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
+		Percent   *Decimal            `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
+		TaxScheme TaxScheme           `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
+	}
+	xmlCat := invoiceLineTaxCategory{
+		ID:        c.ID,
+		TaxScheme: c.TaxScheme,
+	}
+	if c.ID != TaxCategoryNotSubjectToVAT {
+		xmlCat.Percent = c.Percent.Ptr()
+	}
+	return e.EncodeElement(xmlCat, start)
 }
 
 type InvoiceLinePriceAllowanceCharge struct {

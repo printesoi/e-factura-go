@@ -217,25 +217,68 @@ const (
 	TaxSchemeIDVAT TaxSchemeIDType = "VAT"
 )
 
+// Code specifying a duty or tax or fee category.
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred5305.htm
 type TaxCategoryCodeType string
 
 const (
-	TaxCategoryTVACotaNormalaRedusa      TaxCategoryCodeType = "S"
-	TaxCategoryTVACotaZero               TaxCategoryCodeType = "Z"
-	TaxCategoryScutireTVA                TaxCategoryCodeType = "E"
-	TaxCategoryTVATaxareInversa          TaxCategoryCodeType = "AE"
-	TaxCategoryTVALivrariIntracomunitare TaxCategoryCodeType = "K"
-	TaxCategoryTVAExporturi              TaxCategoryCodeType = "G"
-	TaxCategoryNuFaceObiectulTVA         TaxCategoryCodeType = "O"
-	TaxCategoryTaxeInsuleCanare          TaxCategoryCodeType = "L"
-	TaxCategoryTaxeCeutaMelilla          TaxCategoryCodeType = "M"
+	// Standard rate. Code specifying the standard rate.
+	TaxCategoryVATStandardRate TaxCategoryCodeType = "S"
+	// Zero rated goods. Code specifying that the goods are at a zero rate.
+	TaxCategoryVATZeroRate TaxCategoryCodeType = "Z"
+	// Exempt from tax. Code specifying that taxes are not applicable.
+	TaxCategoryVATExempt TaxCategoryCodeType = "E"
+	// VAT Reverse Charge. Code specifying that the standard VAT rate is levied
+	// from the invoicee.
+	TaxCategoryVATReverseCharge TaxCategoryCodeType = "AE"
+	// VAT exempt for EEA intra-community supply of goods and services.
+	// A tax category code indicating the item is VAT exempt due to an
+	// intra-community supply in the European Economic Area.
+	TaxCategoryVATExemptIntraCommunitySupply TaxCategoryCodeType = "K"
+	// Free export item, tax not charged. Code specifying that the item is free
+	// export and taxes are not charged.
+	TaxCategoryVATNotChargedFreeExportItem TaxCategoryCodeType = "G"
+	// Services outside scope of tax. Code specifying that taxes are not
+	// applicable to the services.
+	TaxCategoryNotSubjectToVAT TaxCategoryCodeType = "O"
+	// Canary Islands general indirect tax. Impuesto General Indirecto Canario
+	// (IGIC) is an indirect tax levied on goods and services supplied in the
+	// Canary Islands (Spain) by traders and professionals, as well as on
+	// import of goods.
+	TaxCategoryCanaryIslandsIGIC TaxCategoryCodeType = "L"
+	// Tax for production, services and importation in Ceuta and Melilla.
+	// Impuesto sobre la Producción, los Servicios y la Importación (IPSI) is
+	// an indirect municipal tax, levied on the production, processing and
+	// import of all kinds of movable tangible property, the supply of services
+	// and the transfer of immovable property located in the cities of Ceuta
+	// and Melilla.
+	TaxCategoryCeutaMelillaIPSI TaxCategoryCodeType = "M"
 )
 
+// TaxRateExempted returns true if the VAT rate must be 0 for the receiver
+// category code.
 func (c TaxCategoryCodeType) TaxRateExempted() bool {
 	switch c {
-	case TaxCategoryTVACotaZero, TaxCategoryScutireTVA, TaxCategoryTVATaxareInversa,
-		TaxCategoryTVALivrariIntracomunitare, TaxCategoryTVAExporturi:
+	case TaxCategoryVATZeroRate,
+		TaxCategoryVATExempt,
+		TaxCategoryVATReverseCharge,
+		TaxCategoryVATExemptIntraCommunitySupply,
+		TaxCategoryVATNotChargedFreeExportItem,
+		TaxCategoryNotSubjectToVAT:
+		return true
+	}
+	return false
+}
+
+// ExemptionReasonRequired returns true if the receiver category code requires
+// an exemption reason.
+func (c TaxCategoryCodeType) ExemptionReasonRequired() bool {
+	switch c {
+	case TaxCategoryVATExempt,
+		TaxCategoryVATReverseCharge,
+		TaxCategoryVATExemptIntraCommunitySupply,
+		TaxCategoryVATNotChargedFreeExportItem,
+		TaxCategoryNotSubjectToVAT:
 		return true
 	}
 	return false

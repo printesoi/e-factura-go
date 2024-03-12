@@ -467,7 +467,7 @@ func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeTy
 	return b
 }
 
-func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
+func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 	if b.id == "" || !b.issueDate.IsInitialized() ||
 		b.documentCurrencyID == "" ||
 		(b.taxCurrencyID != "" && b.taxCurrencyID != b.documentCurrencyID && !b.taxCurrencyExchangeRate.IsInitialized()) {
@@ -479,6 +479,7 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 		taxCurrencyID = b.documentCurrencyID
 	}
 
+	var invoice Invoice
 	invoice.ID = b.id
 	invoice.IssueDate = b.issueDate
 	invoice.DueDate = b.dueDate
@@ -526,7 +527,9 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 
 		lineAmount := line.LineExtensionAmount.Amount
 		lineExtensionAmount = lineExtensionAmount.Add(lineAmount)
-		taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, lineAmount)
+		if !taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, lineAmount) {
+			return
+		}
 	}
 	for _, allowanceCharge := range invoice.AllowanceCharges {
 		var amount Decimal
@@ -537,7 +540,9 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 			amount = allowanceCharge.Amount.Amount.Neg()
 			allowanceTotalAmount = allowanceTotalAmount.Add(allowanceCharge.Amount.Amount)
 		}
-		taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amount)
+		if !taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amount) {
+			return
+		}
 	}
 
 	taxTotal, taxTotalTaxCurrency := Zero, Zero
@@ -562,13 +567,12 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 			TaxCategory: taxCategorySummary.category,
 		}
 
-		if categoryCode := subtotal.TaxCategory.ID; categoryCode.TaxRateExempted() {
-			if reason, rok := b.taxExeptionReasons[categoryCode]; !rok {
+		if subtotal.TaxCategory.ID.TaxRateExempted() && subtotal.TaxCategory.ID.ExemptionReasonRequired() {
+			if reason, rok := b.taxExeptionReasons[subtotal.TaxCategory.ID]; !rok {
 				return
 			} else {
 				subtotal.TaxCategory.TaxExemptionReason = reason.reason
 				subtotal.TaxCategory.TaxExemptionReasonCode = reason.code
-
 			}
 		}
 		taxSubtotals = append(taxSubtotals, subtotal)
@@ -631,7 +635,7 @@ func (b *InvoiceBuilder) Build() (invoice Invoice, ok bool) {
 		CurrencyID: b.documentCurrencyID,
 	}
 
-	ok = true
+	retInvoice, ok = invoice, true
 	return
 }
 
@@ -675,7 +679,7 @@ func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amou
 	if category.TaxScheme.ID == TaxSchemeIDVAT {
 		percent := category.Percent.Value()
 		if !category.ID.TaxRateExempted() {
-			if !percent.IsPositive() {
+			if percent.IsZero() {
 				return false
 			}
 		} else if !percent.IsZero() {
