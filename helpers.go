@@ -21,6 +21,8 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strconv"
 
 	"github.com/m29h/xml"
 )
@@ -113,8 +115,43 @@ func buildURL(base *url.URL, refUrl string, query url.Values) (string, error) {
 		return "", err
 	}
 
-	// TODO: support adding query params to and URL already containing query
-	// params.
-	u.RawQuery = query.Encode()
+	if u.RawQuery == "" {
+		u.RawQuery = query.Encode()
+	} else {
+		qs := u.Query()
+		for k, v := range query {
+			qs[k] = v
+		}
+		u.RawQuery = qs.Encode()
+	}
 	return u.String(), nil
+}
+
+func buildParseURL(baseUrl, refUrl string, query url.Values) (string, error) {
+	base, err := url.Parse(baseUrl)
+	if err != nil {
+		return "", err
+	}
+
+	return buildURL(base, refUrl, query)
+}
+
+func atoi64(s string) (n int64, ok bool) {
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return
+	}
+	return i, true
+}
+
+func matchFirstSubmatch(input string, re *regexp.Regexp) (string, bool) {
+	ms := re.FindStringSubmatch(input)
+	if ms == nil || len(ms) < 2 {
+		return "", false
+	}
+	return ms[1], true
+}
+
+func ptrfyString(s string) *string {
+	return &s
 }

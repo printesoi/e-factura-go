@@ -20,6 +20,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -57,7 +58,7 @@ type (
 	}
 
 	RASPMessage struct {
-		UploadIndex int    `xml:"index_incarcare,attr"`
+		UploadIndex int64  `xml:"index_incarcare,attr"`
 		Message     string `xml:"message,attr"`
 
 		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:reqMesaj:v1 header"`
@@ -98,8 +99,6 @@ type (
 		Details      string `json:"detalii"`
 		Type         string `json:"tip"`
 		ID           string `json:"id"`
-		CIFSeller    string `json:"cif_emitent"`
-		CIFCustomer  string `json:"cif_beneficiar"`
 	}
 
 	// MessagesListResponse is the parsed response from the list messages
@@ -166,6 +165,11 @@ const (
 	MessageFilterReceived
 	// Filter that returns only the customer send or received messages
 	MessageFilterCustomerMessage
+)
+
+var (
+	regexSellerCIF = regexp.MustCompile("\\bcif_emitent=(\\d+)")
+	regexBuyerCIF  = regexp.MustCompile("\\bcif_beneficiar=(\\d+)")
 )
 
 func (s ValidateStandard) String() string {
@@ -260,9 +264,35 @@ func (m Message) IsReceivedInvoice() bool {
 	return m.Type == "FACTURA PRIMITA"
 }
 
-//IsBuyerMessage returns true if message type is MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS
+// IsBuyerMessage returns true if message type is MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS
 func (m Message) IsBuyerMessage() bool {
 	return m.Type == "MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS"
+}
+
+// GetID parses and returns the message ID as int64 (since the API returns it
+// as string).
+func (m Message) GetID() int64 {
+	n, _ := atoi64(m.ID)
+	return n
+}
+
+// GetUploadIndex parses and returns the upload index as int64 (since the API
+// returns it as string).
+func (m Message) GetUploadIndex() int64 {
+	n, _ := atoi64(m.UploadIndex)
+	return n
+}
+
+// GetSellerCIF parses message details and returns the seller CIF.
+func (m Message) GetSellerCIF() (sellerCIF string) {
+	sellerCIF, _ = matchFirstSubmatch(m.Details, regexSellerCIF)
+	return
+}
+
+// GetBuyerCIF parses message details and returns the buyer CIF.
+func (m Message) GetBuyerCIF() (buyerCIF string) {
+	buyerCIF, _ = matchFirstSubmatch(m.Details, regexBuyerCIF)
+	return
 }
 
 // IsOk returns true if the response corresponding to a download was successful.
@@ -286,6 +316,7 @@ func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStan
 		return nil, err
 	}
 
+	// This is explicitly requested in the docs.
 	req.Header.Set("Content-Type", "text/plain")
 	resp, err := c.do(req)
 	if resp != nil && resp.Body != nil {
@@ -318,7 +349,7 @@ func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*Validat
 	return c.ValidateXML(ctx, xmlReader, ValidateStandardFACT1)
 }
 
-// XMLToPDF convert the given XML to PDF. To check if the generation is indeed
+// XMLToPDF converts the given XML to PDF. To check if the generation is indeed
 // successful and no validation or other invalid request error occured, check
 // if response.IsOk() == true.
 func (c *Client) XMLToPDF(ctx context.Context, xml io.Reader, st ValidateStandard, noValidate bool) (response *GeneratePDFResponse, err error) {
@@ -375,10 +406,6 @@ func (c *Client) InvoiceToPDF(ctx context.Context, invoice Invoice, noValidate b
 	}
 
 	return c.XMLToPDF(ctx, xmlReader, ValidateStandardFACT1, noValidate)
-}
-
-func ptrfyString(s string) *string {
-	return &s
 }
 
 type uploadOptions struct {
@@ -464,10 +491,10 @@ func (c *Client) UploadRASPMessage(
 // GetMessageState fetch the state of a message. The uploadIndex must a result
 // from an upload operation.
 func (c *Client) GetMessageState(
-	ctx context.Context, uploadIndex int,
+	ctx context.Context, uploadIndex int64,
 ) (response *GetMessageStateResponse, err error) {
 	query := url.Values{
-		"id_incarcare": {strconv.Itoa(uploadIndex)},
+		"id_incarcare": {strconv.FormatInt(uploadIndex, 10)},
 	}
 	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessageState, query, nil)
 	if err = er; err != nil {
