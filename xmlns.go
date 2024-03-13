@@ -28,9 +28,11 @@ const (
 	CIUSRO_v101 = "urn:cen.eu:en16931:2017#compliant#urn:efactura.mfinante.ro:CIUS-RO:1.0.1"
 	// e-factura: UBL Version implemented
 	UBLVersionID = "2.1"
+
+	XMLNSMsgErrorV1 = "mfp:anaf:dgti:efactura:mesajEroriFactuta:v1"
 )
 
 func init() {
-	xml.NameSpaceBinding.Add("urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2", "cac")
-	xml.NameSpaceBinding.Add("urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2", "cbc")
+	xml.NameSpaceBinding.Add(XMLNSUBLcac, "cac")
+	xml.NameSpaceBinding.Add(XMLNSUBLcbc, "cbc")
 }

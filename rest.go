@@ -15,6 +15,8 @@
 package efactura
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -61,6 +63,8 @@ type (
 		UploadIndex int64  `xml:"index_incarcare,attr"`
 		Message     string `xml:"message,attr"`
 
+		// Hardcode the namespace here so we don't need a customer marshaling
+		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:reqMesaj:v1 header"`
 	}
 
@@ -73,6 +77,8 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
+		// Hardcode the namespace here so we don't need a customer marshaling
+		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:respUploadFisier:v1 header"`
 	}
 
@@ -87,6 +93,8 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
+		// Hardcode the namespace here so we don't need a customer marshaling
+		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:stareMesajFactura:v1 header"`
 	}
 
@@ -136,6 +144,29 @@ type (
 		Error *DownloadInvoiceResponseError
 		Zip   []byte
 	}
+
+	// DownloadInvoiceParseZipResponse is the type returned by the
+	// DownloadInvoiceParseZip method. It includes the DownloadInvoiceResponse
+	// and also a *Invoice and a *InvoiceErrorMessage.
+	DownloadInvoiceParseZipResponse struct {
+		DownloadResponse *DownloadInvoiceResponse
+		Invoice          *Invoice
+		InvoiceError     *InvoiceErrorMessage
+	}
+
+	// DownloadInvoiceParseZip is the type corresponding to an Invoice message
+	// error from the download zip.
+	InvoiceErrorMessage struct {
+		UploadIndex int64  `xml:"Index_incarcare,attr,omitempty"`
+		CIFSeller   string `xml:"Cif_emitent,attr,omitempty"`
+		Errors      []struct {
+			ErrorMessage string `xml:"errorMessage,attr"`
+		} `xml:"Error,omitempty"`
+
+		// Hardcode the namespace here so we don't need a customer marshaling
+		// method.
+		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:mesajEroriFactuta:v1 header"`
+	}
 )
 
 const (
@@ -170,6 +201,9 @@ const (
 var (
 	regexSellerCIF = regexp.MustCompile("\\bcif_emitent=(\\d+)")
 	regexBuyerCIF  = regexp.MustCompile("\\bcif_beneficiar=(\\d+)")
+
+	regexZipFile          = regexp.MustCompile("^\\d+.xml$")
+	regexZipSignatureFile = regexp.MustCompile("^semnatura_\\d+.xml$")
 )
 
 func (s ValidateStandard) String() string {
@@ -597,5 +631,88 @@ func (c *Client) DownloadInvoice(
 		err = newErrorResponse(resp,
 			fmt.Errorf("expected application/json or application/pdf, got %s", mediaType))
 	}
+	return
+}
+
+// DownloadInvoiceParseZip same as DownloadInvoice but also parses the zip
+// archive. If the response is not nil, the DownloadResponse will always be
+// set. If there was an error parsing the zip archive, the response will
+// contain the download response, and an error is returned.
+func (c *Client) DownloadInvoiceParseZip(
+	ctx context.Context, downloadID int64,
+) (response *DownloadInvoiceParseZipResponse, err error) {
+	dres, er := c.DownloadInvoice(ctx, downloadID)
+	if er != nil {
+		return nil, er
+	}
+
+	response = new(DownloadInvoiceParseZipResponse)
+	response.DownloadResponse = dres
+	if !dres.IsOk() {
+		return
+	}
+
+	var zr *zip.Reader
+	zr, err = zip.NewReader(bytes.NewReader(dres.Zip), int64(len(dres.Zip)))
+	if err != nil {
+		return
+	}
+
+	if len(zr.File) != 2 {
+		err = fmt.Errorf("Expected exactly 2 files in the archive, got %v", len(zr.File))
+		return
+	}
+
+	readAllZipFile := func(f *zip.File) ([]byte, error) {
+		zof, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer zof.Close()
+		return io.ReadAll(zof)
+	}
+
+	for _, f := range zr.File {
+		if regexZipFile.MatchString(f.Name) {
+			data, er := readAllZipFile(f)
+			if err = er; err != nil {
+				return
+			}
+
+			// This is a trick for optimizing the unmarshaling: since the xml
+			// can be either an Invoice or an InvoiceErrorMessage, we create a
+			// struct with just an xml.Name, and based of the namespace we
+			// unmarshal one or the other.
+			type docName struct {
+				XMLName xml.Name
+			}
+			var doc docName
+			if err = xml.Unmarshal(data, &doc); err != nil {
+				return
+			}
+			switch doc.XMLName.Space {
+			case XMLNSInvoice2:
+				iv := new(Invoice)
+				if err = xml.Unmarshal(data, iv); err != nil {
+					return
+				}
+				response.Invoice = iv
+
+			case XMLNSMsgErrorV1:
+				ie := new(InvoiceErrorMessage)
+				if err = xml.Unmarshal(data, &ie); err != nil {
+					return
+				}
+				response.InvoiceError = ie
+
+			default:
+				err = fmt.Errorf("Invalid namespace for invoice/message '%q'", doc.XMLName.Space)
+				return
+			}
+		} else if regexZipSignatureFile.MatchString(f.Name) {
+			// TODO: parse the signed Invoice
+		}
+	}
+
 	return
 }
