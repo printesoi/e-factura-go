@@ -49,7 +49,7 @@ const (
 	// apiPublicBaseProd points to the production version of the public
 	// (unprotected) API.
 	apiPublicBasePathProd = "/prod/FCTEL/rest/"
-	apiPublicBaseProd     = defaultApiPublicANAF + "/prod/FCTEL/rest/"
+	apiPublicBaseProd     = defaultApiPublicANAF + apiPublicBasePathProd
 
 	apiPathUpload                = "upload"
 	apiPathMessageState          = "stareMesaj"
@@ -123,6 +123,9 @@ func (c *Client) withApiBaseURL(baseURL string, insecureSkipVerify bool) (*Clien
 	if err != nil {
 		return c, err
 	}
+	if !strings.HasSuffix(base.Path, "/") {
+		return c, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", baseURL)
+	}
 
 	c.apiBaseURL = base
 	return c, nil
@@ -133,18 +136,21 @@ func (c *Client) withApiPublicBaseURL(baseURL string, insecureSkipVerify bool) (
 	if err != nil {
 		return c, err
 	}
+	if !strings.HasSuffix(base.Path, "/") {
+		return c, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", baseURL)
+	}
 
 	c.apiPublicBaseURL = base
 	return c, nil
 }
 
-// GetApiBaseUrl returns the base URL as string used by this client.
-func (c *Client) GetApiBaseUrl() string {
+// GetApiBaseURL returns the base URL as string used by this client.
+func (c *Client) GetApiBaseURL() string {
 	return c.apiBaseURL.String()
 }
 
-// GetApiPublicBaseUrl returns the base URL as string used by this client.
-func (c *Client) GetApiPublicBaseUrl() string {
+// GetApiPublicBaseURL returns the base URL as string used by this client.
+func (c *Client) GetApiPublicBaseURL() string {
 	return c.apiPublicBaseURL.String()
 }
 
