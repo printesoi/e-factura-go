@@ -2,6 +2,10 @@
 
 Package efactura provides a client for using the ANAF e-factura API.
 
+## NOTICE ##
+
+**!!! This project is still in alpha stage, use it at you own risk !!!**
+
 ## Installation ##
 
 e-factura-go requires Go version >= 1.20. With Go installed:
@@ -211,16 +215,16 @@ InvoiceBuilder for creating an Invoice.
 
 ## Tasks ##
 
-- [ ] Add tests for all REST API calls and more tests for validating generated
-  XML (maybe checking with the tools provided by mfinante).
-- [ ] Implement CreditNote.
+- [ ] Implement all business terms.
 - [ ] Support parsing the ZIP file from the DownloadInvoice.
 - [ ] Extend the InvoiceBuilder to add all Invoice fields
-- [ ] Implement all business terms.
+- [ ] Implement CreditNote.
+- [ ] Add tests for all REST API calls and more tests for validating generated
+  XML (maybe checking with the tools provided by mfinante).
 - [ ] Check and test API limits.
 - [ ] Godoc and more code examples.
 - [ ] Test coverage
-- [ ] SuppTestInvoiceBuilderort full OAuth2 authentication flow for the client, not just passing
+- [ ] Support full OAuth2 authentication flow for the client, not just passing
   the initial token. This however will be tricky to implement properly since
   the OAuth2 app registered in the ANAF developer profile must have a fixed
   list of HTTPS redirect URLs and the redirect URL used for creating the OAuth2
@@ -228,9 +232,15 @@ InvoiceBuilder for creating an Invoice.
 
 ## Contributing ##
 
-TODO
+Pull requests are more than welcome :)
 
 ## License ##
 
 This library is distributed under the Apache License version 2.0 found in the
 [LICENSE](./LICENSE) file.
+
+## Support me ##
+
+If you like this project and want to support me to make it better you can
+
+<a href="https://www.buymeacoffee.com/printesoi" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" height="41" width="174"></a>
