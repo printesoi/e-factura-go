@@ -1,4 +1,4 @@
-module github.com/e-factura-go/e-factura-go
+module github.com/printesoi/e-factura-go
 
 go 1.20
 
