@@ -1,3 +1,17 @@
+// Copyright 2024 Victor Dodon
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License
+
 package efactura
 
 import (
@@ -80,8 +94,10 @@ func (d Decimal) Div(d2 Decimal) Decimal {
 
 // DivRound divides and rounds to a given precision
 // i.e. to an integer multiple of 10^(-precision)
-//   for a positive quotient digit 5 is rounded up, away from 0
-//   if the quotient is negative then digit 5 is rounded down, away from 0
+//
+//	for a positive quotient digit 5 is rounded up, away from 0
+//	if the quotient is negative then digit 5 is rounded down, away from 0
+//
 // Note that precision<0 is allowed as input.
 func (d Decimal) DivRound(d2 Decimal, precision int32) Decimal {
 	return DD(d.Decimal.DivRound(d2.Decimal, precision))
@@ -101,7 +117,8 @@ func (d Decimal) Pow(d2 Decimal) Decimal {
 //
 // NOTE: precision is the last digit that will not be truncated (must be >= 0).
 // Example:
-//     DD(decimal.NewFromString("123.456")).Truncate(2).String() // "123.45"
+//
+//	DD(decimal.NewFromString("123.456")).Truncate(2).String() // "123.45"
 func (d Decimal) Truncate(precision int32) Decimal {
 	return DD(d.Decimal.Truncate(precision))
 }
@@ -110,8 +127,9 @@ func (d Decimal) Truncate(precision int32) Decimal {
 // If places < 0, it will round the integer part to the nearest 10^(-places).
 //
 // Example:
-//     DD(NewFromFloat(5.45)).Round(1).String() // output: "5.5"
-//     DD(NewFromFloat(545)).Round(-1).String() // output: "550"
+//
+//	DD(NewFromFloat(5.45)).Round(1).String() // output: "5.5"
+//	DD(NewFromFloat(545)).Round(-1).String() // output: "550"
 func (d Decimal) Round(places int32) Decimal {
 	return DD(d.Decimal.Round(places))
 }
