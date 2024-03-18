@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/printesoi/xml-go"
 )
@@ -568,12 +569,13 @@ func (c *Client) GetMessagesList(
 // and a filter. For fetching all messages use MessageFilterAll as the value
 // for msgType.
 func (c *Client) GetMessagesListPagination(
-	ctx context.Context, cif string, startTs, endTs int64, msgType MessageFilterType,
+	ctx context.Context, cif string, startTs, endTs time.Time, page int64, msgType MessageFilterType,
 ) (response *MessagesListPaginationResponse, err error) {
 	query := url.Values{
 		"cif":       {cif},
-		"startTime": {strconv.FormatInt(startTs, 10)},
-		"endTime":   {strconv.FormatInt(endTs, 10)},
+		"startTime": {strconv.FormatInt(startTs.UnixMilli(), 10)},
+		"endTime":   {strconv.FormatInt(endTs.UnixMilli(), 10)},
+		"pagina":    {strconv.FormatInt(page, 10)},
 	}
 	if msgType != MessageFilterAll {
 		query.Set("filter", msgType.String())
@@ -584,7 +586,7 @@ func (c *Client) GetMessagesListPagination(
 		return
 	}
 
-	err = c.doApiUnmarshalXML(req, &response)
+	err = c.doApiUnmarshalJSON(req, &response)
 	return
 }
 

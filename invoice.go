@@ -212,8 +212,9 @@ func (iv Invoice) XML() ([]byte, error) {
 	return iv.XMLIndent("", "")
 }
 
-// XMLIndent returns the XML encoding of the Invoice with the given prefix and
-// indent.
+// XMLIndent works like XML, but each XML element begins on a new
+// indented line that starts with prefix and is followed by one or more
+// copies of indent according to the nesting depth.
 func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
 	var b bytes.Buffer
 	if _, err := b.WriteString(xml.Header); err != nil {
