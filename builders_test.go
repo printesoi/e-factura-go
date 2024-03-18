@@ -419,7 +419,6 @@ func TestInvoiceBuilder(t *testing.T) {
 	}
 	{
 		// A.1.8 Exemplul 7 (Cota normală de TVA cu linii scutite de TVA)
-
 		buildInvoice := func(documentCurrencyID CurrencyCodeType) (Invoice, bool) {
 			var lines []InvoiceLine
 

@@ -1,4 +1,4 @@
-# e-factura-go #
+# e-factura-go [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)#
 
 Package efactura provides a client for using the ANAF e-factura API.
 
@@ -208,10 +208,28 @@ if validateRes.IsOk() {
 }
 ```
 
-## Generating an Invoice
+## Generating an Invoice ##
 
 TODO: See TestInvoiceBuilder() from builders_test.go for an example of using
 InvoiceBuilder for creating an Invoice.
+
+## Getting the raw XML of the invoice ##
+
+In case you need to get the XML encoding of the invoice (eg. you need to store
+it somewhere before the upload):
+
+```go
+var invoice Invoice
+// Build invoice (manually, or with the InvoiceBuilder)
+
+xmlData, err := invoice.XML()
+if err != nil {
+    // Handle error
+}
+```
+
+**NOTE** Don't use the standard `encoding/xml` package for generating the XML
+encoding, since it does not produce Canonical XML [XML-C14N]
 
 ## Tasks ##
 

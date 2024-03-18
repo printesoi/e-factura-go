@@ -15,9 +15,10 @@
 package efactura
 
 import (
+	"bytes"
 	"fmt"
 
-	"github.com/m29h/xml"
+	"github.com/printesoi/xml-go"
 )
 
 // Invoice is the object that represents an e-factura invoice. The invoice
@@ -206,12 +207,36 @@ func (iv *Invoice) Prefill() {
 	}
 }
 
-func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	// this is just to strip away methods like MarshalXML
-	type invoice Invoice
+// XML returns the XML encoding of the Invoice
+func (iv Invoice) XML() ([]byte, error) {
+	return iv.XMLIndent("", "")
+}
+
+// XMLIndent returns the XML encoding of the Invoice with the given prefix and
+// indent.
+func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
+	var b bytes.Buffer
+	if _, err := b.WriteString(xml.Header); err != nil {
+		return nil, err
+	}
+
+	enc := xml.NewEncoder(&b)
+	enc.AddNamespaceBinding(XMLNSUBLcac, "cac")
+	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcac, "cac")
+	enc.AddNamespaceBinding(XMLNSUBLcbc, "cbc")
+	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcbc, "cbc")
+	enc.Indent(prefix, indent)
 
 	iv.Prefill()
-	return e.EncodeElement(invoice(iv), start)
+	if err := enc.Encode(iv); err != nil {
+		enc.Close()
+		return nil, err
+	}
+	if err := enc.Close(); err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
 
 type InvoiceBillingReference struct {

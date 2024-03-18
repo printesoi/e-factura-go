@@ -17,7 +17,7 @@ package efactura
 import (
 	"time"
 
-	"github.com/m29h/xml"
+	"github.com/printesoi/xml-go"
 	"github.com/shopspring/decimal"
 )
 

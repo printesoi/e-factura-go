@@ -1,7 +1,7 @@
 package efactura
 
 import (
-	"github.com/m29h/xml"
+	"github.com/printesoi/xml-go"
 	"github.com/shopspring/decimal"
 )
 

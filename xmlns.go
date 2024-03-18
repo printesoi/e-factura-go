@@ -14,10 +14,6 @@
 
 package efactura
 
-import (
-	xml "github.com/m29h/xml"
-)
-
 // Constants for namespaces and versions
 const (
 	XMLNSInvoice2 = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
@@ -31,8 +27,3 @@ const (
 
 	XMLNSMsgErrorV1 = "mfp:anaf:dgti:efactura:mesajEroriFactuta:v1"
 )
-
-func init() {
-	xml.NameSpaceBinding.Add(XMLNSUBLcac, "cac")
-	xml.NameSpaceBinding.Add(XMLNSUBLcbc, "cbc")
-}

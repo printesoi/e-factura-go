@@ -635,6 +635,7 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 		CurrencyID: b.documentCurrencyID,
 	}
 
+	invoice.Prefill()
 	retInvoice, ok = invoice, true
 	return
 }
