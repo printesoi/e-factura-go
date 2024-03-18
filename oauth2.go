@@ -123,7 +123,7 @@ type tokenJSON struct {
 
 func (e *tokenJSON) expiry() (t time.Time) {
 	if v := e.ExpiresIn; v != 0 {
-		return time.Now().Add(time.Duration(v) * time.Second)
+		return timeNow().Add(time.Duration(v) * time.Second)
 	}
 	return
 }

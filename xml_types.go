@@ -21,6 +21,27 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+var (
+	// RoZoneLocation is the Romanian timezone location loaded in the init
+	// function. This library does not load the time/tzdata package for the
+	// embedded timezone database, so the user of this library is responsible
+	// to ensure the Europe/Bucharest location is available.
+	RoZoneLocation *time.Location
+
+	// Allow mocking and testing
+	timeNow = time.Now
+)
+
+func init() {
+	if loc, err := time.LoadLocation("Europe/Bucharest"); err == nil {
+		RoZoneLocation = loc
+	} else {
+		// If we could not load the Europe/Bucharest location, fallback to
+		// time.UTC
+		RoZoneLocation = time.UTC
+	}
+}
+
 // Date is a wrapper of the time.Time type which marshals to XML in the
 // YYYY-MM-DD format.
 type Date struct {
@@ -29,8 +50,8 @@ type Date struct {
 
 // MakeDateLocal creates a date with the provided year, month and day in the
 // Local time zone location.
-func MakeDateLocal(year int, month time.Month, day int) Date {
-	return Date{time.Date(year, month, day, 0, 0, 0, 0, time.Local)}
+func MakeDate(year int, month time.Month, day int) Date {
+	return Date{time.Date(year, month, day, 0, 0, 0, 0, RoZoneLocation)}
 }
 
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -44,8 +65,7 @@ func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return err
 	}
 
-	// TODO: always use Romanian time zone for date in efactura
-	t, err := time.ParseInLocation(time.DateOnly, sd, time.Local)
+	t, err := time.ParseInLocation(time.DateOnly, sd, RoZoneLocation)
 	if err != nil {
 		return err
 	}
@@ -64,6 +84,17 @@ func (d Date) Ptr() *Date {
 // var declaration with no initialization).
 func (d Date) IsInitialized() bool {
 	return d != Date{}
+}
+
+// Now returns time.Now() in Romanian zone location (Europe/Bucharest)
+func Now() time.Time {
+	return timeNow().In(RoZoneLocation)
+}
+
+// TimeInRomania returns the time t in Romanian zone location
+// (Europe/Bucharest).
+func TimeInRomania(t time.Time) time.Time {
+	return t.In(RoZoneLocation)
 }
 
 // AmountWithCurrency represents an embeddable type that stores an amount as

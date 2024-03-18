@@ -371,8 +371,8 @@ func TestInvoiceBuilder(t *testing.T) {
 		}
 
 		invoiceBuilder := NewInvoiceBuilder("test.example.05").
-			WithIssueDate(MakeDateLocal(2024, 3, 1)).
-			WithDueDate(MakeDateLocal(2024, 3, 31)).
+			WithIssueDate(MakeDate(2024, 3, 1)).
+			WithDueDate(MakeDate(2024, 3, 31)).
 			WithInvoiceTypeCode(InvoiceTypeCommercialInvoice).
 			WithDocumentCurrencyCode(documentCurrencyID).
 			WithSupplier(getInvoiceSupplierParty()).
@@ -506,8 +506,8 @@ func TestInvoiceBuilder(t *testing.T) {
 			}
 
 			invoiceBuilder := NewInvoiceBuilder("test.example.07").
-				WithIssueDate(MakeDateLocal(2024, 3, 1)).
-				WithDueDate(MakeDateLocal(2024, 4, 1)).
+				WithIssueDate(MakeDate(2024, 3, 1)).
+				WithDueDate(MakeDate(2024, 4, 1)).
 				WithInvoiceTypeCode(InvoiceTypeCommercialInvoice).
 				WithDocumentCurrencyCode(documentCurrencyID).
 				WithSupplier(getInvoiceSupplierParty()).
