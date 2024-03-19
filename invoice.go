@@ -161,8 +161,8 @@ type Invoice struct {
 	PaymentMeans *InvoicePaymentMeans `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PaymentMeans,omitempty"`
 	// ID: BT-20
 	// Term: Termeni de plată
-	// Cardinality: 0..n
-	PaymentTerms []PaymentTerms `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PaymentTerms,omitempty"`
+	// Cardinality: 0..1
+	PaymentTerms *PaymentTerms `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PaymentTerms,omitempty"`
 	// test[cbc:ChargeIndicator == false] =>
 	// ID: BG-20
 	// Term: DEDUCERI LA NIVELUL DOCUMENTULUI
