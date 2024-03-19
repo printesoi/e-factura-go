@@ -20,13 +20,27 @@ import "strings"
 type InvoiceTypeCodeType string
 
 const (
-	// Factură comercială
+	// Commercial invoice (RO: Factură comercială)
+	//   (1334) Document/message claiming payment for goods or services supplied
+	//   under conditions agreed between seller and buyer.
 	InvoiceTypeCommercialInvoice InvoiceTypeCodeType = "380"
-	// Factură corectată
+	// Credit Note
+	//   (1113) Document/message for providing credit information to the
+	//   relevant party.
 	InvoiceTypeCreditNote InvoiceTypeCodeType = "381"
-	// Autofactură
+	// Corrected invoice (RO: Factură corectată)
+	//   Commercial invoice that includes revised information differing from an
+	//   earlier submission of the same invoice.
+	InvoiceTypeCorrectedInvoice InvoiceTypeCodeType = "384"
+	// Self-billed invoice (RO: Autofactură)
+	//   An invoice the invoicee is producing instead of the seller.
 	InvoiceTypeSelfBilledInvoice InvoiceTypeCodeType = "389"
-	// Factură - informaţii în scopuri contabile
+	// Invoice information for accounting purposes (RO: Factură - informaţii în
+	// scopuri contabile)
+	//   A document / message containing accounting related information such as
+	//   monetary summations, seller id and VAT information. This may not be a
+	//   complete invoice according to legal requirements. For instance the
+	//   line item information might be excluded.
 	InvoiceTypeInvoiceInformationAccountingPurposes InvoiceTypeCodeType = "751"
 )
 
