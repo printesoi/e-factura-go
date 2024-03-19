@@ -25,7 +25,8 @@ var (
 	// RoZoneLocation is the Romanian timezone location loaded in the init
 	// function. This library does not load the time/tzdata package for the
 	// embedded timezone database, so the user of this library is responsible
-	// to ensure the Europe/Bucharest location is available.
+	// to ensure the Europe/Bucharest location is available, otherwise UTC is
+	// used an may lead to unexpected results.
 	RoZoneLocation *time.Location
 
 	// Allow mocking and testing
@@ -43,15 +44,30 @@ func init() {
 }
 
 // Date is a wrapper of the time.Time type which marshals to XML in the
-// YYYY-MM-DD format.
+// YYYY-MM-DD format and is assumed to be in the Romanian timezone location.
 type Date struct {
 	time.Time
 }
 
-// MakeDateLocal creates a date with the provided year, month and day in the
+// MakeDate creates a date with the provided year, month and day in the
 // Local time zone location.
 func MakeDate(year int, month time.Month, day int) Date {
 	return Date{time.Date(year, month, day, 0, 0, 0, 0, RoZoneLocation)}
+}
+
+// NewDate same as MakeDate, but returns a pointer to Date.
+func NewDate(year int, month time.Month, day int) *Date {
+	return MakeDate(year, month, day).Ptr()
+}
+
+// MakeDateFromTime creates a Date from the given time.Time.
+func MakeDateFromTime(t time.Time) Date {
+	return MakeDate(t.In(RoZoneLocation).Date())
+}
+
+// NewDateFromTime same as MakeDateFromTime, but returns a pointer to Date.
+func NewDateFromTime(t time.Time) *Date {
+	return MakeDate(t.In(RoZoneLocation).Date()).Ptr()
 }
 
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
