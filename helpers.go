@@ -21,6 +21,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 
@@ -154,4 +155,8 @@ func matchFirstSubmatch(input string, re *regexp.Regexp) (string, bool) {
 
 func ptrfyString(s string) *string {
 	return &s
+}
+
+func typeName(v any) string {
+	return reflect.TypeOf(v).Name()
 }

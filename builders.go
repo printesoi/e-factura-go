@@ -76,8 +76,13 @@ func (b *InvoiceLineAllowanceChargeBuilder) WithAllowanceChargeReason(allowanceC
 	return b
 }
 
-func (b *InvoiceLineAllowanceChargeBuilder) Build() (allowanceCharge InvoiceLineAllowanceCharge, ok bool) {
-	if !b.amount.IsInitialized() || b.currencyID == "" {
+func (b InvoiceLineAllowanceChargeBuilder) Build() (allowanceCharge InvoiceLineAllowanceCharge, err error) {
+	if !b.amount.IsInitialized() {
+		err = NewBuilderErrorf("%v: amount not set", typeName(b))
+		return
+	}
+	if b.currencyID == "" {
+		err = NewBuilderErrorf("%v: currency not set", typeName(b))
 		return
 	}
 	allowanceCharge.ChargeIndicator = b.chargeIndicator
@@ -97,7 +102,6 @@ func (b *InvoiceLineAllowanceChargeBuilder) Build() (allowanceCharge InvoiceLine
 	if b.allowanceChargeReason != nil {
 		allowanceCharge.AllowanceChargeReason = *b.allowanceChargeReason
 	}
-	ok = true
 	return
 }
 
@@ -117,7 +121,13 @@ type InvoiceLineBuilder struct {
 
 	invoicePeriod     *InvoiceLinePeriod
 	allowancesCharges []InvoiceLineAllowanceCharge
-	item              InvoiceLineItem
+
+	itemName                       string
+	itemDescription                string
+	itemSellerID                   *string
+	itemStandardItemIdentification *ItemStandardIdentificationCode
+	itemCommodityClassification    *ItemCommodityClassification
+	itemTaxCategory                InvoiceLineTaxCategory
 }
 
 // NewInvoiceLineBuilder creates a new InvoiceLineBuilder
@@ -180,17 +190,63 @@ func (b *InvoiceLineBuilder) AppendAllowanceCharge(allowanceCharge InvoiceLineAl
 	return b.WithAllowancesCharges(append(b.allowancesCharges, allowanceCharge))
 }
 
-func (b *InvoiceLineBuilder) WithItem(item InvoiceLineItem) *InvoiceLineBuilder {
-	b.item = item
+func (b *InvoiceLineBuilder) WithItemName(name string) *InvoiceLineBuilder {
+	b.itemName = name
 	return b
 }
 
-func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
-	if b.id == "" || b.currencyID == "" ||
-		!b.invoicedQuantity.IsInitialized() ||
-		b.unitCode == "" || !b.grossPriceAmount.IsInitialized() ||
-		b.item.Name == "" || b.item.TaxCategory.ID == "" ||
-		b.item.TaxCategory.TaxScheme.ID == "" {
+func (b *InvoiceLineBuilder) WithItemDescription(description string) *InvoiceLineBuilder {
+	b.itemDescription = description
+	return b
+}
+
+func (b *InvoiceLineBuilder) WithItemSellerID(id string) *InvoiceLineBuilder {
+	b.itemSellerID = &id
+	return b
+}
+
+func (b *InvoiceLineBuilder) WithItemStandardItemIdentification(identification ItemStandardIdentificationCode) *InvoiceLineBuilder {
+	b.itemStandardItemIdentification = &identification
+	return b
+}
+
+func (b *InvoiceLineBuilder) WithItemCommodityClassification(classification ItemCommodityClassification) *InvoiceLineBuilder {
+	b.itemCommodityClassification = &classification
+	return b
+}
+
+func (b *InvoiceLineBuilder) WithItemTaxCategory(taxCategory InvoiceLineTaxCategory) *InvoiceLineBuilder {
+	b.itemTaxCategory = taxCategory
+	return b
+}
+
+func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
+	if b.id == "" {
+		err = NewBuilderErrorf("%v: id not set", typeName(b))
+		return
+	}
+	if b.currencyID == "" {
+		err = NewBuilderErrorf("%v: id currency id not set", typeName(b))
+		return
+	}
+	if !b.invoicedQuantity.IsInitialized() {
+		err = NewBuilderErrorf("%v: invoiced quantity not set", typeName(b))
+		return
+	}
+	if b.unitCode == "" {
+		err = NewBuilderErrorf("%v: unit code not set", typeName(b))
+		return
+	}
+	if !b.grossPriceAmount.IsInitialized() {
+		err = NewBuilderErrorf("%v: gross price amount not set", typeName(b))
+		return
+	}
+	if b.itemName == "" {
+		err = NewBuilderErrorf("%v: item name not set", typeName(b))
+		return
+	}
+	if b.itemTaxCategory.ID == "" || b.itemTaxCategory.TaxScheme.ID == "" {
+		err = NewBuilderErrorf("%v: item tax category not set", typeName(b))
 		return
 	}
 
@@ -231,7 +287,16 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 			UnitCode: b.unitCode,
 		}
 	}
-	line.Item = b.item
+
+	line.Item.Name = b.itemName
+	line.Item.Description = b.itemDescription
+	if b.itemSellerID != nil {
+		line.Item.SellerItemID = NewIDNode(*b.itemSellerID)
+	}
+	line.Item.StandardItemIdentification = b.itemStandardItemIdentification
+	line.Item.CommodityClassification = b.itemCommodityClassification
+	line.Item.TaxCategory = b.itemTaxCategory
+
 	line.AllowanceCharges = b.allowancesCharges
 	line.InvoicePeriod = b.invoicePeriod
 
@@ -243,7 +308,8 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		baseQuantity = *b.baseQuantity
 	}
 	if baseQuantity.IsZero() {
-		return line, false
+		err = NewBuilderErrorf("%v: base quantity cannot be zero", typeName(b))
+		return
 	}
 	netAmount := b.invoicedQuantity.Mul(netPriceAmount).Div(baseQuantity)
 	for _, charge := range line.AllowanceCharges {
@@ -258,7 +324,6 @@ func (b *InvoiceLineBuilder) Build() (line InvoiceLine, ok bool) {
 		Amount:     netAmount.AsAmount(),
 		CurrencyID: b.currencyID,
 	}
-	ok = true
 	return
 }
 
@@ -330,9 +395,17 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithAllowanceChargeReason(allowa
 	return b
 }
 
-func (b *InvoiceDocumentAllowanceChargeBuilder) Build() (allowanceCharge InvoiceDocumentAllowanceCharge, ok bool) {
-	if !b.amount.IsInitialized() || b.currencyID == "" ||
-		b.taxCategory.ID == "" || b.taxCategory.TaxScheme.ID == "" {
+func (b InvoiceDocumentAllowanceChargeBuilder) Build() (allowanceCharge InvoiceDocumentAllowanceCharge, err error) {
+	if !b.amount.IsInitialized() {
+		err = NewBuilderErrorf("%v: amount not set", typeName(b))
+		return
+	}
+	if b.currencyID == "" {
+		err = NewBuilderErrorf("%v: current id not set", typeName(b))
+		return
+	}
+	if b.taxCategory.ID == "" || b.taxCategory.TaxScheme.ID == "" {
+		err = NewBuilderErrorf("%v: item tax category not set", typeName(b))
 		return
 	}
 	allowanceCharge.ChargeIndicator = b.chargeIndicator
@@ -353,7 +426,6 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) Build() (allowanceCharge Invoice
 	if b.allowanceChargeReason != nil {
 		allowanceCharge.AllowanceChargeReason = *b.allowanceChargeReason
 	}
-	ok = true
 	return
 }
 
@@ -456,6 +528,11 @@ func (b *InvoiceBuilder) WithInvoiceLines(invoiceLines []InvoiceLine) *InvoiceBu
 	return b
 }
 
+func (b *InvoiceBuilder) Append(lines ...InvoiceLine) *InvoiceBuilder {
+	b.invoiceLines = append(b.invoiceLines, lines...)
+	return b
+}
+
 func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeType, reason string, exemptionCode TaxExemptionReasonCodeType) *InvoiceBuilder {
 	if b.taxExeptionReasons == nil {
 		b.taxExeptionReasons = make(map[TaxCategoryCodeType]taxExemptionReason)
@@ -467,10 +544,21 @@ func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeTy
 	return b
 }
 
-func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
-	if b.id == "" || !b.issueDate.IsInitialized() ||
-		b.documentCurrencyID == "" ||
-		(b.taxCurrencyID != "" && b.taxCurrencyID != b.documentCurrencyID && !b.taxCurrencyExchangeRate.IsInitialized()) {
+func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
+	if b.id == "" {
+		err = NewBuilderErrorf("%v: id not set", typeName(b))
+		return
+	}
+	if !b.issueDate.IsInitialized() {
+		err = NewBuilderErrorf("%v: issue date not set", typeName(b))
+		return
+	}
+	if b.documentCurrencyID == "" {
+		err = NewBuilderErrorf("%v: document currency id not set", typeName(b))
+		return
+	}
+	if b.taxCurrencyID != "" && b.taxCurrencyID != b.documentCurrencyID && !b.taxCurrencyExchangeRate.IsInitialized() {
+		err = NewBuilderErrorf("%v: document to tax currency exchange rate not set", typeName(b))
 		return
 	}
 
@@ -480,6 +568,8 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 	}
 
 	var invoice Invoice
+	invoice.Prefill()
+
 	invoice.ID = b.id
 	invoice.IssueDate = b.issueDate
 	invoice.DueDate = b.dueDate
@@ -518,20 +608,22 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 		payableRoundingAmount = Zero
 		payableAmount         = Zero
 	)
-	taxCategoryMap := make(taxCategoryMap)
 
-	for _, line := range invoice.InvoiceLines {
+	taxCategoryMap := make(taxCategoryMap)
+	for i, line := range invoice.InvoiceLines {
 		if line.LineExtensionAmount.CurrencyID != invoice.DocumentCurrencyCode {
+			err = NewBuilderErrorf("%v: invoice line %d: invalid currency id", typeName(b), i)
 			return
 		}
 
 		lineAmount := line.LineExtensionAmount.Amount
 		lineExtensionAmount = lineExtensionAmount.Add(lineAmount)
 		if !taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, lineAmount) {
+			err = NewBuilderErrorf("%v: invoice line %d: invalid tax category", typeName(b), i)
 			return
 		}
 	}
-	for _, allowanceCharge := range invoice.AllowanceCharges {
+	for i, allowanceCharge := range invoice.AllowanceCharges {
 		var amount Decimal
 		if allowanceCharge.ChargeIndicator {
 			amount = allowanceCharge.Amount.Amount
@@ -541,6 +633,7 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 			allowanceTotalAmount = allowanceTotalAmount.Add(allowanceCharge.Amount.Amount)
 		}
 		if !taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amount) {
+			err = NewBuilderErrorf("%v: invoice allowance/charge %d: invalid tax category", typeName(b), i)
 			return
 		}
 	}
@@ -569,6 +662,8 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 
 		if subtotal.TaxCategory.ID.TaxRateExempted() && subtotal.TaxCategory.ID.ExemptionReasonRequired() {
 			if reason, rok := b.taxExeptionReasons[subtotal.TaxCategory.ID]; !rok {
+				err = NewBuilderErrorf("%v: tax category %s/%s: no exemption reason",
+					typeName(b), subtotal.TaxCategory.ID, subtotal.TaxCategory.Percent.String())
 				return
 			} else {
 				subtotal.TaxCategory.TaxExemptionReason = reason.reason
@@ -614,14 +709,6 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 		Amount:     chargeTotalAmount,
 		CurrencyID: b.documentCurrencyID,
 	}
-	invoice.LegalMonetaryTotal.PrepaidAmount = &AmountWithCurrency{
-		Amount:     prepaidAmount,
-		CurrencyID: b.documentCurrencyID,
-	}
-	invoice.LegalMonetaryTotal.PayableRoundingAmount = &AmountWithCurrency{
-		Amount:     payableRoundingAmount,
-		CurrencyID: b.documentCurrencyID,
-	}
 	invoice.LegalMonetaryTotal.TaxExclusiveAmount = AmountWithCurrency{
 		Amount:     taxExclusiveAmount,
 		CurrencyID: b.documentCurrencyID,
@@ -630,13 +717,24 @@ func (b *InvoiceBuilder) Build() (retInvoice Invoice, ok bool) {
 		Amount:     taxInclusiveAmount,
 		CurrencyID: b.documentCurrencyID,
 	}
+	if !prepaidAmount.IsZero() {
+		invoice.LegalMonetaryTotal.PrepaidAmount = &AmountWithCurrency{
+			Amount:     prepaidAmount,
+			CurrencyID: b.documentCurrencyID,
+		}
+	}
+	if !payableRoundingAmount.IsZero() {
+		invoice.LegalMonetaryTotal.PayableRoundingAmount = &AmountWithCurrency{
+			Amount:     payableRoundingAmount,
+			CurrencyID: b.documentCurrencyID,
+		}
+	}
 	invoice.LegalMonetaryTotal.PayableAmount = AmountWithCurrency{
 		Amount:     payableAmount,
 		CurrencyID: b.documentCurrencyID,
 	}
 
-	invoice.Prefill()
-	retInvoice, ok = invoice, true
+	retInvoice = invoice
 	return
 }
 

@@ -119,8 +119,8 @@ func TestInvoiceLineBuilder(t *testing.T) {
 
 	{
 		b := NewInvoiceLineBuilder("1", CurrencyRON)
-		_, ok := b.Build()
-		assert.False(ok, "should not build if required fields are missing")
+		_, err := b.Build()
+		assert.Error(err, "should not build if required fields are missing")
 	}
 	type lineTest struct {
 		ID             string
@@ -274,10 +274,8 @@ func TestInvoiceLineBuilder(t *testing.T) {
 		b := NewInvoiceLineBuilder(t.ID, t.CurrencyID).
 			WithUnitCode(t.UnitCode).WithInvoicedQuantity(t.Quantity).
 			WithGrossPriceAmount(t.GrossPrice).
-			WithItem(InvoiceLineItem{
-				Name:        t.ItemName,
-				TaxCategory: t.TaxCategory,
-			})
+			WithItemName(t.ItemName).
+			WithItemTaxCategory(t.TaxCategory)
 		if !t.BaseQuantity.IsZero() {
 			b.WithBaseQuantity(t.BaseQuantity)
 		}
@@ -286,28 +284,30 @@ func TestInvoiceLineBuilder(t *testing.T) {
 		}
 		for _, allowance := range t.Allowances {
 			if !allowance.IsZero() {
-				lineAllowance, ok := NewInvoiceLineAllowanceBuilder(t.CurrencyID, allowance).Build()
-				if assert.True(ok) {
+				lineAllowance, err := NewInvoiceLineAllowanceBuilder(t.CurrencyID, allowance).Build()
+				if assert.NoError(err) {
 					b.AppendAllowanceCharge(lineAllowance)
 				}
 			}
 		}
 		for _, charge := range t.Charges {
 			if !charge.IsZero() {
-				lineCharge, ok := NewInvoiceLineChargeBuilder(t.CurrencyID, charge).Build()
-				if assert.True(ok) {
+				lineCharge, err := NewInvoiceLineChargeBuilder(t.CurrencyID, charge).Build()
+				if assert.NoError(err) {
 					b.AppendAllowanceCharge(lineCharge)
 				}
 			}
 		}
-		line, ok := b.Build()
 
-		if assert.True(ok) {
+		line, err := b.Build()
+		if assert.NoError(err) {
 			assert.Equal(a(t.ExpectedLineAmount), a(line.LineExtensionAmount.Amount))
 
 			assert.Equal(t.ID, line.ID)
 			assert.Equal(d(t.Quantity), d(line.InvoicedQuantity.Quantity))
 			assert.Equal(t.ItemName, line.Item.Name)
+			assert.Equal(t.TaxCategory, line.Item.TaxCategory)
+
 			// TODO: compare all fields
 		}
 	}
@@ -325,8 +325,8 @@ func TestInvoiceBuilder(t *testing.T) {
 
 	{
 		b := NewInvoiceBuilder("1")
-		_, ok := b.Build()
-		assert.False(ok, "should not build if required fields are missing")
+		_, err := b.Build()
+		assert.Error(err, "should not build if required fields are missing")
 	}
 	{
 		// A.1.6 Exemplul 5 (Linie a facturii negativă)
@@ -334,39 +334,33 @@ func TestInvoiceBuilder(t *testing.T) {
 
 		var lines []InvoiceLine
 
-		line1, ok := NewInvoiceLineBuilder("1", documentCurrencyID).
+		standardTaxCategory := InvoiceLineTaxCategory{
+			TaxScheme: TaxSchemeVAT,
+			ID:        TaxCategoryVATStandardRate,
+			Percent:   D(25),
+		}
+
+		line1, err := NewInvoiceLineBuilder("1", documentCurrencyID).
 			WithUnitCode("XBX").
 			WithInvoicedQuantity(D(25)).
 			WithGrossPriceAmount(D(9.5)).
 			WithPriceDeduction(D(1)).
-			WithItem(InvoiceLineItem{
-				Name: "Stilouri",
-				TaxCategory: InvoiceLineTaxCategory{
-					TaxScheme: TaxSchemeVAT,
-					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
-				},
-			}).
+			WithItemName("Stilouri").
+			WithItemTaxCategory(standardTaxCategory).
 			Build()
-		if assert.True(ok) {
+		if assert.NoError(err) {
 			lines = append(lines, line1)
 		}
 
-		line2, ok := NewInvoiceLineBuilder("2", documentCurrencyID).
+		line2, err := NewInvoiceLineBuilder("2", documentCurrencyID).
 			WithUnitCode("XBX").
 			WithInvoicedQuantity(D(-10)).
 			WithGrossPriceAmount(D(9.5)).
 			WithPriceDeduction(D(1)).
-			WithItem(InvoiceLineItem{
-				Name: "Stilouri",
-				TaxCategory: InvoiceLineTaxCategory{
-					TaxScheme: TaxSchemeVAT,
-					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
-				},
-			}).
+			WithItemName("Stilouri").
+			WithItemTaxCategory(standardTaxCategory).
 			Build()
-		if assert.True(ok) {
+		if assert.NoError(err) {
 			lines = append(lines, line2)
 		}
 
@@ -379,8 +373,8 @@ func TestInvoiceBuilder(t *testing.T) {
 			WithCustomer(getInvoiceCustomerParty()).
 			WithInvoiceLines(lines)
 
-		invoice, ok := invoiceBuilder.Build()
-		if assert.True(ok) {
+		invoice, err := invoiceBuilder.Build()
+		if assert.NoError(err) {
 			// Invoice lines
 			if assert.Equal(2, len(invoice.InvoiceLines), "should have correct number of lines") {
 				line1 := invoice.InvoiceLines[0]
@@ -419,103 +413,93 @@ func TestInvoiceBuilder(t *testing.T) {
 	}
 	{
 		// A.1.8 Exemplul 7 (Cota normală de TVA cu linii scutite de TVA)
-		buildInvoice := func(documentCurrencyID CurrencyCodeType) (Invoice, bool) {
+		buildInvoice := func(documentCurrencyID CurrencyCodeType) (Invoice, error) {
 			var lines []InvoiceLine
 
-			line1, ok := NewInvoiceLineBuilder("1", documentCurrencyID).
+			line1, err := NewInvoiceLineBuilder("1", documentCurrencyID).
 				WithUnitCode("H87").
 				WithInvoicedQuantity(D(5)).
 				WithGrossPriceAmount(D(25.0)).
-				WithItem(InvoiceLineItem{
-					Name: Transliterate("Cerneală pentru imprimantă"),
-					TaxCategory: InvoiceLineTaxCategory{
-						TaxScheme: TaxSchemeVAT,
-						ID:        TaxCategoryVATStandardRate,
-						Percent:   D(25),
-					},
+				WithItemName(Transliterate("Cerneală pentru imprimantă")).
+				WithItemTaxCategory(InvoiceLineTaxCategory{
+					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
 				}).
 				Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				lines = append(lines, line1)
 			}
 
-			line2, ok := NewInvoiceLineBuilder("2", documentCurrencyID).
+			line2, err := NewInvoiceLineBuilder("2", documentCurrencyID).
 				WithUnitCode("H87").
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(24.0)).
-				WithItem(InvoiceLineItem{
-					Name: Transliterate("Imprimare afiș"),
-					TaxCategory: InvoiceLineTaxCategory{
-						TaxScheme: TaxSchemeVAT,
-						ID:        TaxCategoryVATStandardRate,
-						Percent:   D(10),
-					},
+				WithItemName(Transliterate("Imprimare afiș")).
+				WithItemTaxCategory(InvoiceLineTaxCategory{
+					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(10),
 				}).
 				Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				lines = append(lines, line2)
 			}
 
-			line3, ok := NewInvoiceLineBuilder("3", documentCurrencyID).
+			line3, err := NewInvoiceLineBuilder("3", documentCurrencyID).
 				WithUnitCode("H87").
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(136.0)).
-				WithItem(InvoiceLineItem{
-					Name: Transliterate("Scaun de birou"),
-					TaxCategory: InvoiceLineTaxCategory{
-						TaxScheme: TaxSchemeVAT,
-						ID:        TaxCategoryVATStandardRate,
-						Percent:   D(25),
-					},
+				WithItemName(Transliterate("Scaun de birou")).
+				WithItemTaxCategory(InvoiceLineTaxCategory{
+					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATStandardRate,
+					Percent:   D(25),
 				}).
 				Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				lines = append(lines, line3)
 			}
 
-			line4, ok := NewInvoiceLineBuilder("4", documentCurrencyID).
+			line4, err := NewInvoiceLineBuilder("4", documentCurrencyID).
 				WithUnitCode("H87").
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(95.0)).
-				WithItem(InvoiceLineItem{
-					Name: Transliterate("Tastatură fără fir"),
-					TaxCategory: InvoiceLineTaxCategory{
-						TaxScheme: TaxSchemeVAT,
-						ID:        TaxCategoryVATExempt,
-					},
+				WithItemName(Transliterate("Tastatură fără fir")).
+				WithItemTaxCategory(InvoiceLineTaxCategory{
+					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATExempt,
 				}).
 				Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				lines = append(lines, line4)
 			}
 
-			line5, ok := NewInvoiceLineBuilder("5", documentCurrencyID).
+			line5, err := NewInvoiceLineBuilder("5", documentCurrencyID).
 				WithUnitCode("H87").
 				WithInvoicedQuantity(D(1)).
 				WithGrossPriceAmount(D(53.0)).
-				WithItem(InvoiceLineItem{
-					Name: Transliterate("Cablu de adaptare"),
-					TaxCategory: InvoiceLineTaxCategory{
-						TaxScheme: TaxSchemeVAT,
-						ID:        TaxCategoryVATExempt,
-					},
+				WithItemName(Transliterate("Cablu de adaptare")).
+				WithItemTaxCategory(InvoiceLineTaxCategory{
+					TaxScheme: TaxSchemeVAT,
+					ID:        TaxCategoryVATExempt,
 				}).
 				Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				lines = append(lines, line5)
 			}
 
 			invoiceBuilder := NewInvoiceBuilder("test.example.07").
 				WithIssueDate(MakeDate(2024, 3, 1)).
 				WithDueDate(MakeDate(2024, 4, 1)).
-				WithInvoiceTypeCode(InvoiceTypeCommercialInvoice).
+				WithInvoiceTypeCode(InvoiceTypeSelfBilledInvoice).
 				WithDocumentCurrencyCode(documentCurrencyID).
 				WithSupplier(getInvoiceSupplierParty()).
 				WithCustomer(getInvoiceCustomerParty()).
 				WithInvoiceLines(lines).
 				AddTaxExemptionReason(TaxCategoryVATExempt, "MOTIVUL A", "")
 
-			documentAllowance, ok := NewInvoiceDocumentAllowanceBuilder(
+			documentAllowance, err := NewInvoiceDocumentAllowanceBuilder(
 				documentCurrencyID,
 				D(15),
 				InvoiceTaxCategory{
@@ -524,11 +508,11 @@ func TestInvoiceBuilder(t *testing.T) {
 					Percent:   D(25),
 				},
 			).WithAllowanceChargeReason("Motivul C").Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				invoiceBuilder.AppendAllowanceCharge(documentAllowance)
 			}
 
-			documentCharge, ok := NewInvoiceDocumentChargeBuilder(
+			documentCharge, err := NewInvoiceDocumentChargeBuilder(
 				documentCurrencyID,
 				D(35),
 				InvoiceTaxCategory{
@@ -537,7 +521,7 @@ func TestInvoiceBuilder(t *testing.T) {
 					Percent:   D(25),
 				},
 			).WithAllowanceChargeReason("Motivul B").Build()
-			if assert.True(ok) {
+			if assert.NoError(err) {
 				invoiceBuilder.AppendAllowanceCharge(documentCharge)
 			}
 
@@ -545,14 +529,13 @@ func TestInvoiceBuilder(t *testing.T) {
 				invoiceBuilder.WithTaxCurrencyCode(CurrencyRON)
 				invoiceBuilder.WithDocumentToTaxCurrencyExchangeRate(D(4.9691))
 			}
-
 			return invoiceBuilder.Build()
 		}
 
 		{
 			// BT-5 is RON
-			invoice, ok := buildInvoice(CurrencyRON)
-			if assert.True(ok) {
+			invoice, err := buildInvoice(CurrencyRON)
+			if assert.NoError(err) {
 				// Invoice lines
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]
@@ -609,8 +592,8 @@ func TestInvoiceBuilder(t *testing.T) {
 		{
 			// BT-5 is EUR, BT-6 is RON
 			documentCurrencyID := CurrencyEUR
-			invoice, ok := buildInvoice(documentCurrencyID)
-			if assert.True(ok) {
+			invoice, err := buildInvoice(documentCurrencyID)
+			if assert.NoError(err) {
 				// Invoice lines
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]

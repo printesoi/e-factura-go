@@ -73,3 +73,29 @@ func (r *ErrorResponse) Error() string {
 	}
 	return m
 }
+
+// BuilderError is an error returned by the builders.
+type BuilderError struct {
+	error
+	Term *string
+}
+
+func NewBuilderErrorf(format string, a ...any) *BuilderError {
+	return &BuilderError{
+		error: fmt.Errorf(format, a...),
+	}
+}
+
+func NewBuilderTermErrorf(term string, format string, a ...any) *BuilderError {
+	return &BuilderError{
+		error: fmt.Errorf(format, a...),
+	}
+}
+
+func (e *BuilderError) Error() string {
+	if e.Term == nil {
+		return e.error.Error()
+	}
+
+	return fmt.Sprintf("term: %s, error: %s", *e.Term, e.error.Error())
+}

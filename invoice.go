@@ -1059,7 +1059,7 @@ type InvoiceLineItem struct {
 	// Cardinality: 0..1
 	Description string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Description,omitempty"`
 	// ID: BT-155
-	// Term: BT-155
+	// Term: Identificatorul Vânzătorului articolului
 	// Cardinality: 0..1
 	SellerItemID *IDNode `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 SellersItemIdentification,omitempty"`
 	// ID: BT-157/BT-157-1
@@ -1192,6 +1192,14 @@ func (n InvoiceNote) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 
 type IDNode struct {
 	ID string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
+}
+
+func MakeIDNode(id string) IDNode {
+	return IDNode{ID: id}
+}
+
+func NewIDNode(id string) *IDNode {
+	return &IDNode{ID: id}
 }
 
 type TaxScheme struct {
