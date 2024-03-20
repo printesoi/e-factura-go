@@ -447,9 +447,17 @@ type InvoiceBuilder struct {
 
 	taxExeptionReasons map[TaxCategoryCodeType]taxExemptionReason
 
-	billingReferences []InvoiceBillingReference
-	supplier          InvoiceSupplierParty
-	customer          InvoiceCustomerParty
+	accountingCost            string
+	buyerReference            string
+	orderReference            *InvoiceOrderReference
+	notes                     []InvoiceNote
+	invoicePeriod             *InvoicePeriod
+	billingReferences         []InvoiceDocumentReference
+	contractDocumentReference *string
+	supplier                  InvoiceSupplierParty
+	customer                  InvoiceCustomerParty
+	paymentMeans              *InvoicePaymentMeans
+	paymentTerms              *InvoicePaymentTerms
 
 	allowancesCharges []InvoiceDocumentAllowanceCharge
 	invoiceLines      []InvoiceLine
@@ -495,13 +503,13 @@ func (b *InvoiceBuilder) WithTaxCurrencyCode(currencyID CurrencyCodeType) *Invoi
 	return b
 }
 
-func (b *InvoiceBuilder) WithBillingReferences(billingReferences []InvoiceBillingReference) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithBillingReferences(billingReferences []InvoiceDocumentReference) *InvoiceBuilder {
 	b.billingReferences = billingReferences
 	return b
 }
 
-func (b *InvoiceBuilder) AppendBillingReferences(billingReference InvoiceBillingReference) *InvoiceBuilder {
-	return b.WithBillingReferences(append(b.billingReferences, billingReference))
+func (b *InvoiceBuilder) AppendBillingReferences(billingReferences ...InvoiceDocumentReference) *InvoiceBuilder {
+	return b.WithBillingReferences(append(b.billingReferences, billingReferences...))
 }
 
 func (b *InvoiceBuilder) WithSupplier(supplier InvoiceSupplierParty) *InvoiceBuilder {
@@ -530,6 +538,51 @@ func (b *InvoiceBuilder) WithInvoiceLines(invoiceLines []InvoiceLine) *InvoiceBu
 
 func (b *InvoiceBuilder) Append(lines ...InvoiceLine) *InvoiceBuilder {
 	b.invoiceLines = append(b.invoiceLines, lines...)
+	return b
+}
+
+func (b *InvoiceBuilder) WithAccountingCost(accountingCost string) *InvoiceBuilder {
+	b.accountingCost = accountingCost
+	return b
+}
+
+func (b *InvoiceBuilder) WithBuyerReference(buyerReference string) *InvoiceBuilder {
+	b.buyerReference = buyerReference
+	return b
+}
+
+func (b *InvoiceBuilder) WithOrderReference(orderReference InvoiceOrderReference) *InvoiceBuilder {
+	b.orderReference = &orderReference
+	return b
+}
+
+func (b *InvoiceBuilder) WithNotes(notes []InvoiceNote) *InvoiceBuilder {
+	b.notes = notes
+	return b
+}
+
+func (b *InvoiceBuilder) AppendNotes(notes ...InvoiceNote) *InvoiceBuilder {
+	b.notes = append(b.notes, notes...)
+	return b
+}
+
+func (b *InvoiceBuilder) WithInvoicePeriod(invoicePeriod InvoicePeriod) *InvoiceBuilder {
+	b.invoicePeriod = &invoicePeriod
+	return b
+}
+
+func (b *InvoiceBuilder) WithContractDocumentReference(contractDocumentReference string) *InvoiceBuilder {
+	b.contractDocumentReference = &contractDocumentReference
+	return b
+}
+
+func (b *InvoiceBuilder) WithPaymentMeans(paymentMeans InvoicePaymentMeans) *InvoiceBuilder {
+	b.paymentMeans = &paymentMeans
+	return b
+}
+
+func (b *InvoiceBuilder) WithPaymentTerms(paymentTerms InvoicePaymentTerms) *InvoiceBuilder {
+	b.paymentTerms = &paymentTerms
 	return b
 }
 
@@ -576,15 +629,27 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	invoice.InvoiceTypeCode = b.invoiceType
 	invoice.DocumentCurrencyCode = b.documentCurrencyID
 	invoice.TaxCurrencyCode = b.taxCurrencyID
+	invoice.AccountingCost = b.accountingCost
+	invoice.BuyerReference = b.buyerReference
+	invoice.OrderReference = b.orderReference
+	invoice.Note = b.notes
+	invoice.InvoicePeriod = b.invoicePeriod
 
-	// TODO:
+	for _, ref := range b.billingReferences {
+		invoice.BillingReferences = append(invoice.BillingReferences, InvoiceBillingReference{
+			InvoiceDocumentReference: ref,
+		})
+	}
 
-	invoice.BillingReferences = b.billingReferences
-
-	// TODO:
+	if b.contractDocumentReference != nil {
+		invoice.ContractDocumentReference = NewIDNode(*b.contractDocumentReference)
+	}
 
 	invoice.Supplier.Party = b.supplier
 	invoice.Customer.Party = b.customer
+
+	invoice.PaymentMeans = b.paymentMeans
+	invoice.PaymentTerms = b.paymentTerms
 
 	// amountToTaxAmount converts an Amount assumed to be in the
 	// DocumentCurrencyCode to an amount in TaxCurrencyCode

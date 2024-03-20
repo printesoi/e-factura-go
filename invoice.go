@@ -162,7 +162,7 @@ type Invoice struct {
 	// ID: BT-20
 	// Term: Termeni de plată
 	// Cardinality: 0..1
-	PaymentTerms *PaymentTerms `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PaymentTerms,omitempty"`
+	PaymentTerms *InvoicePaymentTerms `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PaymentTerms,omitempty"`
 	// test[cbc:ChargeIndicator == false] =>
 	// ID: BG-20
 	// Term: DEDUCERI LA NIVELUL DOCUMENTULUI
@@ -717,7 +717,7 @@ type PayeeFinancialAccount struct {
 	FinancialInstitutionBranch *IDNode `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 FinancialInstitutionBranch,omitempty"`
 }
 
-type PaymentTerms struct {
+type InvoicePaymentTerms struct {
 	Note string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Note"`
 }
 
