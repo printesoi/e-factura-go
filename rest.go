@@ -351,6 +351,11 @@ func (r *DownloadInvoiceResponse) IsOk() bool {
 	return r != nil && r.Error == nil
 }
 
+// IsOk returns true if the response corresponding to a download was successful.
+func (r *DownloadInvoiceParseZipResponse) IsOk() bool {
+	return r != nil && r.DownloadResponse.IsOk()
+}
+
 // IsOk returns true if the response corresponding to fetching messages list
 // was successful.
 func (r *MessagesListResponse) IsOk() bool {

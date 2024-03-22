@@ -63,8 +63,8 @@ Construct the required OAuth2 config needed for the Client:
 
 ```go
 oauth2Cfg, err := efactura.MakeOAuth2Config(
-    OAuth2ConfigCredentials(anafAppClientID, anafApplientSecret),
-    OAuth2ConfigRedirectURL(anafAppRedirectURL),
+    efactura.OAuth2ConfigCredentials(anafAppClientID, anafApplientSecret),
+    efactura.OAuth2ConfigRedirectURL(anafAppRedirectURL),
 )
 if err != nil {
     // Handle error
