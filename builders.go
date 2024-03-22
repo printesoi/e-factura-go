@@ -461,6 +461,8 @@ type InvoiceBuilder struct {
 
 	allowancesCharges []InvoiceDocumentAllowanceCharge
 	invoiceLines      []InvoiceLine
+
+	expectedTaxInclusiveAmount *Decimal
 }
 
 func NewInvoiceBuilder(id string) (b *InvoiceBuilder) {
@@ -594,6 +596,17 @@ func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeTy
 		reason: reason,
 		code:   exemptionCode,
 	}
+	return b
+}
+
+// WithExpectedTaxInclusiveAmount sets the expected tax inclusive amount. This
+// is useful in cases where the invoice was already generated and the rounding
+// algorithm might differ from the way the rounding is done for e-factura. If
+// the tax inclusive amount generated is different than the given amount, the
+// BT-114 term will be set (Payable rounding amount) and Payable Amount
+// (BT-115) is adjusted with the difference.
+func (b *InvoiceBuilder) WithExpectedTaxInclusiveAmount(amount Decimal) *InvoiceBuilder {
+	b.expectedTaxInclusiveAmount = amount.Ptr()
 	return b
 }
 
@@ -740,7 +753,10 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 
 	taxExclusiveAmount = lineExtensionAmount.Add(chargeTotalAmount).Sub(allowanceTotalAmount)
 	taxInclusiveAmount = taxExclusiveAmount.Add(taxTotal)
-	payableAmount = taxInclusiveAmount.Sub(prepaidAmount)
+	if b.expectedTaxInclusiveAmount != nil && !b.expectedTaxInclusiveAmount.Equal(taxInclusiveAmount) {
+		payableRoundingAmount = b.expectedTaxInclusiveAmount.Sub(taxInclusiveAmount)
+	}
+	payableAmount = taxInclusiveAmount.Sub(prepaidAmount).Add(payableRoundingAmount)
 
 	if len(taxSubtotals) > 0 {
 		taxTotalNode := InvoiceTaxTotal{
