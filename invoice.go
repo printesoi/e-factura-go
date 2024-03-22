@@ -1216,7 +1216,7 @@ func NewIDNode(id string) *IDNode {
 }
 
 type TaxScheme struct {
-	ID TaxSchemeIDType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
+	ID TaxSchemeIDType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID,omitempty"`
 }
 
 var (
