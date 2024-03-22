@@ -282,13 +282,15 @@ type InvoiceSupplierParty struct {
 	//     despre adresa Vânzătorului.
 	// Cardinality: 1..1
 	PostalAddress InvoiceSupplierPostalAddress `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PostalAddress"`
+	// test[cac:PartyTaxScheme/cac:TaxScheme/cbc:ID == 'VAT'] ==>
+	// Field: TaxScheme.CompanyID
 	// ID: BT-31
 	// Term: Identificatorul de TVA al Vânzătorului
 	// Description: Identificatorul de TVA al Vânzătorului (cunoscut, de
 	//     asemenea, ca numărul de identificare de TVA al Vânzătorului).
 	// Cardinality: 0..1
-	TaxScheme   *InvoicePartyTaxScheme     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PartyTaxScheme,omitempty"`
-	LegalEntity InvoiceSupplierLegalEntity `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PartyLegalEntity"`
+	// test[cac:PartyTaxScheme/cac:TaxScheme/cbc:ID == '']    ==>
+	// Field: TaxScheme.CompanyID
 	// ID: BT-32
 	// Term: Identificatorul de înregistrare fiscală a Vânzătorului
 	// Description: Identificarea locală (definită prin adresa Vânzătorului)
@@ -296,6 +298,8 @@ type InvoiceSupplierParty struct {
 	//     Vânzătorului să demonstreze că este înregistrat la administraţia
 	//     fiscală.
 	// Cardinality: 0..1
+	TaxScheme   *InvoicePartyTaxScheme     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PartyTaxScheme,omitempty"`
+	LegalEntity InvoiceSupplierLegalEntity `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PartyLegalEntity"`
 	// TODO:
 	// ID: BG-6
 	// Term: CONTACTUL VÂNZĂTORULUI
@@ -443,6 +447,7 @@ type InvoiceCustomerParty struct {
 	//     despre adresa Cumpărătorului.
 	// Cardinality: 1..1
 	PostalAddress InvoiceCustomerPostalAddress `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 PostalAddress"`
+	// Field: TaxScheme.CompanyID
 	// ID: BT-48
 	// Term: Identificatorul de TVA al Cumpărătorului
 	// Description: Identificatorul de TVA al Cumpărătorului (cunoscut, de
