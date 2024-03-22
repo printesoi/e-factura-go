@@ -538,7 +538,7 @@ func (b *InvoiceBuilder) WithInvoiceLines(invoiceLines []InvoiceLine) *InvoiceBu
 	return b
 }
 
-func (b *InvoiceBuilder) Append(lines ...InvoiceLine) *InvoiceBuilder {
+func (b *InvoiceBuilder) AppendInvoiceLines(lines ...InvoiceLine) *InvoiceBuilder {
 	b.invoiceLines = append(b.invoiceLines, lines...)
 	return b
 }
