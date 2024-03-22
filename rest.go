@@ -236,9 +236,37 @@ func (r *ValidateResponse) IsOk() bool {
 	return r != nil && r.State == CodeOk
 }
 
+// GetFirstMessage returns the first message from the validate response. If no
+// messages are set, empty string is returned.
+func (r *ValidateResponse) GetFirstMessage() string {
+	if r == nil || len(r.Messages) == 0 {
+		return ""
+	}
+
+	return r.Messages[0].Message
+}
+
 // IsOk returns true if the XML-To-PDF response was successful.
 func (r *GeneratePDFResponse) IsOk() bool {
 	return r != nil && r.Error == nil
+}
+
+// GetError is a getter for the Error field.
+func (r *GeneratePDFResponse) GetError() *GeneratePDFResponseError {
+	if r == nil {
+		return nil
+	}
+	return r.Error
+}
+
+// GetFirstMessage returns the first message from the validate response. If no
+// messages are set, empty string is returned.
+func (r *GeneratePDFResponseError) GetFirstMessage() string {
+	if r == nil || len(r.Messages) == 0 {
+		return ""
+	}
+
+	return r.Messages[0].Message
 }
 
 // IsOk returns true if the response corresponding to an upload was successful.
@@ -253,6 +281,16 @@ func (r *UploadResponse) GetUploadIndex() int64 {
 		return 0
 	}
 	return *r.UploadIndex
+}
+
+// GetFirstErrorMessage returns the first error message. If no error messages
+// are set for the upload response, empty string is returned.
+func (r *UploadResponse) GetFirstErrorMessage() string {
+	if r == nil || len(r.Errors) == 0 {
+		return ""
+	}
+
+	return r.Errors[0].ErrorMessage
 }
 
 // IsOk returns true if the message state if ok (processed, and can be
@@ -284,6 +322,16 @@ func (r *GetMessageStateResponse) IsProcessing() bool {
 // IsInvalidXML returns true if the message state is processing.
 func (r *GetMessageStateResponse) IsInvalidXML() bool {
 	return r != nil && r.State == GetMessageStateCodeInvalidXML
+}
+
+// GetFirstErrorMessage returns the first error message. If no error messages
+// are set for the response, empty string is returned.
+func (r *GetMessageStateResponse) GetFirstErrorMessage() string {
+	if r == nil || len(r.Errors) == 0 {
+		return ""
+	}
+
+	return r.Errors[0].ErrorMessage
 }
 
 func (t MessageFilterType) String() string {
