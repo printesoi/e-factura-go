@@ -240,6 +240,14 @@ func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// UnmarshalInvoice unmarshals an Invoice from XML data. Only use this method
+// for unmarshaling an Invoice, since the standard encoding/xml cannot
+// properly unmarshal a struct like Invoice due to namespace prefixes. This
+// method does not check if the unmarshaled Invoice is valid.
+func UnmarshalInvoice(xmlData []byte, invoice *Invoice) error {
+	return xml.Unmarshal(xmlData, invoice)
+}
+
 type InvoiceBillingReference struct {
 	InvoiceDocumentReference InvoiceDocumentReference `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 InvoiceDocumentReference"`
 }

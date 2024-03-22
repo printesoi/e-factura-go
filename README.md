@@ -9,7 +9,7 @@ Package efactura provides a client for using the ANAF e-factura API.
 
 ## Installation ##
 
-e-factura-go requires Go version >= 1.20. With Go installed:
+e-factura-go requires Go version >= 1.21. With Go installed:
 
 ```bash
 go get github.com/printesoi/e-factura-go
@@ -229,8 +229,30 @@ if err != nil {
 }
 ```
 
+To get the XML with indentation:
+
+```go
+xmlData, err := invoice.XMLIndent("", " ")
+if err != nil {
+    // Handle error
+}
+```
+
+
 **NOTE** Don't use the standard `encoding/xml` package for generating the XML
-encoding, since it does not produce Canonical XML [XML-C14N]
+encoding, since it does not produce Canonical XML [XML-C14N]!
+
+## Unmarshal XML to invoice ##
+
+```go
+var invoice efactura.Invoice
+if err := efactura.UnmarshalInvoice(data, &invoice); err != nil {
+    // Handle error
+}
+```
+
+**NOTE** Only use efactura.UnmarshalInvoice, because `encoding/xml` package
+cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
 
 ## Tasks ##
 
@@ -258,8 +280,8 @@ Pull requests are more than welcome :)
 This library is distributed under the Apache License version 2.0 found in the
 [LICENSE](./LICENSE) file.
 
-## Support me ##
+## Commercial support ##
 
-If you like this project and want to support me to make it better you can
-
-<a href="https://www.buymeacoffee.com/printesoi" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+If you need help integrating this library in your software or you need
+consulting services regarding e-factura APIs contact me (contact email in my
+[Github profile](https://github.com/printesoi)).
