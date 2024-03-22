@@ -148,11 +148,27 @@ type (
 
 	// DownloadInvoiceParseZipResponse is the type returned by the
 	// DownloadInvoiceParseZip method. It includes the DownloadInvoiceResponse
-	// and also a *Invoice and a *InvoiceErrorMessage.
+	// (the zip archive as a []byte), the invoice and signature XML (as
+	// []byte), and also a *Invoice or a *InvoiceErrorMessage (parsed Invoice
+	// or InvoiceErrorMessage from InvoiceXML).
 	DownloadInvoiceParseZipResponse struct {
 		DownloadResponse *DownloadInvoiceResponse
-		Invoice          *Invoice
-		InvoiceError     *InvoiceErrorMessage
+
+		// InvoiceXML is the XML of the Invoice/InvoiceErrorMessage file from
+		// the ZIP archive. This field is useful for storing the raw invoice
+		// XML.
+		InvoiceXML []byte
+		// Signature is the XML of the Signature file from the ZIP archive.
+		// This field is useful for manually parsing and verifying the
+		// signature.
+		SignatureXML []byte
+
+		// Invoice is the parsed Invoice if the InvoiceXML is storing an
+		// invoice.
+		Invoice *Invoice
+		// InvoiceError is the parse InvoiceErrorMessage if InvoiceXML is
+		// storing an invoice error message.
+		InvoiceError *InvoiceErrorMessage
 	}
 
 	// DownloadInvoiceParseZip is the type corresponding to an Invoice message
@@ -639,7 +655,8 @@ func (c *Client) DownloadInvoice(
 // DownloadInvoiceParseZip same as DownloadInvoice but also parses the zip
 // archive. If the response is not nil, the DownloadResponse will always be
 // set. If there was an error parsing the zip archive, the response will
-// contain the download response, and an error is returned.
+// contain the download response, and an error is returned. This method is not
+// validating the signature.
 func (c *Client) DownloadInvoiceParseZip(
 	ctx context.Context, downloadID int64,
 ) (response *DownloadInvoiceParseZipResponse, err error) {
@@ -676,44 +693,56 @@ func (c *Client) DownloadInvoiceParseZip(
 
 	for _, f := range zr.File {
 		if regexZipFile.MatchString(f.Name) {
-			data, er := readAllZipFile(f)
-			if err = er; err != nil {
+			response.InvoiceXML, err = readAllZipFile(f)
+			if err != nil {
 				return
 			}
 
-			// This is a trick for optimizing the unmarshaling: since the xml
-			// can be either an Invoice or an InvoiceErrorMessage, we create a
-			// struct with just an xml.Name, and based of the namespace we
-			// unmarshal one or the other.
-			type docName struct {
-				XMLName xml.Name
-			}
-			var doc docName
-			if err = xml.Unmarshal(data, &doc); err != nil {
-				return
-			}
-			switch doc.XMLName.Space {
-			case XMLNSInvoice2:
-				iv := new(Invoice)
-				if err = xml.Unmarshal(data, iv); err != nil {
-					return
-				}
-				response.Invoice = iv
-
-			case XMLNSMsgErrorV1:
-				ie := new(InvoiceErrorMessage)
-				if err = xml.Unmarshal(data, &ie); err != nil {
-					return
-				}
-				response.InvoiceError = ie
-
-			default:
-				err = fmt.Errorf("Invalid namespace for invoice/message '%q'", doc.XMLName.Space)
-				return
-			}
 		} else if regexZipSignatureFile.MatchString(f.Name) {
-			// TODO: parse the signed Invoice
+			response.SignatureXML, err = readAllZipFile(f)
+			if err != nil {
+				return
+			}
 		}
+	}
+
+	if response.InvoiceXML == nil || response.SignatureXML == nil {
+		err = fmt.Errorf("invoice archive is not complete")
+		return
+	}
+
+	// TODO(victor): validate the signature before unmarshaling the
+	// invoice/message.
+
+	// This is a trick for optimizing the unmarshaling: since the xml
+	// can be either an Invoice or an InvoiceErrorMessage, we create a
+	// struct with just an xml.Name, and based on the namespace we
+	// unmarshal one or the other.
+	type docName struct {
+		XMLName xml.Name
+	}
+	var doc docName
+	if err = xml.Unmarshal(response.InvoiceXML, &doc); err != nil {
+		return
+	}
+	switch doc.XMLName.Space {
+	case XMLNSInvoice2:
+		iv := new(Invoice)
+		if err = xml.Unmarshal(response.InvoiceXML, iv); err != nil {
+			return
+		}
+		response.Invoice = iv
+
+	case XMLNSMsgErrorV1:
+		ie := new(InvoiceErrorMessage)
+		if err = xml.Unmarshal(response.InvoiceXML, &ie); err != nil {
+			return
+		}
+		response.InvoiceError = ie
+
+	default:
+		err = fmt.Errorf("Invalid namespace for invoice/message '%q'", doc.XMLName.Space)
+		return
 	}
 
 	return

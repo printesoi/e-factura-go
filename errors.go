@@ -99,3 +99,13 @@ func (e *BuilderError) Error() string {
 
 	return fmt.Sprintf("term: %s, error: %s", *e.Term, e.error.Error())
 }
+
+// ValidateSignatureError is an error returned if the signature cannot be
+// succesfully validated.
+type ValidateSignatureError struct {
+	error
+}
+
+func NewValidateSignatureError(err error) *ValidateSignatureError {
+	return &ValidateSignatureError{error: err}
+}
