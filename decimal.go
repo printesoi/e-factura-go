@@ -25,20 +25,42 @@ type Decimal struct {
 	decimal.Decimal
 }
 
-var Zero Decimal = D(0)
+// Zero constant, to make computations faster.
+// Zero should never be compared with == or != directly, please use
+// decimal.Equal or decimal.Cmp instead.
+var Zero Decimal = DD(decimal.Zero)
 
-func D(d float64) Decimal {
-	return NewFromDecimal(decimal.NewFromFloat(d))
-}
-
-func DD(d decimal.Decimal) Decimal {
-	return NewFromDecimal(d)
-}
-
+// NewFromDecimal converts a decimal.Decimal to Decimal.
 func NewFromDecimal(d decimal.Decimal) Decimal {
 	return Decimal{Decimal: d}
 }
 
+// DD is a synonym for NewFromDecimal.
+func DD(d decimal.Decimal) Decimal {
+	return NewFromDecimal(d)
+}
+
+// NewFromFloat converts a float64 to Decimal.
+func NewFromFloat(f float64) Decimal {
+	return NewFromDecimal(decimal.NewFromFloat(f))
+}
+
+// D is a synonym for NewFromFloat.
+func D(f float64) Decimal {
+	return NewFromFloat(f)
+}
+
+// NewFromString returns a new Decimal from a string representation.
+// Trailing zeroes are not trimmed.
+func NewFromString(value string) (Decimal, error) {
+	d, err := decimal.NewFromString(value)
+	if err != nil {
+		return Decimal{}, err
+	}
+	return NewFromDecimal(d), nil
+}
+
+// Ptr returns a pointer to d. Useful ins contexts where a pointer is needed.
 func (d Decimal) Ptr() *Decimal {
 	return &d
 }
@@ -52,6 +74,8 @@ func (d *Decimal) IsInitialized() bool {
 	return d.Decimal != decimal.Decimal{}
 }
 
+// Value returns the value of the pointer receiver. If the receiver is nil,
+// Zero is returned.
 func (d *Decimal) Value() Decimal {
 	if d == nil {
 		return Zero
@@ -59,6 +83,7 @@ func (d *Decimal) Value() Decimal {
 	return *d
 }
 
+// MarshalXML implements the xml.Marshaler interface.
 func (d *Decimal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if d == nil {
 		return nil
@@ -128,8 +153,8 @@ func (d Decimal) Truncate(precision int32) Decimal {
 //
 // Example:
 //
-//	DD(NewFromFloat(5.45)).Round(1).String() // output: "5.5"
-//	DD(NewFromFloat(545)).Round(-1).String() // output: "550"
+//	NewFromFloat(5.45).Round(1).String() // output: "5.5"
+//	NewFromFloat(545).Round(-1).String() // output: "550"
 func (d Decimal) Round(places int32) Decimal {
 	return DD(d.Decimal.Round(places))
 }
