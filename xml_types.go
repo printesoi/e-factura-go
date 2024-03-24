@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/printesoi/xml-go"
-	"github.com/shopspring/decimal"
 )
 
 var (
@@ -26,7 +25,7 @@ var (
 	// function. This library does not load the time/tzdata package for the
 	// embedded timezone database, so the user of this library is responsible
 	// to ensure the Europe/Bucharest location is available, otherwise UTC is
-	// used an may lead to unexpected results.
+	// used and may lead to unexpected results.
 	RoZoneLocation *time.Location
 
 	// Allow mocking and testing
@@ -50,7 +49,7 @@ type Date struct {
 }
 
 // MakeDate creates a date with the provided year, month and day in the
-// Local time zone location.
+// Romanian time zone location.
 func MakeDate(year int, month time.Month, day int) Date {
 	return Date{time.Date(year, month, day, 0, 0, 0, 0, RoZoneLocation)}
 }
@@ -60,7 +59,8 @@ func NewDate(year int, month time.Month, day int) *Date {
 	return MakeDate(year, month, day).Ptr()
 }
 
-// MakeDateFromTime creates a Date from the given time.Time.
+// MakeDateFromTime creates a Date in Romanian time zone location from the
+// given time.Time.
 func MakeDateFromTime(t time.Time) Date {
 	return MakeDate(t.In(RoZoneLocation).Date())
 }
@@ -70,11 +70,13 @@ func NewDateFromTime(t time.Time) *Date {
 	return MakeDate(t.In(RoZoneLocation).Date()).Ptr()
 }
 
+// MarshalXML implements the xml.Marshaler interface.
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	v := d.Format(time.DateOnly)
 	return e.EncodeElement(v, start)
 }
 
+// UnmarshalXML implements the xml.Unmarshaler interface.
 func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var sd string
 	if err := d.DecodeElement(&sd, &start); err != nil {
@@ -117,39 +119,8 @@ func TimeInRomania(t time.Time) time.Time {
 // chardata and the currency ID as the currencyID attribute. The name of the
 // node must be controlled by the parent type.
 type AmountWithCurrency struct {
-	Amount     Decimal
-	CurrencyID CurrencyCodeType
-}
-
-// this type is a hack for a limitation of the encoding/xml package: it only
-// supports []byte and string for a chardata.
-type xmlAmountWithCurrency struct {
-	Amount     string           `xml:",chardata"`
+	Amount     Decimal          `xml:",chardata"`
 	CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
-}
-
-func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	xa := xmlAmountWithCurrency{
-		Amount:     a.Amount.String(),
-		CurrencyID: a.CurrencyID,
-	}
-	return e.EncodeElement(xa, start)
-}
-
-func (a *AmountWithCurrency) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var xa xmlAmountWithCurrency
-	if err := d.DecodeElement(&xa, &start); err != nil {
-		return err
-	}
-
-	amount, err := decimal.NewFromString(xa.Amount)
-	if err != nil {
-		return err
-	}
-
-	a.Amount = DD(amount)
-	a.CurrencyID = xa.CurrencyID
-	return nil
 }
 
 // ValueWithAttrs represents and embeddable type that stores a string as
@@ -203,56 +174,40 @@ func (v *ValueWithAttrs) GetAttrByName(name string) (attr xml.Attr) {
 	return
 }
 
-// InvoicedQuantity represents the quantity (of items) on an invoice line.
-type InvoicedQuantity struct {
-	Quantity Decimal
-	// The unit of the quantity.
-	UnitCode UnitCodeType
-	// The quantity unit code list.
-	UnitCodeListID string
-	// The identification of the agency that maintains the quantity unit code
-	// list.
-	UnitCodeListAgencyID string
-	// The name of the agency which maintains the quantity unit code list.
-	UnitCodeListAgencyName string
+// IDNote is a struct that encodes a node that only has a cbc:ID property.
+type IDNode struct {
+	ID string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
 }
 
-// this type is a hack for a limitation of the encoding/xml package: it only
-// supports []byte and string for a chardata.
-type xmlInvoicedQuantity struct {
-	Quantity               string       `xml:",chardata"`
-	UnitCode               UnitCodeType `xml:"unitCode,attr"`
-	UnitCodeListID         string       `xml:"unitCodeListID,attr,omitempty"`
-	UnitCodeListAgencyID   string       `xml:"unitCodeListAgencyID,attr,omitempty"`
-	UnitCodeListAgencyName string       `xml:"unitCodeListAgencyName,attr,omitempty"`
+// MakeIDNode creates a IDNode with the given id.
+func MakeIDNode(id string) IDNode {
+	return IDNode{ID: id}
 }
 
-func (q InvoicedQuantity) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	xq := xmlInvoicedQuantity{
-		Quantity:               q.Quantity.String(),
-		UnitCode:               q.UnitCode,
-		UnitCodeListID:         q.UnitCodeListID,
-		UnitCodeListAgencyID:   q.UnitCodeListAgencyID,
-		UnitCodeListAgencyName: q.UnitCodeListAgencyName,
-	}
-	return e.EncodeElement(xq, start)
+// NewIDNode creates a *IDNode with the given id.
+func NewIDNode(id string) *IDNode {
+	return &IDNode{ID: id}
 }
 
-func (q *InvoicedQuantity) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var xq xmlInvoicedQuantity
-	if err := d.DecodeElement(&xq, &start); err != nil {
-		return err
-	}
+// MarshalXML returns the XML encoding of v in Canonical XML form [XML-C14N].
+// This method must be used for marshaling objects from this library, instead
+// of encoding/xml.
+func MarshalXML(v any) ([]byte, error) {
+	return xml.Marshal(v)
+}
 
-	quantity, err := decimal.NewFromString(xq.Quantity)
-	if err != nil {
-		return err
-	}
+// MarshalIndentXML works like MarshalXML, but each XML element begins on a new
+// indented line that starts with prefix and is followed by one or more
+// copies of indent according to the nesting depth.
+func MarshalIndentXML(v any, prefix, indent string) ([]byte, error) {
+	return xml.MarshalIndent(v, prefix, indent)
+}
 
-	q.Quantity = DD(quantity)
-	q.UnitCode = xq.UnitCode
-	q.UnitCodeListID = xq.UnitCodeListID
-	q.UnitCodeListAgencyID = xq.UnitCodeListAgencyID
-	q.UnitCodeListAgencyName = xq.UnitCodeListAgencyName
-	return nil
+// Unmarshal parses the XML-encoded data and stores the result in
+// the value pointed to by v, which must be an arbitrary struct,
+// slice, or string. Well-formed data that does not fit into v is
+// discarded. This method must be used for unmarshaling objects from this
+// library, instead of encoding/xml.
+func UnmarshalXML(data []byte, v any) error {
+	return xml.Unmarshal(data, v)
 }

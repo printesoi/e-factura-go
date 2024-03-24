@@ -15,7 +15,6 @@
 package efactura
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/printesoi/xml-go"
@@ -182,24 +181,24 @@ type Invoice struct {
 	// Cardinality: 1..n
 	InvoiceLines []InvoiceLine `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 InvoiceLine"`
 
-	// Name of node. Will be automatically set in MarshalXML
+	// Name of node.
 	XMLName xml.Name `xml:"Invoice"`
-	// xmlns. Will be automatically set in MarshalXML
-	NS string `xml:"xmlns,attr"`
-	// xmlns:cac. Will be automatically set in MarshalXML
-	NScac string `xml:"xmlns:cac,attr"`
-	// xmlns:cbc. Will be automatically set in MarshalXML
-	NScbc string `xml:"xmlns:cbc,attr"`
-	// generated with... Will be automatically set in MarshalXML
+	// xmlns attr. Will be automatically set in MarshalXML
+	Namespace string `xml:"xmlns,attr"`
+	// xmlns:cac attr. Will be automatically set in MarshalXML
+	NamespaceCAC string `xml:"xmlns:cac,attr"`
+	// xmlns:cbc attr. Will be automatically set in MarshalXML
+	NamespaceCBC string `xml:"xmlns:cbc,attr"`
+	// generated with... Will be automatically set in MarshalXML if empty.
 	Comment string `xml:",comment"`
 }
 
 // Prefill sets the  NS, NScac, NScbc and Comment properties for ensuring that
-// the required attributes and properties are set vor a valid UBL XML.
+// the required attributes and properties are set for a valid UBL XML.
 func (iv *Invoice) Prefill() {
-	iv.NS = XMLNSInvoice2
-	iv.NScac = XMLNSUBLcac
-	iv.NScbc = XMLNSUBLcbc
+	iv.Namespace = XMLNSInvoice2
+	iv.NamespaceCAC = XMLNSUBLcac
+	iv.NamespaceCBC = XMLNSUBLcbc
 	iv.UBLVersionID = UBLVersionID
 	iv.CustomizationID = CIUSRO_v101
 	if iv.Comment == "" {
@@ -207,37 +206,23 @@ func (iv *Invoice) Prefill() {
 	}
 }
 
+func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type invoice Invoice
+	setupUBLXMLEncoder(e)
+	iv.Prefill()
+	return e.EncodeElement(invoice(iv), start)
+}
+
 // XML returns the XML encoding of the Invoice
 func (iv Invoice) XML() ([]byte, error) {
-	return iv.XMLIndent("", "")
+	return MarshalXML(iv)
 }
 
 // XMLIndent works like XML, but each XML element begins on a new
 // indented line that starts with prefix and is followed by one or more
 // copies of indent according to the nesting depth.
 func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
-	var b bytes.Buffer
-	if _, err := b.WriteString(xml.Header); err != nil {
-		return nil, err
-	}
-
-	enc := xml.NewEncoder(&b)
-	enc.AddNamespaceBinding(XMLNSUBLcac, "cac")
-	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcac, "cac")
-	enc.AddNamespaceBinding(XMLNSUBLcbc, "cbc")
-	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcbc, "cbc")
-	enc.Indent(prefix, indent)
-
-	iv.Prefill()
-	if err := enc.Encode(iv); err != nil {
-		enc.Close()
-		return nil, err
-	}
-	if err := enc.Close(); err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
+	return MarshalIndentXML(iv, prefix, indent)
 }
 
 // UnmarshalInvoice unmarshals an Invoice from XML data. Only use this method
@@ -245,7 +230,7 @@ func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
 // properly unmarshal a struct like Invoice due to namespace prefixes. This
 // method does not check if the unmarshaled Invoice is valid.
 func UnmarshalInvoice(xmlData []byte, invoice *Invoice) error {
-	return xml.Unmarshal(xmlData, invoice)
+	return UnmarshalXML(xmlData, invoice)
 }
 
 type InvoiceBillingReference struct {
@@ -982,6 +967,20 @@ type InvoiceLine struct {
 	Price InvoiceLinePrice `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 Price"`
 }
 
+// InvoicedQuantity represents the quantity (of items) on an invoice line.
+type InvoicedQuantity struct {
+	Quantity Decimal `xml:",chardata"`
+	// The unit of the quantity.
+	UnitCode UnitCodeType `xml:"unitCode,attr"`
+	// The quantity unit code list.
+	UnitCodeListID string `xml:"unitCodeListID,attr,omitempty"`
+	// The identification of the agency that maintains the quantity unit code
+	// list.
+	UnitCodeListAgencyID string `xml:"unitCodeListAgencyID,attr,omitempty"`
+	// The name of the agency which maintains the quantity unit code list.
+	UnitCodeListAgencyName string `xml:"unitCodeListAgencyName,attr,omitempty"`
+}
+
 type InvoiceLinePeriod struct {
 	// ID: BT-134
 	// Term: Data de început a perioadei de facturare a liniei facturii
@@ -1201,18 +1200,6 @@ func (n InvoiceNote) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	}
 	// TODO: implement parsing the code
 	return nil
-}
-
-type IDNode struct {
-	ID string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
-}
-
-func MakeIDNode(id string) IDNode {
-	return IDNode{ID: id}
-}
-
-func NewIDNode(id string) *IDNode {
-	return &IDNode{ID: id}
 }
 
 type TaxScheme struct {

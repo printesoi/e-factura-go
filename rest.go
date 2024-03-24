@@ -411,6 +411,7 @@ func (r *MessagesListResponse) IsOk() bool {
 }
 
 // ValidateXML call the validate endpoint with the given standard and XML body
+// reader.
 func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStandard) (*ValidateResponse, error) {
 	var response *ValidateResponse
 
@@ -775,26 +776,26 @@ func (c *Client) DownloadInvoiceParseZip(
 		XMLName xml.Name
 	}
 	var doc docName
-	if err = xml.Unmarshal(response.InvoiceXML, &doc); err != nil {
+	if err = UnmarshalXML(response.InvoiceXML, &doc); err != nil {
 		return
 	}
 	switch doc.XMLName.Space {
 	case XMLNSInvoice2:
 		iv := new(Invoice)
-		if err = xml.Unmarshal(response.InvoiceXML, iv); err != nil {
+		if err = UnmarshalXML(response.InvoiceXML, iv); err != nil {
 			return
 		}
 		response.Invoice = iv
 
 	case XMLNSMsgErrorV1:
 		ie := new(InvoiceErrorMessage)
-		if err = xml.Unmarshal(response.InvoiceXML, &ie); err != nil {
+		if err = UnmarshalXML(response.InvoiceXML, &ie); err != nil {
 			return
 		}
 		response.InvoiceError = ie
 
 	default:
-		err = fmt.Errorf("Invalid namespace for invoice/message '%q'", doc.XMLName.Space)
+		err = fmt.Errorf("Invalid namespace for invoice/message: %q", doc.XMLName.Space)
 		return
 	}
 

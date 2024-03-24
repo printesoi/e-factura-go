@@ -91,7 +91,17 @@ func xmlUnmarshalReader(r io.Reader, v any) error {
 	if err != nil {
 		return err
 	}
-	return xml.Unmarshal(data, v)
+	return UnmarshalXML(data, v)
+}
+
+// setupUBLXMLEncoder will configure the xml.Encoder to make it suitable for
+// marshaling UBL objects to XML.
+func setupUBLXMLEncoder(enc *xml.Encoder) *xml.Encoder {
+	enc.AddNamespaceBinding(XMLNSUBLcac, "cac")
+	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcac, "cac")
+	enc.AddNamespaceBinding(XMLNSUBLcbc, "cbc")
+	enc.AddSkipNamespaceAttrForPrefix(XMLNSUBLcbc, "cbc")
+	return enc
 }
 
 // xmlMarshalReader returns the XML encoding of v as a io.Reader.
