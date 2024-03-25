@@ -518,11 +518,11 @@ type uploadOptions struct {
 	autofactura *string
 }
 
-type uploadOption func(*uploadOptions)
+type UploadOption func(*uploadOptions)
 
 // UploadOptionForeign is an upload option specifiying that the buyer is not a
 // Romanian entity (no CUI or NIF).
-func UploadOptionForeign() uploadOption {
+func UploadOptionForeign() UploadOption {
 	return func(o *uploadOptions) {
 		o.extern = ptrfyString("DA")
 	}
@@ -531,7 +531,7 @@ func UploadOptionForeign() uploadOption {
 // UploadOptionSelfBilled is an upload option specifying that it's a
 // self-billed invoice (the buyer is issuing the invoice on behalf of the
 // supplier.
-func UploadOptionSelfBilled() uploadOption {
+func UploadOptionSelfBilled() UploadOption {
 	return func(o *uploadOptions) {
 		o.autofactura = ptrfyString("DA")
 	}
@@ -540,7 +540,7 @@ func UploadOptionSelfBilled() uploadOption {
 // UploadXML uploads and invoice or message XML. Optional upload options can be
 // provided via call params.
 func (c *Client) UploadXML(
-	ctx context.Context, xml io.Reader, st UploadStandard, cif string, opts ...uploadOption,
+	ctx context.Context, xml io.Reader, st UploadStandard, cif string, opts ...UploadOption,
 ) (response *UploadResponse, err error) {
 	uploadOptions := uploadOptions{}
 	for _, opt := range opts {
@@ -582,16 +582,15 @@ func (c *Client) UploadInvoice(
 	return c.UploadXML(ctx, xmlReader, UploadStandardUBL, cif, opts...)
 }
 
-// UploadRASPMessage uploads the given RASPMessage with the provided optional
-// options.
+// UploadRASPMessage uploads the given RASPMessage.
 func (c *Client) UploadRASPMessage(
-	ctx context.Context, msg RASPMessage, cif string, opts ...uploadOption,
+	ctx context.Context, msg RASPMessage, cif string,
 ) (response *UploadResponse, err error) {
 	xmlReader, err := xmlMarshalReader(msg)
 	if err != nil {
 		return nil, err
 	}
-	return c.UploadXML(ctx, xmlReader, UploadStandardRASP, cif, opts...)
+	return c.UploadXML(ctx, xmlReader, UploadStandardRASP, cif)
 }
 
 // GetMessageState fetch the state of a message. The uploadIndex must a result
