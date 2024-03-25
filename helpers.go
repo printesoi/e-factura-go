@@ -167,6 +167,21 @@ func ptrfyString(s string) *string {
 	return &s
 }
 
+func ptrfyStringNotEmpty(s string) *string {
+	if s != "" {
+		return &s
+	}
+	return nil
+}
+
 func typeName(v any) string {
 	return reflect.TypeOf(v).Name()
+}
+
+func typeNameAddrPtr(v any) string {
+	rt := reflect.TypeOf(v)
+	if rt.Kind() == reflect.Pointer {
+		rt = rt.Elem()
+	}
+	return rt.Name()
 }

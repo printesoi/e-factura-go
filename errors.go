@@ -77,27 +77,29 @@ func (r *ErrorResponse) Error() string {
 // BuilderError is an error returned by the builders.
 type BuilderError struct {
 	error
-	Term *string
+	Builder string
+	Term    *string
 }
 
-func NewBuilderErrorf(format string, a ...any) *BuilderError {
+func newBuilderNameErrorf(builder, term string, format string, a ...any) *BuilderError {
 	return &BuilderError{
-		error: fmt.Errorf(format, a...),
+		error:   fmt.Errorf(format, a...),
+		Builder: builder,
+		Term:    ptrfyStringNotEmpty(term),
 	}
 }
 
-func NewBuilderTermErrorf(term string, format string, a ...any) *BuilderError {
-	return &BuilderError{
-		error: fmt.Errorf(format, a...),
-	}
+func newBuilderErrorf(builder any, term string, format string, a ...any) *BuilderError {
+	return newBuilderNameErrorf(typeNameAddrPtr(builder), term, format, a...)
 }
 
 func (e *BuilderError) Error() string {
-	if e.Term == nil {
-		return e.error.Error()
+	errMsg := fmt.Sprintf("%s: ", e.Builder)
+	if e.Term != nil {
+		errMsg += fmt.Sprintf("term=%s: ", *e.Term)
 	}
-
-	return fmt.Sprintf("term: %s, error: %s", *e.Term, e.error.Error())
+	errMsg += e.error.Error()
+	return errMsg
 }
 
 // ValidateSignatureError is an error returned if the signature cannot be
