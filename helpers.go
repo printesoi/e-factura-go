@@ -28,6 +28,15 @@ import (
 	"github.com/printesoi/xml-go"
 )
 
+const (
+	mediaTypeApplicationJSON = "application/json"
+	mediaTypeApplicationXML  = "application/xml"
+	mediaTypeApplicationPDF  = "application/pdf"
+	mediaTypeApplicationZIP  = "application/zip"
+	mediaTypeTextXML         = "text/xml"
+	mediaTypeTextPlain       = "text/plain"
+)
+
 // This is a copy of the drainBody from src/net/http/httputil/dump.go
 func drainBody(b io.ReadCloser) (body []byte, r2 io.ReadCloser, err error) {
 	if b == nil || b == http.NoBody {
@@ -59,7 +68,11 @@ func responseMediaType(headers http.Header) (mediaType string) {
 }
 
 func responseBodyIsJSON(headers http.Header) bool {
-	return responseMediaType(headers) == "application/json"
+	return responseMediaType(headers) == mediaTypeApplicationJSON
+}
+
+func responseBodyIsPlainText(headers http.Header) bool {
+	return responseMediaType(headers) == mediaTypeTextPlain
 }
 
 func responseBodyIsXML(headers http.Header) bool {

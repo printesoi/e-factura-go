@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strconv"
 )
 
 // ErrorResponse is an error returns if the HTTP requests was finished (we got
@@ -35,7 +37,10 @@ type ErrorResponse struct {
 	Message      *string
 }
 
-func newErrorResponse(resp *http.Response, err error) *ErrorResponse {
+// newErrorResponseParse creates a new *ErrorResponse from the given
+// http.Response and error. If parse is true, we try to unmarshal the body as
+// JSON to extract some additional info about the error.
+func newErrorResponseParse(resp *http.Response, err error, parse bool) *ErrorResponse {
 	errResp := &ErrorResponse{
 		StatusCode: resp.StatusCode,
 		Status:     resp.Status,
@@ -46,18 +51,43 @@ func newErrorResponse(resp *http.Response, err error) *ErrorResponse {
 
 	data, err := peekResponseBody(resp)
 	errResp.ResponseBody = data
-	if err == nil && len(data) > 0 && responseBodyIsJSON(resp.Header) {
+	if !parse {
+		return errResp
+	}
+
+	responseSeemsJSON := func() bool {
+		if responseBodyIsJSON(resp.Header) {
+			return true
+		}
+		if responseBodyIsPlainText(resp.Header) {
+			if len(data) > 0 && data[0] == '{' {
+				return true
+			}
+		}
+		return false
+	}
+
+	if err == nil && len(data) > 0 && responseSeemsJSON() {
 		var b struct {
 			TraceID *string `json:"trace_id,omitempty"`
 			Message *string `json:"message,omitempty"`
+			Error   *string `json:"eroare,omitempty"`
 		}
 		// Don't care if we get an error here.
-		json.Unmarshal(data, &b)
+		_ = json.Unmarshal(data, &b)
 		errResp.TraceID = b.TraceID
 		errResp.Message = b.Message
+		if b.Message == nil && b.Error != nil {
+			errResp.Message = b.Error
+		}
 	}
 
 	return errResp
+}
+
+// newErrorResponse is synonym to newErrorResponseParse(resp, err, true)
+func newErrorResponse(resp *http.Response, err error) *ErrorResponse {
+	return newErrorResponseParse(resp, err, true)
 }
 
 func (r *ErrorResponse) Error() string {
@@ -81,6 +111,8 @@ type BuilderError struct {
 	Term    *string
 }
 
+// newBuilderNameErrorf creates a new Builder error for the given builder name,
+// term and format string and args.
 func newBuilderNameErrorf(builder, term string, format string, a ...any) *BuilderError {
 	return &BuilderError{
 		error:   fmt.Errorf(format, a...),
@@ -89,6 +121,8 @@ func newBuilderNameErrorf(builder, term string, format string, a ...any) *Builde
 	}
 }
 
+// newBuilderErrorf same as newBuilderNameErrorf but the builder name is taken
+// from the type name of builder.
 func newBuilderErrorf(builder any, term string, format string, a ...any) *BuilderError {
 	return newBuilderNameErrorf(typeNameAddrPtr(builder), term, format, a...)
 }
@@ -108,6 +142,62 @@ type ValidateSignatureError struct {
 	error
 }
 
-func NewValidateSignatureError(err error) *ValidateSignatureError {
+func newValidateSignatureError(err error) *ValidateSignatureError {
 	return &ValidateSignatureError{error: err}
+}
+
+// LimitExceededError is an error returned if we hit an API limit.
+type LimitExceededError struct {
+	*ErrorResponse
+	Limit int64
+}
+
+func newLimitExceededError(r *http.Response, limit int64, err error) *LimitExceededError {
+	return &LimitExceededError{
+		ErrorResponse: newErrorResponseParse(r, err, false),
+		Limit:         limit,
+	}
+}
+
+func (e *LimitExceededError) Error() string {
+	return e.ErrorResponse.Error()
+}
+
+var (
+	regexLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) .* in cursul zilei")
+	regexDownloadID       = regexp.MustCompile("id_descarcare=(\\d+)")
+	regexCUI              = regexp.MustCompile("CUI=\\s*(\\d+)")
+
+	// regexDownloadLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) descarcari la mesajul cu id_descarcare=(\\d+)\\s* in cursul zilei")
+	// regexGetMessagesLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) de interogari de tip lista mesaje .* de catre CUI=\\s*(\\d+)\\s* in cursul zilei")
+)
+
+func errorMessageMatchLimitExceeded(err string) (limit int64, match bool) {
+	if m, ok := matchFirstSubmatch(err, regexLimitExceededMsg); ok {
+		limit, _ := strconv.ParseInt(m, 10, 64)
+		return limit, true
+	}
+	return
+}
+
+func newErrorResponseDetectType(resp *http.Response) error {
+	data, err := peekResponseBody(resp)
+	if err == nil && len(data) > 0 {
+		var b struct {
+			Title string `json:"titlu"`
+			Error string `json:"eroare"`
+		}
+		// Don't care if we get an error here.
+		_ = json.Unmarshal(data, &b)
+		if b.Error != "" {
+			rerr := fmt.Errorf("%s: %s", b.Title, b.Error)
+			if limit, ok := errorMessageMatchLimitExceeded(b.Error); ok {
+				return newLimitExceededError(resp, limit, rerr)
+			}
+
+			return newErrorResponseParse(resp, rerr, false)
+		}
+	}
+
+	return newErrorResponse(resp, nil)
 }

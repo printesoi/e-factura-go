@@ -173,13 +173,19 @@ func (c *Client) doApiUnmarshalXML(req *http.Request, response any) error {
 	}
 
 	if !responseBodyIsXML(resp.Header) {
+		if responseBodyIsPlainText(resp.Header) {
+			return newErrorResponseDetectType(resp)
+		}
 		return newErrorResponse(resp,
-			fmt.Errorf("expected application/xml, got %s", responseMediaType(resp.Header)))
+			fmt.Errorf("expected %s, got %s", mediaTypeApplicationXML, responseMediaType(resp.Header)))
 	}
-	return xmlUnmarshalReader(resp.Body, response)
+	if err := xmlUnmarshalReader(resp.Body, response); err != nil {
+		return newErrorResponseParse(resp, err, false)
+	}
+	return nil
 }
 
-func (c *Client) doApiUnmarshalJSON(req *http.Request, response any) error {
+func (c *Client) doApiUnmarshalJSON(req *http.Request, destResponse any, cb func(*http.Response, any) error) error {
 	resp, err := c.do(req)
 	if resp != nil && resp.Body != nil {
 		defer resp.Body.Close()
@@ -189,10 +195,19 @@ func (c *Client) doApiUnmarshalJSON(req *http.Request, response any) error {
 	}
 
 	if !responseBodyIsJSON(resp.Header) {
+		if responseBodyIsPlainText(resp.Header) {
+			return newErrorResponseDetectType(resp)
+		}
 		return newErrorResponse(resp,
-			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
+			fmt.Errorf("expected %s, got %s", mediaTypeApplicationJSON, responseMediaType(resp.Header)))
 	}
-	return jsonUnmarshalReader(resp.Body, response)
+	if err := jsonUnmarshalReader(resp.Body, destResponse); err != nil {
+		return newErrorResponseParse(resp, err, false)
+	}
+	if cb != nil {
+		return cb(resp, destResponse)
+	}
+	return nil
 }
 
 // RequestOption represents an option that can modify an http.Request.

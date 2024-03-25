@@ -432,13 +432,13 @@ func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStan
 	}
 	if !responseBodyIsJSON(resp.Header) {
 		return nil, newErrorResponse(resp,
-			fmt.Errorf("expected application/json, got %s", responseMediaType(resp.Header)))
+			fmt.Errorf("expected %s, got %s", mediaTypeApplicationJSON, responseMediaType(resp.Header)))
 	}
 
 	response = new(ValidateResponse)
 	if err := jsonUnmarshalReader(resp.Body, response); err != nil {
-		return nil, newErrorResponse(resp,
-			fmt.Errorf("failed to decode JSON body: %v", err))
+		return nil, newErrorResponseParse(resp,
+			fmt.Errorf("failed to decode JSON body: %v", err), false)
 	}
 
 	return response, nil
@@ -479,25 +479,25 @@ func (c *Client) XMLToPDF(ctx context.Context, xml io.Reader, st ValidateStandar
 	// If the response content type is application/json, then the validation
 	// failed, otherwise we got the PDF in response body
 	switch mediaType := responseMediaType(resp.Header); mediaType {
-	case "application/json":
-		response = &GeneratePDFResponse{
-			Error: &GeneratePDFResponseError{},
-		}
-		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
-			err = newErrorResponse(resp,
-				fmt.Errorf("failed to unmarshal response body: %v", err))
+	case mediaTypeApplicationJSON:
+		resError := new(GeneratePDFResponseError)
+		if err = jsonUnmarshalReader(resp.Body, resError); err != nil {
+			err = newErrorResponseParse(resp,
+				fmt.Errorf("failed to unmarshal response body: %v", err), false)
 			return
 		}
-	case "application/pdf":
+		response = &GeneratePDFResponse{Error: resError}
+	case mediaTypeApplicationPDF:
 		response = &GeneratePDFResponse{}
 		if response.PDF, err = io.ReadAll(resp.Body); err != nil {
-			err = newErrorResponse(resp,
-				fmt.Errorf("failed to read body: %v", err))
+			err = newErrorResponseParse(resp,
+				fmt.Errorf("failed to read body: %v", err), false)
 			return
 		}
 	default:
 		err = newErrorResponse(resp,
-			fmt.Errorf("expected application/json or application/pdf, got %s", mediaType))
+			fmt.Errorf("expected %s or %s, got %s", mediaTypeApplicationJSON,
+				mediaTypeApplicationPDF, mediaType))
 	}
 	return
 }
@@ -542,7 +542,6 @@ func UploadOptionSelfBilled() uploadOption {
 func (c *Client) UploadXML(
 	ctx context.Context, xml io.Reader, st UploadStandard, cif string, opts ...uploadOption,
 ) (response *UploadResponse, err error) {
-
 	uploadOptions := uploadOptions{}
 	for _, opt := range opts {
 		opt(&uploadOptions)
@@ -564,8 +563,10 @@ func (c *Client) UploadXML(
 		return
 	}
 
-	response = new(UploadResponse)
-	err = c.doApiUnmarshalXML(req, response)
+	res := new(UploadResponse)
+	if err = c.doApiUnmarshalXML(req, res); err == nil {
+		response = res
+	}
 	return
 }
 
@@ -606,8 +607,10 @@ func (c *Client) GetMessageState(
 		return
 	}
 
-	response = new(GetMessageStateResponse)
-	err = c.doApiUnmarshalXML(req, response)
+	res := new(GetMessageStateResponse)
+	if err = c.doApiUnmarshalXML(req, res); err == nil {
+		response = res
+	}
 	return
 }
 
@@ -629,8 +632,15 @@ func (c *Client) GetMessagesList(
 		return
 	}
 
-	response = new(MessagesListResponse)
-	err = c.doApiUnmarshalJSON(req, response)
+	res := new(MessagesListResponse)
+	if err = c.doApiUnmarshalJSON(req, res, func(r *http.Response, _ any) error {
+		if limit, ok := errorMessageMatchLimitExceeded(res.Error); ok {
+			return newLimitExceededError(r, limit, fmt.Errorf("%s: %s", res.Title, res.Error))
+		}
+		return nil
+	}); err == nil {
+		response = res
+	}
 	return
 }
 
@@ -656,7 +666,15 @@ func (c *Client) GetMessagesListPagination(
 		return
 	}
 
-	err = c.doApiUnmarshalJSON(req, &response)
+	res := new(MessagesListPaginationResponse)
+	if err = c.doApiUnmarshalJSON(req, res, func(r *http.Response, _ any) error {
+		if limit, ok := errorMessageMatchLimitExceeded(res.Error); ok {
+			return newLimitExceededError(r, limit, fmt.Errorf("%s: %s", res.Title, res.Error))
+		}
+		return nil
+	}); err == nil {
+		response = res
+	}
 	return
 }
 
@@ -683,25 +701,29 @@ func (c *Client) DownloadInvoice(
 	// If the response content type is application/json, then the download
 	// failed, otherwise we got the zip in response body
 	switch mediaType := responseMediaType(resp.Header); mediaType {
-	case "application/json":
-		response = &DownloadInvoiceResponse{
-			Error: &DownloadInvoiceResponseError{},
-		}
-		if err = jsonUnmarshalReader(resp.Body, response.Error); err != nil {
-			err = newErrorResponse(resp,
-				fmt.Errorf("failed to unmarshal response body: %v", err))
+	case mediaTypeApplicationJSON:
+		resError := new(DownloadInvoiceResponseError)
+		if err = jsonUnmarshalReader(resp.Body, resError); err != nil {
+			err = newErrorResponseParse(resp, err, false)
 			return
 		}
-	case "application/zip":
+		if limit, ok := errorMessageMatchLimitExceeded(resError.Error); ok {
+			err = newLimitExceededError(resp, limit, fmt.Errorf("%s: %s", resError.Title, resError.Error))
+			return
+		}
+		response = &DownloadInvoiceResponse{Error: resError}
+	case mediaTypeApplicationZIP:
 		response = &DownloadInvoiceResponse{}
 		if response.Zip, err = io.ReadAll(resp.Body); err != nil {
-			err = newErrorResponse(resp,
-				fmt.Errorf("failed to read body: %v", err))
+			err = newErrorResponseParse(resp, err, false)
 			return
 		}
+	case mediaTypeTextPlain:
+		err = newErrorResponseDetectType(resp)
 	default:
 		err = newErrorResponse(resp,
-			fmt.Errorf("expected application/json or application/pdf, got %s", mediaType))
+			fmt.Errorf("expected %s or %s, got %s", mediaTypeApplicationJSON,
+				mediaTypeApplicationPDF, mediaType))
 	}
 	return
 }

@@ -225,7 +225,7 @@ func TestClientAuth(t *testing.T) {
 			token.RefreshToken = buildRefreshToken(seq)
 			// 12 seconds = 2 seconds of validity (oauth2.defaultExpiryDelta = 10s)
 			token.ExpiresIn = 12
-			w.Header().Add("Content-Type", "application/json")
+			w.Header().Add("Content-Type", mediaTypeApplicationJSON)
 
 			tokenBytes, err := json.Marshal(token)
 			if err != nil {
