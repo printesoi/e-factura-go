@@ -572,7 +572,7 @@ func (c *Client) UploadXML(
 
 // UploadInvoice uploads the given Invoice with the provided optional options.
 func (c *Client) UploadInvoice(
-	ctx context.Context, invoice Invoice, cif string, opts ...uploadOption,
+	ctx context.Context, invoice Invoice, cif string, opts ...UploadOption,
 ) (response *UploadResponse, err error) {
 	xmlReader, err := xmlMarshalReader(invoice)
 	if err != nil {
