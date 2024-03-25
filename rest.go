@@ -60,7 +60,7 @@ type (
 		PDF   []byte
 	}
 
-	RASPMessage struct {
+	RaspMessage struct {
 		UploadIndex int64  `xml:"index_incarcare,attr"`
 		Message     string `xml:"message,attr"`
 
@@ -582,9 +582,9 @@ func (c *Client) UploadInvoice(
 	return c.UploadXML(ctx, xmlReader, UploadStandardUBL, cif, opts...)
 }
 
-// UploadRASPMessage uploads the given RASPMessage.
-func (c *Client) UploadRASPMessage(
-	ctx context.Context, msg RASPMessage, cif string,
+// UploadRaspMessage uploads the given RaspMessage.
+func (c *Client) UploadRaspMessage(
+	ctx context.Context, msg RaspMessage, cif string,
 ) (response *UploadResponse, err error) {
 	xmlReader, err := xmlMarshalReader(msg)
 	if err != nil {

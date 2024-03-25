@@ -148,7 +148,9 @@ func newValidateSignatureError(err error) *ValidateSignatureError {
 
 // LimitExceededError is an error returned if we hit an API limit.
 type LimitExceededError struct {
+	// ErrorResponse has information about the HTTP response.
 	*ErrorResponse
+	// Limit stores the API limit that was hit for the day.
 	Limit int64
 }
 

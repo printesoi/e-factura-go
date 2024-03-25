@@ -128,11 +128,11 @@ uploadRes, err := client.UploadXML(ctx, xml, UploadStandardUBL, "123456789")
 ### Upload message ###
 
 ```go
-msg := efactura.RASPMessage{
+msg := efactura.RaspMessage{
     UploadIndex: 5008787839,
     Message: "test",
 }
-uploadRes, err := client.UploadRASPMessage(ctx, msg, "123456789")
+uploadRes, err := client.UploadRaspMessage(ctx, msg, "123456789")
 if err != nil {
     // Handle error
 }
@@ -209,12 +209,34 @@ if validateRes.IsOk() {
 }
 ```
 
+### Errors ###
+
+This library tries its best to overcome the not so clever API implementation
+and to detect limits exceeded errors. To check if the error is cause by a
+limit:
+
+```go
+resp, err := client.GetMessageState(ctx, uploadIndex)
+if err != nil {
+    var limitsErr *efactura.LimitExceededError
+    var responseErr *efactura.ErrorResponse
+    if errors.As(err, &limitsErr) {
+        // The limits were exceeded. limitsErr.ErrorResponse contains more
+        // information about the HTTP response, and the limitsErr.Limit field
+        // contains the limit for the day.
+    } else if errors.As(err, &responseErr) {
+        // ErrorResponse means we got the HTTP response but we failed to parse
+        // it or some other error like invalid response content type.
+    }
+}
+```
+
 ## Generating an Invoice ##
 
 TODO: See TestInvoiceBuilder() from builders_test.go for an example of using
 InvoiceBuilder for creating an Invoice.
 
-## Getting the raw XML of the invoice ##
+### Getting the raw XML of the invoice ##
 
 In case you need to get the XML encoding of the invoice (eg. you need to store
 it somewhere before the upload):
@@ -242,7 +264,7 @@ if err != nil {
 **NOTE** Don't use the standard `encoding/xml` package for generating the XML
 encoding, since it does not produce Canonical XML [XML-C14N]!
 
-## Unmarshal XML to invoice ##
+### Unmarshal XML to invoice ##
 
 ```go
 var invoice efactura.Invoice
@@ -262,7 +284,6 @@ cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
 - [ ] Implement CreditNote.
 - [ ] Add tests for all REST API calls and more tests for validating generated
   XML (maybe checking with the tools provided by mfinante).
-- [ ] Check and test API limits.
 - [ ] Godoc and more code examples.
 - [ ] Test coverage
 - [ ] Support full OAuth2 authentication flow for the client, not just passing
