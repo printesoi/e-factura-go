@@ -191,16 +191,37 @@ func NewIDNode(id string) *IDNode {
 
 // MarshalXML returns the XML encoding of v in Canonical XML form [XML-C14N].
 // This method must be used for marshaling objects from this library, instead
-// of encoding/xml.
+// of encoding/xml. This method does NOT include the XML header declaration.
 func MarshalXML(v any) ([]byte, error) {
 	return xml.Marshal(v)
 }
 
+// MarshalXMLWithHeader same as MarshalXML, but also add the XML header
+// declaration.
+func MarshalXMLWithHeader(v any) ([]byte, error) {
+	data, err := MarshalXML(v)
+	if err != nil {
+		return nil, err
+	}
+	return concatBytes([]byte(xml.Header), data), nil
+}
+
 // MarshalIndentXML works like MarshalXML, but each XML element begins on a new
 // indented line that starts with prefix and is followed by one or more
-// copies of indent according to the nesting depth.
+// copies of indent according to the nesting depth. This method does NOT
+// include the XML header declaration.
 func MarshalIndentXML(v any, prefix, indent string) ([]byte, error) {
 	return xml.MarshalIndent(v, prefix, indent)
+}
+
+// MarshalIndentXMLWithHeader same as MarshalIndentXML, but also add the XML
+// header declaration.
+func MarshalIndentXMLWithHeader(v any, prefix, indent string) ([]byte, error) {
+	data, err := MarshalIndentXML(v, prefix, indent)
+	if err != nil {
+		return nil, err
+	}
+	return concatBytes([]byte(xml.Header), data), nil
 }
 
 // Unmarshal parses the XML-encoded data and stores the result in

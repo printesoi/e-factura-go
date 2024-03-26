@@ -215,14 +215,14 @@ func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
 // XML returns the XML encoding of the Invoice
 func (iv Invoice) XML() ([]byte, error) {
-	return MarshalXML(iv)
+	return MarshalXMLWithHeader(iv)
 }
 
 // XMLIndent works like XML, but each XML element begins on a new
 // indented line that starts with prefix and is followed by one or more
 // copies of indent according to the nesting depth.
 func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
-	return MarshalIndentXML(iv, prefix, indent)
+	return MarshalIndentXMLWithHeader(iv, prefix, indent)
 }
 
 // UnmarshalInvoice unmarshals an Invoice from XML data. Only use this method

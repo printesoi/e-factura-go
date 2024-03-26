@@ -198,3 +198,15 @@ func typeNameAddrPtr(v any) string {
 	}
 	return rt.Name()
 }
+
+func concatBytes(s ...[]byte) []byte {
+	n := 0
+	for _, v := range s {
+		n += len(v)
+	}
+	res := make([]byte, 0, n)
+	for _, v := range s {
+		res = append(res, v...)
+	}
+	return res
+}
