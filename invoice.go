@@ -1148,14 +1148,14 @@ type InvoiceLinePriceAllowanceCharge struct {
 	// test[cbc:ChargeIndicator == false] => deducere
 	// test[cbc:ChargeIndicator == true]  => taxă suplimentară
 	ChargeIndicator bool `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ChargeIndicator"`
-	// ID: BT-148
-	// Term: Preţul brut al articolului
-	// Cardinality: 0..1
-	BaseAmount AmountWithCurrency `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 BaseAmount"`
 	// ID: BT-147
 	// Term: Reducere la prețul articolului
 	// Cardinality: 0..1
 	Amount AmountWithCurrency `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Amount"`
+	// ID: BT-148
+	// Term: Preţul brut al articolului
+	// Cardinality: 0..1
+	BaseAmount AmountWithCurrency `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 BaseAmount"`
 }
 
 type InvoiceOrderReference struct {
