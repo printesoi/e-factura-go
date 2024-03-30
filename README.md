@@ -91,6 +91,21 @@ if err != nil {
 }
 ```
 
+### Time and dates in Romanian time zone ###
+
+E-factura APIs expect dates to be in Romanian timezone and will return dates
+and times in Romanian timezone. This library tries to load the
+`Europe/Bucharest` timezone location on init so that creating and parsing dates
+will work as expected. **The user of this library is responsible to ensure the
+`Europe/Bucharest` location is available**. If you are not sure that the target
+system will have system timezone database, you can use in you `main` package:
+
+```go
+import _ "time/tzdata"
+```
+
+to load the Go embedded copy of the timezone database.
+
 ### Upload invoice ###
 
 ```go

@@ -22,7 +22,7 @@ import (
 
 var (
 	// RoZoneLocation is the Romanian timezone location loaded in the init
-	// function. This library does not load the time/tzdata package for the
+	// function. This library does NOT load the time/tzdata package for the
 	// embedded timezone database, so the user of this library is responsible
 	// to ensure the Europe/Bucharest location is available, otherwise UTC is
 	// used and may lead to unexpected results.
