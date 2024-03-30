@@ -102,12 +102,12 @@ type (
 	MessageFilterType int
 
 	Message struct {
-		CreationDate string `json:"data_creare"`
-		CIF          string `json:"cif"`
-		UploadIndex  string `json:"id_solicitare"`
-		Details      string `json:"detalii"`
-		Type         string `json:"tip"`
 		ID           string `json:"id"`
+		Type         string `json:"tip"`
+		UploadIndex  string `json:"id_solicitare"`
+		CIF          string `json:"cif"`
+		Details      string `json:"detalii"`
+		CreationDate string `json:"data_creare"`
 	}
 
 	// MessagesListResponse is the parsed response from the list messages
@@ -212,12 +212,24 @@ const (
 	// Filter that returns only the received invoices
 	MessageFilterReceived
 	// Filter that returns only the customer send or received messages
-	MessageFilterCustomerMessage
+	MessageFilterBuyerMessage
+
+	// MessageTypeError
+	MessageTypeError           = "ERORI FACTURA"
+	MessageTypeSentInvoice     = "FACTURA TRIMISA"
+	MessageTypeReceivedInvoice = "FACTURA PRIMITA"
+	MessageTypeBuyerMessage    = "MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS"
+
+	messageTimeLayout = "200601021504"
 )
 
 var (
-	regexSellerCIF = regexp.MustCompile("\\bcif_emitent=(\\d+)")
-	regexBuyerCIF  = regexp.MustCompile("\\bcif_beneficiar=(\\d+)")
+	regexSellerCIF           = regexp.MustCompile("\\bcif_emitent=(\\d+)")
+	regexBuyerCIF            = regexp.MustCompile("\\bcif_beneficiar=(\\d+)")
+	regexErrTypeSelfBilled   = regexp.MustCompile("\\btip declarat=AUTOFACTURA\\b")
+	regexTypeSelfBilled      = regexp.MustCompile(" ca autofactutra in numele cif=")
+	regexSelfBilledSellerCIF = regexp.MustCompile("\\bin numele cif=(\\d+)")
+	regexSelfBilledBuyerCIF  = regexp.MustCompile("\\btransmisa de cif=(\\d+)")
 
 	regexZipFile          = regexp.MustCompile("^\\d+.xml$")
 	regexZipSignatureFile = regexp.MustCompile("^semnatura_\\d+.xml$")
@@ -342,7 +354,7 @@ func (t MessageFilterType) String() string {
 		return "T"
 	case MessageFilterReceived:
 		return "P"
-	case MessageFilterCustomerMessage:
+	case MessageFilterBuyerMessage:
 		return "R"
 	}
 	return ""
@@ -350,22 +362,22 @@ func (t MessageFilterType) String() string {
 
 // IsError returns true if message type is ERORI FACTURA
 func (m Message) IsError() bool {
-	return m.Type == "ERORI FACTURA"
+	return m.Type == MessageTypeError
 }
 
 // IsSentInvoice returns true if message type is FACTURA TRIMISA
 func (m Message) IsSentInvoice() bool {
-	return m.Type == "FACTURA TRIMISA"
+	return m.Type == MessageTypeSentInvoice
 }
 
 // IsReceivedInvoice returns true if message type is FACTURA PRIMITA
 func (m Message) IsReceivedInvoice() bool {
-	return m.Type == "FACTURA PRIMITA"
+	return m.Type == MessageTypeReceivedInvoice
 }
 
 // IsBuyerMessage returns true if message type is MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS
 func (m Message) IsBuyerMessage() bool {
-	return m.Type == "MESAJ CUMPARATOR PRIMIT / MESAJ CUMPARATOR TRANSMIS"
+	return m.Type == MessageTypeBuyerMessage
 }
 
 // GetID parses and returns the message ID as int64 (since the API returns it
@@ -382,16 +394,52 @@ func (m Message) GetUploadIndex() int64 {
 	return n
 }
 
+// IsSelfBilledInvoice returns true if the message represents a self-billed
+// invoice.
+func (m Message) IsSelfBilledInvoice() bool {
+	if m.IsError() {
+		return regexErrTypeSelfBilled.MatchString(m.Details)
+	}
+
+	return regexTypeSelfBilled.MatchString(m.Details)
+}
+
 // GetSellerCIF parses message details and returns the seller CIF.
 func (m Message) GetSellerCIF() (sellerCIF string) {
-	sellerCIF, _ = matchFirstSubmatch(m.Details, regexSellerCIF)
+	if m.IsError() {
+		return
+	}
+	if m.IsReceivedInvoice() {
+		if m.IsSelfBilledInvoice() {
+			sellerCIF, _ = matchFirstSubmatch(m.Details, regexSelfBilledSellerCIF)
+			return
+		}
+
+		sellerCIF, _ = matchFirstSubmatch(m.Details, regexSellerCIF)
+		return
+	}
+	sellerCIF = m.CIF
 	return
 }
 
 // GetBuyerCIF parses message details and returns the buyer CIF.
 func (m Message) GetBuyerCIF() (buyerCIF string) {
+	if m.IsError() {
+		return
+	}
+	if m.IsSelfBilledInvoice() {
+		buyerCIF = m.CIF
+		return
+	}
 	buyerCIF, _ = matchFirstSubmatch(m.Details, regexBuyerCIF)
 	return
+}
+
+// GetCreationDate parsed CreationDate and returns a time.Time in
+// RoZoneLocation.
+func (m Message) GetCreationDate() (time.Time, bool) {
+	t, err := time.ParseInLocation(messageTimeLayout, m.CreationDate, RoZoneLocation)
+	return t, err == nil
 }
 
 // IsOk returns true if the response corresponding to a download was successful.
