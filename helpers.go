@@ -168,6 +168,10 @@ func atoi64(s string) (n int64, ok bool) {
 	return i, true
 }
 
+func itoa64(n int64) string {
+	return strconv.FormatInt(n, 10)
+}
+
 func matchFirstSubmatch(input string, re *regexp.Regexp) (string, bool) {
 	ms := re.FindStringSubmatch(input)
 	if ms == nil || len(ms) < 2 {

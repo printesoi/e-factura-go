@@ -455,7 +455,7 @@ func (r *DownloadInvoiceParseZipResponse) IsOk() bool {
 // IsOk returns true if the response corresponding to fetching messages list
 // was successful.
 func (r *MessagesListResponse) IsOk() bool {
-	return r != nil && (r.Error == "" || strings.HasPrefix(r.Error, "Nu exista mesaje in ultimele "))
+	return r != nil && (r.Error == "" || strings.HasPrefix(r.Error, "Nu exista mesaje in "))
 }
 
 // ValidateXML call the validate endpoint with the given standard and XML body
@@ -664,6 +664,10 @@ func (c *Client) GetMessageState(
 // GetMessages fetches the list of messages for a provided cif, number of days
 // and a filter. For fetching all messages use MessageFilterAll as the value
 // for msgType.
+// NOTE: If there are no messages for the given interval, ANAF APIs
+// return an error. For this case, the response.IsOk() returns true and the
+// Messages slice is empty, since I don't think that no messages should result
+// in an error.
 func (c *Client) GetMessagesList(
 	ctx context.Context, cif string, numDays int, msgType MessageFilterType,
 ) (response *MessagesListResponse, err error) {
@@ -695,17 +699,21 @@ func (c *Client) GetMessagesList(
 // start time (unix time in milliseconds), end time (unix time in milliseconds)
 // and a filter. For fetching all messages use MessageFilterAll as the value
 // for msgType.
+// NOTE: If there are no messages for the given interval, ANAF APIs
+// return an error. For this case, the response.IsOk() returns true,
+// response.TotalRecords = 0, and the Messages slice is empty, since I don't
+// think that no messages should result in an error.
 func (c *Client) GetMessagesListPagination(
 	ctx context.Context, cif string, startTs, endTs time.Time, page int64, msgType MessageFilterType,
 ) (response *MessagesListPaginationResponse, err error) {
 	query := url.Values{
 		"cif":       {cif},
-		"startTime": {strconv.FormatInt(startTs.UnixMilli(), 10)},
-		"endTime":   {strconv.FormatInt(endTs.UnixMilli(), 10)},
-		"pagina":    {strconv.FormatInt(page, 10)},
+		"startTime": {itoa64(startTs.UnixMilli())},
+		"endTime":   {itoa64(endTs.UnixMilli())},
+		"pagina":    {itoa64(page)},
 	}
-	if msgType != MessageFilterAll {
-		query.Set("filter", msgType.String())
+	if f := msgType.String(); f != "" {
+		query.Set("filter", f)
 	}
 
 	req, er := c.newApiRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
