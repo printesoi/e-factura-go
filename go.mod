@@ -6,7 +6,7 @@ toolchain go1.22.1
 
 require (
 	github.com/alexsergivan/transliterator v1.0.0
-	github.com/printesoi/xml-go v1.0.0
+	github.com/printesoi/xml-go v1.0.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.18.0
