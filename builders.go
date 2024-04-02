@@ -782,13 +782,17 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 		Amount:     lineExtensionAmount,
 		CurrencyID: b.documentCurrencyID,
 	}
-	invoice.LegalMonetaryTotal.AllowanceTotalAmount = &AmountWithCurrency{
-		Amount:     allowanceTotalAmount,
-		CurrencyID: b.documentCurrencyID,
+	if !allowanceTotalAmount.IsZero() {
+		invoice.LegalMonetaryTotal.AllowanceTotalAmount = &AmountWithCurrency{
+			Amount:     allowanceTotalAmount,
+			CurrencyID: b.documentCurrencyID,
+		}
 	}
-	invoice.LegalMonetaryTotal.ChargeTotalAmount = &AmountWithCurrency{
-		Amount:     chargeTotalAmount,
-		CurrencyID: b.documentCurrencyID,
+	if !chargeTotalAmount.IsZero() {
+		invoice.LegalMonetaryTotal.ChargeTotalAmount = &AmountWithCurrency{
+			Amount:     chargeTotalAmount,
+			CurrencyID: b.documentCurrencyID,
+		}
 	}
 	invoice.LegalMonetaryTotal.TaxExclusiveAmount = AmountWithCurrency{
 		Amount:     taxExclusiveAmount,
