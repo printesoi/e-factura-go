@@ -123,6 +123,21 @@ type AmountWithCurrency struct {
 	CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
 }
 
+// MarshalXML implements the xml.Marshaler interface. We use a custom
+// marshaling function for AmountWithCurrency to ensure two digits after the
+// decimal point.
+func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type amountWithCurrency struct {
+		Amount     string           `xml:",chardata"`
+		CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
+	}
+	xmlAmount := amountWithCurrency{
+		Amount:     a.Amount.StringFixed(2),
+		CurrencyID: a.CurrencyID,
+	}
+	return e.EncodeElement(xmlAmount, start)
+}
+
 // ValueWithAttrs represents and embeddable type that stores a string as
 // chardata and a list of attributes. The name of the XML node must be
 // controlled by the parent type.
