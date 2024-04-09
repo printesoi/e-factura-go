@@ -87,8 +87,10 @@ func (tf *tokenRefresher) Token() (*xoauth2.Token, error) {
 	}
 	if tf.refreshToken != tk.RefreshToken {
 		tf.refreshToken = tk.RefreshToken
-		if err := tf.onTokenChanged(tf.ctx, tk); err != nil {
-			return tk, err
+		if tf.onTokenChanged != nil {
+			if err := tf.onTokenChanged(tf.ctx, tk); err != nil {
+				return tk, err
+			}
 		}
 	}
 	return tk, err

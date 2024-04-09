@@ -156,7 +156,7 @@ func setupTestOAuth2Config(clientID, clientSecret string) (oauth2Cfg oauth2.Conf
 // setupTestClient sets up a test HTTP server along with a Client that is
 // configured to talk to that test server. Tests should register handlers on
 // mux which provide mock responses for the API method being tested.
-func setupTestClient(token *xoauth2.Token) (client *Client, mux *http.ServeMux, serverURL string, teardown func(), err error) {
+func setupTestClient(oauth2Cfg oauth2.Config, token *xoauth2.Token) (client *Client, mux *http.ServeMux, serverURL string, teardown func(), err error) {
 	// mux is the HTTP request multiplexer used with the test server.
 	mux = http.NewServeMux()
 
@@ -170,9 +170,9 @@ func setupTestClient(token *xoauth2.Token) (client *Client, mux *http.ServeMux, 
 	}
 
 	serverURL = server.URL
-	client, err = NewClient(
-		context.Background(),
-		ClientOAuth2TokenSource(xoauth2.StaticTokenSource(token)),
+	ctx := context.Background()
+	client, err = NewClient(ctx,
+		ClientOAuth2TokenSource(oauth2Cfg.TokenSource(ctx, token)),
 		ClientSandboxEnvironment(true),
 		ClientBaseURL(serverURL+apiBasePathSandbox),
 		ClientBasePublicURL(serverURL+apiPublicBasePathProd),
@@ -275,7 +275,7 @@ func TestClientAuth(t *testing.T) {
 		return
 	}
 
-	client, clientMux, serverURL, clientTeardown, err := setupTestClient(token)
+	client, clientMux, serverURL, clientTeardown, err := setupTestClient(oauth2Cfg, token)
 	if clientTeardown != nil {
 		defer clientTeardown()
 	}
