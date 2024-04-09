@@ -45,20 +45,6 @@ API via the Client object and for generating an Invoice UBL XML.
 import "github.com/printesoi/e-factura-go"
 ```
 
-Construct a new client:
-
-```go
-client, err := efactura.NewClient(
-    context.Background(),
-    efactura.ClientOAuth2Config(oauth2Cfg),
-    efactura.ClientOAuth2InitialToken(initialToken),
-    efactura.ClientProductionEnvironment(false),
-)
-if err != nil {
-    // Handle error
-}
-```
-
 Construct the required OAuth2 config needed for the Client:
 
 ```go
@@ -71,6 +57,27 @@ if err != nil {
 }
 ```
 
+Generate an authorization link for certificate authorization:
+
+```go
+authorizeURL := oauth2Cfg.AuthCodeURL(state)
+// Redirect the user to authorizeURL
+```
+
+Getting a token from an authorization code (the parameter `code` sent via GET
+to the redirect URL):
+
+```go
+// Assuming the oauth2Cfg is built as above
+initialToken, err := oauth2Cfg.Exchange(ctx, authorizationCode)
+if err != nil {
+    // Handle error
+}
+```
+
+If you specified a non-empty state when building the authorization URL, you
+will also receive the `state` parameter with `code`.
+
 Parse the initial token from JSON:
 
 ```go
@@ -80,12 +87,15 @@ if err != nil {
 }
 ```
 
-Getting a token from an authorization code (the parameter `code` sent via GET
-to the redirect URL):
+Construct a new client:
 
 ```go
-// Assuming the oauth2Cfg is built as above
-initialToken, err := oauth2Cfg.Exchange(ctx, authorizationCode)
+client, err := efactura.NewClient(
+    context.Background(),
+    efactura.ClientOAuth2Config(oauth2Cfg),
+    efactura.ClientOAuth2InitialToken(initialToken),
+    efactura.ClientProductionEnvironment(false), // false for test, true for production mode
+)
 if err != nil {
     // Handle error
 }

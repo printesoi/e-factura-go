@@ -100,8 +100,8 @@ func (c *OAuth2Config) Valid() bool {
 }
 
 // AuthCodeURL generates the code authorization URL.
-func (c OAuth2Config) AuthCodeURL() string {
-	return c.Config.AuthCodeURL("",
+func (c OAuth2Config) AuthCodeURL(state string) string {
+	return c.Config.AuthCodeURL(state,
 		oauth2.SetAuthURLParam("token_content_type", "jwt"))
 }
 
