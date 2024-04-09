@@ -42,15 +42,18 @@ This package can be use both for interacting with (calling) the ANAF e-factura
 API via the Client object and for generating an Invoice UBL XML.
 
 ```go
-import "github.com/printesoi/e-factura-go"
+import (
+    "github.com/printesoi/e-factura-go"
+    efactura_oauth2 "github.com/printesoi/e-factura-go/oauth2"
+)
 ```
 
 Construct the required OAuth2 config needed for the Client:
 
 ```go
-oauth2Cfg, err := efactura.MakeOAuth2Config(
-    efactura.OAuth2ConfigCredentials(anafAppClientID, anafApplientSecret),
-    efactura.OAuth2ConfigRedirectURL(anafAppRedirectURL),
+oauth2Cfg, err := efactura_oauth2.MakeConfig(
+    efactura_oauth2.ConfigCredentials(anafAppClientID, anafApplientSecret),
+    efactura_oauth2.ConfigRedirectURL(anafAppRedirectURL),
 )
 if err != nil {
     // Handle error
@@ -69,7 +72,7 @@ to the redirect URL):
 
 ```go
 // Assuming the oauth2Cfg is built as above
-initialToken, err := oauth2Cfg.Exchange(ctx, authorizationCode)
+token, err := oauth2Cfg.Exchange(ctx, authorizationCode)
 if err != nil {
     // Handle error
 }
@@ -81,7 +84,7 @@ will also receive the `state` parameter with `code`.
 Parse the initial token from JSON:
 
 ```go
-initialToken, err := efactura.TokenFromJSON([]byte(tokenJSON))
+token, err := efactura.TokenFromJSON([]byte(tokenJSON))
 if err != nil {
     // Handle error
 }
@@ -93,7 +96,26 @@ Construct a new client:
 client, err := efactura.NewClient(
     context.Background(),
     efactura.ClientOAuth2Config(oauth2Cfg),
-    efactura.ClientOAuth2InitialToken(initialToken),
+    efactura.ClientOAuth2TokenSource(efactura_oauth2.TokenSource(token)),
+    efactura.ClientProductionEnvironment(false), // false for test, true for production mode
+)
+if err != nil {
+    // Handle error
+}
+```
+
+If you want to store the token in a store/db and update it everytime it
+refreshes use `efactura_oauth2.TokenSourceWithChangedHandler`:
+
+```go
+onTokenChanged := func(ctx context.Context, token *xoauth.Token) error {
+    fmt.Printf("Token changed...")
+    return nil
+}
+client, err := efactura.NewClient(
+    context.Background(),
+    efactura.ClientOAuth2Config(oauth2Cfg),
+    efactura.ClientOAuth2TokenSource(efactura_oauth2.TokenSourceWithChangedHandler(token, onTokenChanged)),
     efactura.ClientProductionEnvironment(false), // false for test, true for production mode
 )
 if err != nil {
@@ -311,11 +333,6 @@ cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
   XML (maybe checking with the tools provided by mfinante).
 - [ ] Godoc and more code examples.
 - [ ] Test coverage
-- [ ] Support full OAuth2 authentication flow for the client, not just passing
-  the initial token. This however will be tricky to implement properly since
-  the OAuth2 app registered in the ANAF developer profile must have a fixed
-  list of HTTPS redirect URLs and the redirect URL used for creating the OAuth2
-  config must exactly matche one of the URLs.
 
 ## Contributing ##
 

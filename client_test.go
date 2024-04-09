@@ -25,8 +25,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/printesoi/e-factura-go/oauth2"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/oauth2"
+	xoauth2 "golang.org/x/oauth2"
 )
 
 // setupTestEnvOAuth2Config creates a OAuth2Config from the environment.
@@ -35,7 +36,7 @@ import (
 // EFACTURA_TEST_REDIRECT_URL are not set, this method returns an error.
 // If skipIfEmptyEnv is set to true and the env vars
 // are not set, this method returns a nil config.
-func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *OAuth2Config, err error) {
+func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, err error) {
 	clientID := os.Getenv("EFACTURA_TEST_CLIENT_ID")
 	clientSecret := os.Getenv("EFACTURA_TEST_CLIENT_SECRET")
 	if clientID == "" || clientSecret == "" {
@@ -52,9 +53,9 @@ func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *OAuth2Config, err
 		return
 	}
 
-	if cfg, er := MakeOAuth2Config(
-		OAuth2ConfigCredentials(clientID, clientSecret),
-		OAuth2ConfigRedirectURL(redirectURL),
+	if cfg, er := oauth2.MakeConfig(
+		oauth2.ConfigCredentials(clientID, clientSecret),
+		oauth2.ConfigRedirectURL(redirectURL),
 	); er != nil {
 		err = er
 		return
@@ -64,9 +65,13 @@ func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *OAuth2Config, err
 	return
 }
 
+func getTestCIF() string {
+	return os.Getenv("EFACTURA_TEST_CIF")
+}
+
 // setupRealClient creates a real sandboxed Client (a client that talks to the
 // ANAF TEST APIs).
-func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *OAuth2Config) (*Client, error) {
+func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, error) {
 	if oauth2Cfg == nil {
 		cfg, err := setupTestEnvOAuth2Config(skipIfEmptyEnv)
 		if err != nil {
@@ -83,23 +88,33 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *OAuth2Config) (*Client, err
 		return nil, errors.New("Invalid initial token json")
 	}
 
-	token, err := TokenFromJSON([]byte(tokenJSON))
+	token, err := oauth2.TokenFromJSON([]byte(tokenJSON))
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := NewClient(
-		context.Background(),
-		ClientOAuth2Config(*oauth2Cfg),
-		ClientOAuth2InitialToken(token),
-		ClientSandboxEnvironment(true),
+	sandbox := true
+	if os.Getenv("EFACTURA_TEST_PRODUCTION") == getTestCIF() {
+		sandbox = false
+	}
+
+	onTokenChanged := func(ctx context.Context, token *xoauth2.Token) error {
+		tokenJSON, _ := json.Marshal(token)
+		fmt.Printf("[E-FACTURA] token changed: %s\n", string(tokenJSON))
+		return nil
+	}
+
+	ctx := context.Background()
+	client, err := NewClient(ctx,
+		ClientOAuth2TokenSource(oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged)),
+		ClientSandboxEnvironment(sandbox),
 	)
 	return client, err
 }
 
 // setupTestOAuth2Config sets up a test HTTP server along with a OAuth2Config
 // that is configured to talk to that test server.
-func setupTestOAuth2Config(clientID, clientSecret string) (oauth2Cfg OAuth2Config, mux *http.ServeMux, serverURL string, teardown func(), err error) {
+func setupTestOAuth2Config(clientID, clientSecret string) (oauth2Cfg oauth2.Config, mux *http.ServeMux, serverURL string, teardown func(), err error) {
 	// mux is the HTTP request multiplexer used with the test server.
 	mux = http.NewServeMux()
 
@@ -119,13 +134,13 @@ func setupTestOAuth2Config(clientID, clientSecret string) (oauth2Cfg OAuth2Confi
 	if err != nil {
 		return
 	}
-	oauth2Cfg, err = MakeOAuth2Config(
-		OAuth2ConfigCredentials(clientID, clientSecret),
-		OAuth2ConfigRedirectURL(redirectURL),
-		OAuth2ConfigEndpoint(oauth2.Endpoint{
+	oauth2Cfg, err = oauth2.MakeConfig(
+		oauth2.ConfigCredentials(clientID, clientSecret),
+		oauth2.ConfigRedirectURL(redirectURL),
+		oauth2.ConfigEndpoint(xoauth2.Endpoint{
 			AuthURL:   authorizeURL,
 			TokenURL:  tokenURL,
-			AuthStyle: oauth2.AuthStyleInHeader,
+			AuthStyle: xoauth2.AuthStyleInHeader,
 		}),
 	)
 	if err != nil {
@@ -141,7 +156,7 @@ func setupTestOAuth2Config(clientID, clientSecret string) (oauth2Cfg OAuth2Confi
 // setupTestClient sets up a test HTTP server along with a Client that is
 // configured to talk to that test server. Tests should register handlers on
 // mux which provide mock responses for the API method being tested.
-func setupTestClient(oauth2Cfg OAuth2Config, initialToken *oauth2.Token) (client *Client, mux *http.ServeMux, serverURL string, teardown func(), err error) {
+func setupTestClient(token *xoauth2.Token) (client *Client, mux *http.ServeMux, serverURL string, teardown func(), err error) {
 	// mux is the HTTP request multiplexer used with the test server.
 	mux = http.NewServeMux()
 
@@ -157,8 +172,7 @@ func setupTestClient(oauth2Cfg OAuth2Config, initialToken *oauth2.Token) (client
 	serverURL = server.URL
 	client, err = NewClient(
 		context.Background(),
-		ClientOAuth2Config(oauth2Cfg),
-		ClientOAuth2InitialToken(initialToken),
+		ClientOAuth2TokenSource(xoauth2.StaticTokenSource(token)),
 		ClientSandboxEnvironment(true),
 		ClientBaseURL(serverURL+apiBasePathSandbox),
 		ClientBasePublicURL(serverURL+apiPublicBasePathProd),
@@ -261,7 +275,7 @@ func TestClientAuth(t *testing.T) {
 		return
 	}
 
-	client, clientMux, serverURL, clientTeardown, err := setupTestClient(oauth2Cfg, token)
+	client, clientMux, serverURL, clientTeardown, err := setupTestClient(token)
 	if clientTeardown != nil {
 		defer clientTeardown()
 	}

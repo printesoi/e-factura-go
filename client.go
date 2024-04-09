@@ -23,12 +23,7 @@ import (
 	"net/url"
 	"strings"
 
-	"golang.org/x/oauth2"
-)
-
-var (
-	ErrInvalidClientOAuth2Config = errors.New("Invalid OAuth2Config provided")
-	ErrInvalidClientOAuth2Token  = errors.New("Invalid Auth token provided")
+	xoauth2 "golang.org/x/oauth2"
 )
 
 const (
@@ -68,10 +63,8 @@ type Client struct {
 	apiPublicBaseURL *url.URL
 	userAgent        string
 
-	oauth2Cfg    OAuth2Config
-	initialToken *oauth2.Token
-
-	apiClient *http.Client
+	tokenSource xoauth2.TokenSource
+	apiClient   *http.Client
 }
 
 // NewClient creates a new client using the provided config options.
@@ -93,18 +86,14 @@ func NewClient(ctx context.Context, opts ...ClientConfigOption) (*Client, error)
 		apiPublicBaseURL = apiPublicBaseProd
 	}
 
-	if !cfg.OAuth2Config.Valid() {
-		return nil, ErrInvalidClientOAuth2Config
-	}
-	if !cfg.InitialToken.Valid() {
-		return nil, ErrInvalidClientOAuth2Token
+	if cfg.TokenSource == nil {
+		return nil, errors.New("invalid token source for client")
 	}
 
 	client := new(Client)
 	client.userAgent = defaultUserAgent
-	client.oauth2Cfg = cfg.OAuth2Config
-	client.initialToken = cfg.InitialToken
-	client.apiClient = cfg.OAuth2Config.Client(ctx, cfg.InitialToken)
+	client.tokenSource = cfg.TokenSource
+	client.apiClient = xoauth2.NewClient(ctx, client.tokenSource)
 	if cfg.UserAgent != nil {
 		client.userAgent = *cfg.UserAgent
 	}
