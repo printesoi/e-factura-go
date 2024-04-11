@@ -70,6 +70,25 @@ func NewDateFromTime(t time.Time) *Date {
 	return MakeDate(t.In(RoZoneLocation).Date()).Ptr()
 }
 
+// MakeDateFromString creates a Date in Romanian time zone from a string in the
+// YYYY-MM-DD format.
+func MakeDateFromString(str string) (Date, error) {
+	t, err := time.ParseInLocation(time.DateOnly, str, RoZoneLocation)
+	if err != nil {
+		return Date{}, err
+	}
+	return MakeDate(t.Date()), nil
+}
+
+// NewDateFromString same as MakeDateFromString, but returns a pointer to Date.
+func NewDateFromString(str string) (*Date, error) {
+	d, err := MakeDateFromString(str)
+	if err != nil {
+		return nil, err
+	}
+	return d.Ptr(), nil
+}
+
 // MarshalXML implements the xml.Marshaler interface.
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	v := d.Format(time.DateOnly)
