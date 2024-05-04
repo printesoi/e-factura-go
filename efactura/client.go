@@ -67,7 +67,7 @@ func NewProductionClient(ctx context.Context, tokenSource xoauth2.TokenSource) (
 	}
 
 	publicApiClient, err := client.NewPublicApiClient(
-		client.PublicApiClientBaseURL(constants.PublicApiBasePathProd),
+		client.PublicApiClientBaseURL(constants.PublicApiBaseProd),
 	)
 
 	return &Client{
@@ -88,7 +88,7 @@ func NewSandboxClient(ctx context.Context, tokenSource xoauth2.TokenSource) (*Cl
 	}
 
 	publicApiClient, err := client.NewPublicApiClient(
-		client.PublicApiClientBaseURL(constants.PublicApiBasePathProd),
+		client.PublicApiClientBaseURL(constants.PublicApiBaseProd),
 	)
 	if err != nil {
 		return nil, err
