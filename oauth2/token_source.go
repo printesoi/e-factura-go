@@ -24,15 +24,16 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/printesoi/e-factura-go/oauth2/internal"
 	xoauth2 "golang.org/x/oauth2"
+
+	ioauth2 "github.com/printesoi/e-factura-go/internal/oauth2"
 )
 
 type TokenChangedHandler func(ctx context.Context, t *xoauth2.Token) error
 
-// tokenFromInternal maps an *internal.Token struct into
+// tokenFromInternal maps an *ioauth2.Token struct into
 // a *Token struct.
-func tokenFromInternal(t *internal.Token) *xoauth2.Token {
+func tokenFromInternal(t *ioauth2.Token) *xoauth2.Token {
 	if t == nil {
 		return nil
 	}
@@ -44,13 +45,13 @@ func tokenFromInternal(t *internal.Token) *xoauth2.Token {
 	}
 }
 
-// retrieveToken takes a *Config and uses that to retrieve an *internal.Token.
-// This token is then mapped from *internal.Token into an *oauth2.Token which
+// retrieveToken takes a *Config and uses that to retrieve an *ioauth2.Token.
+// This token is then mapped from *ioauth2.Token into an *oauth2.Token which
 // is returned along with an error..
 func retrieveToken(ctx context.Context, c *xoauth2.Config, v url.Values) (*xoauth2.Token, error) {
-	tk, err := internal.RetrieveToken(ctx, c.ClientID, c.ClientSecret, c.Endpoint.TokenURL, v, internal.AuthStyle(c.Endpoint.AuthStyle), nil)
+	tk, err := ioauth2.RetrieveToken(ctx, c.ClientID, c.ClientSecret, c.Endpoint.TokenURL, v, ioauth2.AuthStyle(c.Endpoint.AuthStyle), nil)
 	if err != nil {
-		if rErr, ok := err.(*internal.RetrieveError); ok {
+		if rErr, ok := err.(*ioauth2.RetrieveError); ok {
 			return nil, (*xoauth2.RetrieveError)(rErr)
 		}
 		return nil, err

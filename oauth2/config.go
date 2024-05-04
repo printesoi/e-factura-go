@@ -17,10 +17,10 @@ package oauth2
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/printesoi/e-factura-go/errors"
 	xoauth2 "golang.org/x/oauth2"
 )
 
@@ -40,10 +40,6 @@ var (
 		TokenURL:  TokenURL,
 		AuthStyle: xoauth2.AuthStyleInHeader,
 	}
-
-	ErrInvalidOAuth2Credentials = errors.New("Invalid OAuth2 credentials")
-	ErrInvalidOAuth2Endpoint    = errors.New("Invalid OAuth2 endpoint")
-	ErrInvalidOAuth2RedirectURL = errors.New("Invalid OAuth2 redirect URL")
 )
 
 // Config is a wrapper over the golang.org/x/oauth2.Config.
@@ -87,15 +83,15 @@ func MakeConfig(opts ...ConfigOption) (cfg Config, err error) {
 		opt(&cfg)
 	}
 	if !cfg.validCredentials() {
-		err = ErrInvalidOAuth2Credentials
+		err = errors.ErrInvalidOAuth2Credentials
 		return
 	}
 	if !cfg.validEndpoint() {
-		err = ErrInvalidOAuth2Endpoint
+		err = errors.ErrInvalidOAuth2Endpoint
 		return
 	}
 	if cfg.RedirectURL == "" {
-		err = ErrInvalidOAuth2RedirectURL
+		err = errors.ErrInvalidOAuth2RedirectURL
 		return
 	}
 	return

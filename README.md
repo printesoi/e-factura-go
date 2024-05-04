@@ -23,12 +23,7 @@ Alternatively the same can be achieved if you use import in a package:
 import "github.com/printesoi/e-factura-go"
 ```
 
-and run `go get` without parameters. The exported package name is `efactura`,
-so you **don't** need to alias the import like:
-
-```go
-import efactura "github.com/printesoi/e-factura-go"
-```
+and run `go get` without parameters. 
 
 Finally, to use the top-of-trunk version of this repo, use the following command:
 
@@ -43,7 +38,7 @@ API via the Client object and for generating an Invoice UBL XML.
 
 ```go
 import (
-    "github.com/printesoi/e-factura-go"
+    "github.com/printesoi/e-factura-go/efactura"
     efactura_oauth2 "github.com/printesoi/e-factura-go/oauth2"
 )
 ```
@@ -84,20 +79,30 @@ will also receive the `state` parameter with `code`.
 Parse the initial token from JSON:
 
 ```go
-token, err := efactura.TokenFromJSON([]byte(tokenJSON))
+token, err := efactura_oauth2.TokenFromJSON([]byte(tokenJSON))
 if err != nil {
     // Handle error
 }
 ```
 
-Construct a new client:
+Construct a new simple client for production environment:
 
 ```go
-client, err := efactura.NewClient(
-    context.Background(),
-    efactura.ClientOAuth2Config(oauth2Cfg),
-    efactura.ClientOAuth2TokenSource(efactura_oauth2.TokenSource(token)),
-    efactura.ClientProductionEnvironment(false), // false for test, true for production mode
+client, err := efactura.NewProductionClient(
+	context.Background(),
+    efactura_oauth2.TokenSource(token),
+)
+if err != nil {
+    // Handle error
+}
+```
+
+Construct a new simple client for sandbox (test) environment:
+
+```go
+client, err := efactura.NewSandboxClient(
+	context.Background(),
+    efactura_oauth2.TokenSource(token),
 )
 if err != nil {
     // Handle error
@@ -112,11 +117,9 @@ onTokenChanged := func(ctx context.Context, token *xoauth.Token) error {
     fmt.Printf("Token changed...")
     return nil
 }
-client, err := efactura.NewClient(
+client, err := efactura.NewSandboxClient(
     context.Background(),
-    efactura.ClientOAuth2Config(oauth2Cfg),
-    efactura.ClientOAuth2TokenSource(efactura_oauth2.TokenSourceWithChangedHandler(token, onTokenChanged)),
-    efactura.ClientProductionEnvironment(false), // false for test, true for production mode
+    efactura_oauth2.TokenSourceWithChangedHandler(token, onTokenChanged),
 )
 if err != nil {
     // Handle error
@@ -263,10 +266,14 @@ and to detect limits exceeded errors. To check if the error is cause by a
 limit:
 
 ```go
+import (
+	efactura_errors "github.com/printesoi/e-factura-go/errors"
+)
+
 resp, err := client.GetMessageState(ctx, uploadIndex)
 if err != nil {
-    var limitsErr *efactura.LimitExceededError
-    var responseErr *efactura.ErrorResponse
+    var limitsErr *efactura_errors.LimitExceededError
+    var responseErr *efactura_errors.ErrorResponse
     if errors.As(err, &limitsErr) {
         // The limits were exceeded. limitsErr.ErrorResponse contains more
         // information about the HTTP response, and the limitsErr.Limit field
@@ -325,12 +332,14 @@ cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
 
 ## Tasks ##
 
+- [ ] e-factura CLI tool
+- [ ] One-stop shop for ANAF APIs: VAT v8 API, E-Transport
 - [ ] Implement all business terms.
-- [ ] Support parsing the ZIP file from the DownloadInvoice.
 - [ ] Extend the InvoiceBuilder to add all Invoice fields
 - [ ] Implement CreditNote.
 - [ ] Add tests for all REST API calls and more tests for validating generated
   XML (maybe checking with the tools provided by mfinante).
+- [ ] Validate signature from Invoice zip.
 - [ ] Godoc and more code examples.
 - [ ] Test coverage
 
