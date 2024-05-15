@@ -29,7 +29,6 @@ type ClientConfig struct {
 	ApiClient *client.ApiClient
 	// the client to use for making requests to the ANAF public APIs.
 	PublicApiClient *client.PublicApiClient
-	Ctx             context.Context
 }
 
 // ClientConfigOption allows gradually modifying a ClientConfig

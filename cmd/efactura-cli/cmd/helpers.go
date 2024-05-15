@@ -20,6 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	efacturaclient "github.com/printesoi/e-factura-go/client"
+	"github.com/printesoi/e-factura-go/constants"
 	"github.com/printesoi/e-factura-go/efactura"
 	"github.com/printesoi/e-factura-go/oauth2"
 )
@@ -72,5 +74,17 @@ func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactur
 	} else {
 		client, err = efactura.NewSandboxClient(ctx, tokenSource)
 	}
+	return
+}
+
+func newEfacturaPublicClient(cmd *cobra.Command) (client *efactura.Client, err error) {
+	publicApiClient, err := efacturaclient.NewPublicApiClient(
+		efacturaclient.PublicApiClientBaseURL(constants.PublicApiBaseProd),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err = efactura.NewClient(efactura.ClientPublicApiClient(publicApiClient))
 	return
 }

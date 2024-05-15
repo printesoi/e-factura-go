@@ -27,7 +27,7 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "client",
-	Short: "A CLI client for the ANAF e-factura API",
+	Short: "A CLI client for the ANAF e-factura APIs",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 	},
@@ -78,7 +78,7 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".cobra" (without extension).
+		// Search config in home directory with name ".e-factura.yaml".
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".e-factura")
