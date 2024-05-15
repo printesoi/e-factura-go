@@ -28,7 +28,7 @@ const (
 	flagNameValidateStandard   = "standard"
 )
 
-// publicApiValidateCmd represents the `api download` command
+// publicApiValidateCmd represents the `public-api validate-xml` command
 var publicApiValidateCmd = &cobra.Command{
 	Use:   "validate-xml",
 	Short: "Validate XML",
@@ -67,7 +67,7 @@ var publicApiValidateCmd = &cobra.Command{
 		}
 		if !validateRes.IsOk() {
 			cmd.SilenceUsage = true
-			return fmt.Errorf("error validating XML: %s", validateRes.GetFirstMessage())
+			return fmt.Errorf("validate XML %s failed: %s", fvStandard, validateRes.GetFirstMessage())
 		}
 		fmt.Printf("validate %s: OK\n", fvStandard)
 		return nil
