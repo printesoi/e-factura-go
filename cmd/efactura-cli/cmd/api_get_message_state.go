@@ -47,13 +47,15 @@ var apiGetMessageStateCmd = &cobra.Command{
 			return fmt.Errorf("get message state failed: %w", err)
 		}
 		if res.IsOk() {
-			fmt.Printf("Message for upload index %d: ok, download_id=%d", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: ok, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
 		} else if res.IsProcessing() {
-			fmt.Printf("Message for upload index %d: processing", fvUploadIndex)
+			fmt.Printf("Message for upload index %d: processing\n", fvUploadIndex)
 		} else if res.IsInvalidXML() {
-			fmt.Printf("Message for upload index %d: invalid XML, download_id=%d", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: invalid XML, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
 		} else if res.IsNok() {
-			fmt.Printf("Message for upload index %d: nok, download_id=%d", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: nok, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
+		} else {
+			fmt.Printf("Message for upload index %d: unknown state '%s', message: '%s'\n", fvUploadIndex, res.State, res.GetFirstErrorMessage())
 		}
 
 		return nil
