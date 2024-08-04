@@ -15,46 +15,118 @@
 package etransport
 
 import (
+	"errors"
+
 	"github.com/shopspring/decimal"
 
 	ixml "github.com/printesoi/e-factura-go/xml"
 	"github.com/printesoi/xml-go"
 )
 
+// PostingDeclaration is the object that represents an e-transport posting
+// declaration payload for the upload v2 endpoint.
 type PostingDeclaration struct {
 	// CUI/CIF/CNP
 	DeclarantCode string `xml:"codDeclarant,attr"`
-	//
-	DeclarantRef     string               `xml:"refDeclarant,attr,omitempty"`
+	// Reference for the declarant
+	DeclarantRef string `xml:"refDeclarant,attr,omitempty"`
+	// DeclPostIncident this must be set only if the posting declaration is
+	// uploaded after the transport already had place, otherwise leave this
+	// empty.
 	DeclPostIncident DeclPostIncidentType `xml:"declPostAvarie,attr,omitempty"`
 
-	Notification  *PostingDeclarationNotification  `xml:"notificare,omitempty"`
-	Deletion      *PostingDeclarationDeletion      `xml:"stergere,omitempty"`
-	Confirmation  *PostingDeclarationConfirmation  `xml:"confirmare,omitempty"`
-	VehicleChange *PostingDeclarationVehicleChange `xml:"modifVehicul,omitempty"`
-
-	// Name of node.
-	XMLName xml.Name `xml:"eTransport"`
-	// xmlns attr. Will be automatically set in MarshalXML
-	Namespace string `xml:"xmlns,attr"`
-	// xmlns:xsi attr. Will be automatically set in MarshalXML
-	NamespaceXSI string `xml:"xmlns:xsi,attr"`
-	// generated with... Will be automatically set in MarshalXML if empty.
-	Comment string `xml:",comment"`
+	declarationType postingDeclarationType `xml:"-"`
+	declarationData any                    `xml:"-"`
 }
 
-// Prefill sets the  NS, NScac, NScbc and Comment properties for ensuring that
-// the required attributes and properties are set for a valid UBL XML.
-func (pd *PostingDeclaration) Prefill() {
-	pd.Namespace = "mfp:anaf:dgti:eTransport:declaratie:v2"
-	pd.NamespaceXSI = "http://www.w3.org/2001/XMLSchema-instance"
+type postingDeclarationType int
+
+const (
+	postingDeclarationTypeNA postingDeclarationType = iota
+	postingDeclarationTypeNotification
+	postingDeclarationTypeDeletion
+	postingDeclarationTypeConfirmation
+	postingDeclarationTypeVehicleChange
+)
+
+// SetNotification set the given PostingDeclarationNotification as the
+// PostingDeclaration payload.
+func (pd *PostingDeclaration) SetNotification(notification PostingDeclarationNotification) *PostingDeclaration {
+	pd.declarationType = postingDeclarationTypeNotification
+	pd.declarationData = notification
+	return pd
+}
+
+// SetDeletion set the given PostingDeclarationDeletion as the
+// PostingDeclaration payload.
+func (pd *PostingDeclaration) SetDeletion(deletion PostingDeclarationDeletion) *PostingDeclaration {
+	pd.declarationType = postingDeclarationTypeDeletion
+	pd.declarationData = deletion
+	return pd
+}
+
+// SetConfirmation set the given PostingDeclarationConfirmation as the
+// PostingDeclaration payload.
+func (pd *PostingDeclaration) SetConfirmation(confirmation PostingDeclarationConfirmation) *PostingDeclaration {
+	pd.declarationType = postingDeclarationTypeConfirmation
+	pd.declarationData = confirmation
+	return pd
+}
+
+// SetVehicleChange set the given PostingDeclarationVehicleChange as the
+// PostingDeclaration payload.
+func (pd *PostingDeclaration) SetVehicleChange(vehicleChange PostingDeclarationVehicleChange) *PostingDeclaration {
+	pd.declarationType = postingDeclarationTypeVehicleChange
+	pd.declarationData = vehicleChange
+	return pd
 }
 
 func (pd PostingDeclaration) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	type eTransport PostingDeclaration
-	pd.Prefill()
+	type postingDeclaration PostingDeclaration
+	var eTransport struct {
+		postingDeclaration
+
+		Notification  *PostingDeclarationNotification  `xml:"notificare,omitempty"`
+		Deletion      *PostingDeclarationDeletion      `xml:"stergere,omitempty"`
+		Confirmation  *PostingDeclarationConfirmation  `xml:"confirmare,omitempty"`
+		VehicleChange *PostingDeclarationVehicleChange `xml:"modifVehicul,omitempty"`
+
+		// Name of node.
+		XMLName xml.Name `xml:"eTransport"`
+		// xmlns attr. Will be automatically set in MarshalXML
+		Namespace string `xml:"xmlns,attr"`
+		// xmlns:xsi attr. Will be automatically set in MarshalXML
+		NamespaceXSI string `xml:"xmlns:xsi,attr"`
+		// generated with... comment
+		Comment string `xml:",comment"`
+	}
+
+	eTransport.postingDeclaration = postingDeclaration(pd)
+	eTransport.Namespace = "mfp:anaf:dgti:eTransport:declaratie:v2"
+	eTransport.NamespaceXSI = "http://www.w3.org/2001/XMLSchema-instance"
+	switch pd.declarationType {
+	case postingDeclarationTypeNotification:
+		notification, _ := pd.declarationData.(PostingDeclarationNotification)
+		eTransport.Notification = &notification
+
+	case postingDeclarationTypeDeletion:
+		deletion, _ := pd.declarationData.(PostingDeclarationDeletion)
+		eTransport.Deletion = &deletion
+
+	case postingDeclarationTypeConfirmation:
+		confirmation, _ := pd.declarationData.(PostingDeclarationConfirmation)
+		eTransport.Confirmation = &confirmation
+
+	case postingDeclarationTypeVehicleChange:
+		confirmation, _ := pd.declarationData.(PostingDeclarationVehicleChange)
+		eTransport.VehicleChange = &confirmation
+
+	default:
+		return errors.New("payload not set for posting declaration")
+	}
+
 	start.Name.Local = "eTransport"
-	return e.EncodeElement(eTransport(pd), start)
+	return e.EncodeElement(eTransport, start)
 }
 
 // XML returns the XML encoding of the PostingDeclaration
@@ -69,7 +141,7 @@ func (pd PostingDeclaration) XMLIndent(prefix, indent string) ([]byte, error) {
 	return ixml.MarshalIndentXMLWithHeader(pd, prefix, indent)
 }
 
-type UitType string
+type UITType string
 
 type PostingDeclarationNotification struct {
 	OpType OpType `xml:"codTipOperatiune,attr"`
@@ -89,11 +161,11 @@ type PostingDeclarationNotification struct {
 	// Cardinality: 1..n
 	TransportDocuments []PostingDeclarationTransportDocument `xml:"documenteTransport"`
 	// Cardinality: 0..n
-	PrevNotifications []string `xml:"notificareAnterioara,omitempty"`
+	PrevNotifications []PostingDeclarationNotificationPrevNotification `xml:"notificareAnterioara,omitempty"`
 }
 
 type PostingDeclarationNotificationCorrection struct {
-	Uit UitType `xml:"uit,attr"`
+	UIT UITType `xml:"uit,attr"`
 }
 
 type PostingDeclarationNotificationTransportedGood struct {
@@ -116,13 +188,12 @@ type PostingDeclarationNotificationCommercialPartner struct {
 
 type PostingDeclarationNotificationTransportData struct {
 	LicensePlate            string          `xml:"nrVehicul,attr"`
-	TrailerLicensePlate1    string          `xml:"nrRemorca1,attr,omitempty"`
-	TrailerLicensePlate2    string          `xml:"nrRemorca2,attr,omitempty"`
+	Trailer1LicensePlate    string          `xml:"nrRemorca1,attr,omitempty"`
+	Trailer2LicensePlate    string          `xml:"nrRemorca2,attr,omitempty"`
 	TransportOrgCountryCode CountryCodeType `xml:"codTaraOrgTransport,attr"`
 	TransportOrgCode        string          `xml:"codOrgTransport,attr,omitempty"`
 	TransportOrgName        string          `xml:"denumireOrgTransport,attr"`
-	// TODO: type
-	TransportDate string `xml:"dataTransport,attr"`
+	TransportDate           string          `xml:"dataTransport,attr"`
 }
 
 type PostingDeclationPlace struct {
@@ -151,11 +222,27 @@ type PostingDeclarationTransportDocument struct {
 	Remarks      string       `xml:"observatii,attr,omitempty"`
 }
 
+type PostingDeclarationNotificationPrevNotification struct {
+	UIT          UITType `xml:"uit,attr"`
+	Remarks      string  `xml:"observatii,attr,omitempty"`
+	DeclarantRef string  `xml:"refDeclarant,attr,omitempty"`
+}
+
 type PostingDeclarationDeletion struct {
+	UIT UITType `xml:"uit,attr"`
 }
 
 type PostingDeclarationConfirmation struct {
+	UIT              UITType          `xml:"uit,attr"`
+	ConfirmationType ConfirmationType `xml:"tipConfirmare,attr"`
+	Remarks          string           `xml:"observatii,attr,omitempty"`
 }
 
 type PostingDeclarationVehicleChange struct {
+	UIT                  UITType `xml:"uit,attr"`
+	LicensePlate         string  `xml:"nrVehicul,attr"`
+	Trailer1LicensePlate string  `xml:"nrRemorca1,attr,omitempty"`
+	Trailer2LicensePlate string  `xml:"nrRemorca2,attr,omitempty"`
+	ChangeData           string  `xml:"dataModificare,attr"`
+	Remarks              string  `xml:"observatii,attr,omitempty"`
 }

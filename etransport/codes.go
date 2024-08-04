@@ -29,7 +29,6 @@ const (
 type OpType string
 
 const (
-	// Valori posibile pentru câmpul codTipOperatiune:
 	// "10" AIC - Achiziţie intracomunitară
 	OpTypeAIC OpType = "10"
 	// "12" LHI - Operațiuni în sistem lohn (UE) - intrare
@@ -833,7 +832,7 @@ const (
 // "1001" Investiție in curs
 // "1101" Donații, ajutoare
 // "9901" Altele
-// - pentru codTipOperatiune = "12" LHI - Operațiuni în sistem lohn (UE) - intrare: 
+// - pentru codTipOperatiune = "12" LHI - Operațiuni în sistem lohn (UE) - intrare:
 // "9999" Același cu operațiunea
 // - pentru codTipOperatiune = "14" SCI - Stocuri la dispoziția clientului (Call-off stock) - intrare:
 // "9999" Același cu operațiunea
@@ -874,4 +873,12 @@ const (
 // "20" Factura
 // "30" Aviz de însoțire a mărfii
 // "9999" Altele
+)
+
+type ConfirmationType string
+
+const (
+	ConfirmationTypeConfirmed          ConfirmationType = "10"
+	ConfirmationTypePartiallyConfirmed ConfirmationType = "20"
+	ConfirmationTypeUnconfirmed        ConfirmationType = "30"
 )

@@ -35,29 +35,37 @@ const (
 )
 
 type Message struct {
-	Uit          string         `json:"uit"`
-	Cod_decl     string         `json:"cod_decl"`
-	Ref_decl     string         `json:"ref_decl"`
-	Sursa        string         `json:"sursa"`
-	Id_incarcare string         `json:"id_incarcare"`
-	Data_creare  string         `json:"data_creare"`
-	Tip_op       string         `json:"tip_op"`
-	Data_transp  string         `json:"data_transp"`
-	Pc_tara      string         `json:"pc_tara"`
-	Pc_cod       string         `json:"pc_cod"`
-	Pc_den       string         `json:"pc_den"`
-	Tr_tara      string         `json:"tr_tara"`
-	Tr_cod       string         `json:"tr_cod"`
-	Tr_den       string         `json:"tr_den"`
-	Nr_veh       string         `json:"nr_veh"`
-	Nr_rem1      string         `json:"nr_rem1"`
-	Nr_rem2      string         `json:"nr_rem2"`
-	Mesaje       []MessageError `json:"mesaje,omitempty"`
+	UIT                          UITType         `json:"uit"`
+	DeclarantCode                string          `json:"cod_decl"`
+	DeclarantRef                 string          `json:"ref_decl"`
+	Source                       string          `json:"sursa"`
+	UploadID                     string          `json:"id_incarcare"`
+	CreatedDate                  string          `json:"data_creare"`
+	OpType                       string          `json:"tip_op"`
+	TransportDate                string          `json:"data_transp"`
+	CommercialPartnerCountryCode CountryCodeType `json:"pc_tara,omitempty"`
+	CommercialPartnerCode        string          `json:"pc_cod,omitempty"`
+	CommercialPartnerName        string          `json:"pc_den,omitempty"`
+	TransportOrgCountryCode      CountryCodeType `json:"tr_tara,omitempty"`
+	TransportOrgCode             string          `json:"tr_cod,omitempty"`
+	TransportOrgName             string          `json:"tr_den,omitempty"`
+	LicensePlace                 string          `json:"nr_veh,omitempty"`
+	Trailer1LicensePlate         string          `json:"nr_rem1,omitempty"`
+	Trailer2LicensePlate         string          `json:"nr_rem2,omitempty"`
+	Messages                     []MessageError  `json:"mesaje,omitempty"`
 }
 
+type MessageErrorType string
+
+const (
+	MessageErrorTypeErr  MessageErrorType = "ERR"
+	MessageErrorTypeWarn MessageErrorType = "WARN"
+	MessageErrorTypeInfo MessageErrorType = "INFO"
+)
+
 type MessageError struct {
-	Type    string `json:"tip"`
-	Message string `json:"mesaj"`
+	Type    MessageErrorType `json:"tip"`
+	Message string           `json:"mesaj"`
 }
 
 // MessagesListResponse is the parsed response from the list messages endpoint.
