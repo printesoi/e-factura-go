@@ -769,49 +769,90 @@ const (
 type CountyCodeType string
 
 const (
-// Valori posibile pentru câmpul codJudetType:
-// "1" Alba
-// "2" Arad
-// "3" Argeş
-// "4" Bacău
-// "5" Bihor
-// "6" Bistriţa-Năsăud
-// "7" Botoşani
-// "8" Braşov
-// "9" Brăila
-// "10" Buzău
-// "11" Caraş-Severin
-// "51" Călăraşi
-// "12" Cluj
-// "13" Constanţa
-// "14" Covasna
-// "16" Dolj
-// "15" Dâmboviţa
-// "17" Galaţi
-// "52" Giurgiu
-// "18" Gorj
-// "19" Harghita
-// "20" Hunedoara
-// "21" Ialomiţa
-// "22" Iaşi
-// "23" Ilfov
-// "24" Maramureş
-// "25" Mehedinţi
-// "40" Municipiul Bucureşti
-// "26" Mureş
-// "27" Neamţ
-// "28" Olt
-// "29" Prahova
-// "30" Satu Mare
-// "32" Sibiu
-// "33" Suceava
-// "31" Sălaj
-// "34" Teleorman
-// "35" Timiş
-// "36" Tulcea
-// "37" Vaslui
-// "39" Vrancea
-// "38" Vâlcea
+	// "40" Municipiul Bucureşti
+	CountyCodeB CountyCodeType = "40"
+	// "1" Alba
+	CountryCodeAB CountyCodeType = "1"
+	// "2" Arad
+	CountyCodeAR CountyCodeType = "2"
+	// "3" Argeş
+	CountyCodeAG CountyCodeType = "3"
+	// "4" Bacău
+	CountyCodeBC CountyCodeType = "4"
+	// "5" Bihor
+	CountyCodeBH CountyCodeType = "5"
+	// "6" Bistriţa-Năsăud
+	CountyCodeBN CountyCodeType = "6"
+	// "7" Botoşani
+	CountyCodeBT CountyCodeType = "7"
+	// "8" Braşov
+	CountyCodeBV CountyCodeType = "8"
+	// "9" Brăila
+	CountyCodeBR CountyCodeType = "9"
+	// "10" Buzău
+	CountyCodeBZ CountyCodeType = "10"
+	// "11" Caraş-Severin
+	CountyCodeCS CountyCodeType = "11"
+	// "51" Călăraşi
+	CountyCodeCL CountyCodeType = "51"
+	// "12" Cluj
+	CountyCodeCJ CountyCodeType = "12"
+	// "13" Constanţa
+	CountyCodeCT CountyCodeType = "13"
+	// "14" Covasna
+	CountyCodeCV CountyCodeType = "14"
+	// "15" Dâmboviţa
+	CountyCodeDB CountyCodeType = "15"
+	// "16" Dolj
+	CountyCodeDJ CountyCodeType = "16"
+	// "17" Galaţi
+	CountyCodeGL CountyCodeType = "17"
+	// "52" Giurgiu
+	CountyCodeGR CountyCodeType = "52"
+	// "18" Gorj
+	CountyCodeGJ CountyCodeType = "18"
+	// "19" Harghita
+	CountyCodeHR CountyCodeType = "19"
+	// "20" Hunedoara
+	CountyCodeHD CountyCodeType = "20"
+	// "21" Ialomiţa
+	CountyCodeIL CountyCodeType = "21"
+	// "22" Iaşi
+	CountyCodeIS CountyCodeType = "22"
+	// "23" Ilfov
+	CountyCodeIF CountyCodeType = "23"
+	// "24" Maramureş
+	CountyCodeMM CountyCodeType = "24"
+	// "25" Mehedinţi
+	CountyCodeMH CountyCodeType = "25"
+	// "26" Mureş
+	CountyCodeMS CountyCodeType = "26"
+	// "27" Neamţ
+	CountyCodeNT CountyCodeType = "27"
+	// "28" Olt
+	CountyCodeOT CountyCodeType = "28"
+	// "29" Prahova
+	CountyCodePH CountyCodeType = "29"
+	// "30" Satu Mare
+	CountyCodeSM CountyCodeType = "30"
+	// "31" Sălaj
+	CountyCodeSJ CountyCodeType = "31"
+	// "32" Sibiu
+	CountyCodeSB CountyCodeType = "32"
+	// "33" Suceava
+	CountyCodeSV CountyCodeType = "33"
+	// "34" Teleorman
+	CountyCodeTR CountyCodeType = "34"
+	// "35" Timiş
+	CountyCodeTM CountyCodeType = "35"
+	// "36" Tulcea
+	CountyCodeTL CountyCodeType = "36"
+	// "37" Vaslui
+	CountyCodeVS CountyCodeType = "37"
+	// "38" Vâlcea
+	CountyCodeVL CountyCodeType = "38"
+	// "39" Vrancea
+	CountyCodeVN CountyCodeType = "39"
 )
 
 type OpPurposeCodeType string
@@ -868,11 +909,14 @@ type UnitMeasureCodeType string
 type DocumentType string
 
 const (
-// Valori posibile pentru câmpul tipDocument:
-// "10" CMR
-// "20" Factura
-// "30" Aviz de însoțire a mărfii
-// "9999" Altele
+	// "10" CMR
+	DocumentTypeCMR DocumentType = "10"
+	// "20" Factura
+	DocumentTypeInvoice DocumentType = "20"
+	// "30" Aviz de însoțire a mărfii
+	DocumentTypeDeliveryNote DocumentType = "30"
+	// "9999" Altele
+	DocumentTypeOther DocumentType = "9999"
 )
 
 type ConfirmationType string

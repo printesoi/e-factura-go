@@ -68,6 +68,18 @@ type MessageError struct {
 	Message string           `json:"mesaj"`
 }
 
+func (me MessageError) IsErr() bool {
+	return me.Type == MessageErrorTypeErr
+}
+
+func (me MessageError) IsWarn() bool {
+	return me.Type == MessageErrorTypeWarn
+}
+
+func (me MessageError) IsInfo() bool {
+	return me.Type == MessageErrorTypeInfo
+}
+
 // MessagesListResponse is the parsed response from the list messages endpoint.
 type MessagesListResponse struct {
 	Errors []struct {
@@ -117,19 +129,17 @@ func (c *Client) GetMessagesList(
 	return
 }
 
-type (
-	GetMessageStateCode string
+type GetMessageStateResponse struct {
+	Errors []struct {
+		ErrorMessage string `json:"errorMessage"`
+	} `json:"errors,omitempty"`
+	State           GetMessageStateCode `json:"stare"`
+	DateResponse    string              `json:"dateResponse"`
+	ExecutionStatus int32               `json:"ExecutionStatus"`
+	TraceID         string              `json:"trace_id"`
+}
 
-	GetMessageStateResponse struct {
-		Errors []struct {
-			ErrorMessage string `json:"errorMessage"`
-		} `json:"errors,omitempty"`
-		State           GetMessageStateCode `json:"stare"`
-		DateResponse    string              `json:"dateResponse"`
-		ExecutionStatus int32               `json:"ExecutionStatus"`
-		TraceID         string              `json:"trace_id"`
-	}
-)
+type GetMessageStateCode string
 
 const (
 	GetMessageStateCodeOk         GetMessageStateCode = "ok"
@@ -185,28 +195,26 @@ func (c *Client) GetMessageState(
 	return
 }
 
-type (
-	uploadStandard string
-
-	UploadV2Response struct {
-		DateResponse    string `json:"dateResponse"`
-		ExecutionStatus int32  `json:"ExecutionStatus"`
-		UploadIndex     int64  `json:"index_incarcare"`
-		UIT             string `json:"UIT"`
-		TraceID         string `json:"trace_id"`
-		DeclarantRef    string `json:"ref_declarant"`
-		Attention       string `json:"atentie,omitempty"`
-		Errors          []struct {
-			ErrorMessage string `json:"errorMessage"`
-		} `json:"errors,omitempty"`
-	}
-)
+type UploadV2Response struct {
+	DateResponse    string `json:"dateResponse"`
+	ExecutionStatus int32  `json:"ExecutionStatus"`
+	UploadIndex     int64  `json:"index_incarcare"`
+	UIT             string `json:"UIT"`
+	TraceID         string `json:"trace_id"`
+	DeclarantRef    string `json:"ref_declarant"`
+	Attention       string `json:"atentie,omitempty"`
+	Errors          []struct {
+		ErrorMessage string `json:"errorMessage"`
+	} `json:"errors,omitempty"`
+}
 
 // IsOk returns true if the response corresponding to fetching messages list
 // was successful.
 func (r *UploadV2Response) IsOk() bool {
 	return r != nil && r.ExecutionStatus == 0
 }
+
+type uploadStandard string
 
 const (
 	uploadStandardETransp uploadStandard = "ETRANSP"
@@ -237,7 +245,7 @@ func (c *Client) UploadV2XML(
 }
 
 func (c *Client) UploadPostingDeclarationV2(
-	ctx context.Context, decl PostingDeclaration, cif string,
+	ctx context.Context, decl PostingDeclarationV2, cif string,
 ) (response *UploadV2Response, err error) {
 	xmlReader, err := ixml.MarshalXMLToReader(decl)
 	if err != nil {

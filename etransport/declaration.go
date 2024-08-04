@@ -23,9 +23,14 @@ import (
 	"github.com/printesoi/xml-go"
 )
 
-// PostingDeclaration is the object that represents an e-transport posting
+const (
+	nsETransportDeclV2 = "mfp:anaf:dgti:eTransport:declaratie:v2"
+	nsXSI              = "http://www.w3.org/2001/XMLSchema-instance"
+)
+
+// PostingDeclarationV2 is the object that represents an e-transport posting
 // declaration payload for the upload v2 endpoint.
-type PostingDeclaration struct {
+type PostingDeclarationV2 struct {
 	// CUI/CIF/CNP
 	DeclarantCode string `xml:"codDeclarant,attr"`
 	// Reference for the declarant
@@ -35,8 +40,8 @@ type PostingDeclaration struct {
 	// empty.
 	DeclPostIncident DeclPostIncidentType `xml:"declPostAvarie,attr,omitempty"`
 
-	declarationType postingDeclarationType `xml:"-"`
-	declarationData any                    `xml:"-"`
+	declarationType    postingDeclarationType
+	declarationPayload any
 }
 
 type postingDeclarationType int
@@ -50,39 +55,39 @@ const (
 )
 
 // SetNotification set the given PostingDeclarationNotification as the
-// PostingDeclaration payload.
-func (pd *PostingDeclaration) SetNotification(notification PostingDeclarationNotification) *PostingDeclaration {
+// PostingDeclarationV2 payload.
+func (pd *PostingDeclarationV2) SetNotification(notification PostingDeclarationNotification) *PostingDeclarationV2 {
 	pd.declarationType = postingDeclarationTypeNotification
-	pd.declarationData = notification
+	pd.declarationPayload = notification
 	return pd
 }
 
 // SetDeletion set the given PostingDeclarationDeletion as the
-// PostingDeclaration payload.
-func (pd *PostingDeclaration) SetDeletion(deletion PostingDeclarationDeletion) *PostingDeclaration {
+// PostingDeclarationV2 payload.
+func (pd *PostingDeclarationV2) SetDeletion(deletion PostingDeclarationDeletion) *PostingDeclarationV2 {
 	pd.declarationType = postingDeclarationTypeDeletion
-	pd.declarationData = deletion
+	pd.declarationPayload = deletion
 	return pd
 }
 
 // SetConfirmation set the given PostingDeclarationConfirmation as the
-// PostingDeclaration payload.
-func (pd *PostingDeclaration) SetConfirmation(confirmation PostingDeclarationConfirmation) *PostingDeclaration {
+// PostingDeclarationV2 payload.
+func (pd *PostingDeclarationV2) SetConfirmation(confirmation PostingDeclarationConfirmation) *PostingDeclarationV2 {
 	pd.declarationType = postingDeclarationTypeConfirmation
-	pd.declarationData = confirmation
+	pd.declarationPayload = confirmation
 	return pd
 }
 
 // SetVehicleChange set the given PostingDeclarationVehicleChange as the
-// PostingDeclaration payload.
-func (pd *PostingDeclaration) SetVehicleChange(vehicleChange PostingDeclarationVehicleChange) *PostingDeclaration {
+// PostingDeclarationV2 payload.
+func (pd *PostingDeclarationV2) SetVehicleChange(vehicleChange PostingDeclarationVehicleChange) *PostingDeclarationV2 {
 	pd.declarationType = postingDeclarationTypeVehicleChange
-	pd.declarationData = vehicleChange
+	pd.declarationPayload = vehicleChange
 	return pd
 }
 
-func (pd PostingDeclaration) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	type postingDeclaration PostingDeclaration
+func (pd PostingDeclarationV2) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	type postingDeclaration PostingDeclarationV2
 	var eTransport struct {
 		postingDeclaration
 
@@ -102,23 +107,23 @@ func (pd PostingDeclaration) MarshalXML(e *xml.Encoder, start xml.StartElement) 
 	}
 
 	eTransport.postingDeclaration = postingDeclaration(pd)
-	eTransport.Namespace = "mfp:anaf:dgti:eTransport:declaratie:v2"
-	eTransport.NamespaceXSI = "http://www.w3.org/2001/XMLSchema-instance"
+	eTransport.Namespace = nsETransportDeclV2
+	eTransport.NamespaceXSI = nsXSI
 	switch pd.declarationType {
 	case postingDeclarationTypeNotification:
-		notification, _ := pd.declarationData.(PostingDeclarationNotification)
+		notification, _ := pd.declarationPayload.(PostingDeclarationNotification)
 		eTransport.Notification = &notification
 
 	case postingDeclarationTypeDeletion:
-		deletion, _ := pd.declarationData.(PostingDeclarationDeletion)
+		deletion, _ := pd.declarationPayload.(PostingDeclarationDeletion)
 		eTransport.Deletion = &deletion
 
 	case postingDeclarationTypeConfirmation:
-		confirmation, _ := pd.declarationData.(PostingDeclarationConfirmation)
+		confirmation, _ := pd.declarationPayload.(PostingDeclarationConfirmation)
 		eTransport.Confirmation = &confirmation
 
 	case postingDeclarationTypeVehicleChange:
-		confirmation, _ := pd.declarationData.(PostingDeclarationVehicleChange)
+		confirmation, _ := pd.declarationPayload.(PostingDeclarationVehicleChange)
 		eTransport.VehicleChange = &confirmation
 
 	default:
@@ -129,15 +134,15 @@ func (pd PostingDeclaration) MarshalXML(e *xml.Encoder, start xml.StartElement) 
 	return e.EncodeElement(eTransport, start)
 }
 
-// XML returns the XML encoding of the PostingDeclaration
-func (pd PostingDeclaration) XML() ([]byte, error) {
+// XML returns the XML encoding of the PostingDeclarationV2
+func (pd PostingDeclarationV2) XML() ([]byte, error) {
 	return ixml.MarshalXMLWithHeader(pd)
 }
 
 // XMLIndent works like XML, but each XML element begins on a new
 // indented line that starts with prefix and is followed by one or more
 // copies of indent according to the nesting depth.
-func (pd PostingDeclaration) XMLIndent(prefix, indent string) ([]byte, error) {
+func (pd PostingDeclarationV2) XMLIndent(prefix, indent string) ([]byte, error) {
 	return ixml.MarshalIndentXMLWithHeader(pd, prefix, indent)
 }
 
@@ -243,6 +248,6 @@ type PostingDeclarationVehicleChange struct {
 	LicensePlate         string  `xml:"nrVehicul,attr"`
 	Trailer1LicensePlate string  `xml:"nrRemorca1,attr,omitempty"`
 	Trailer2LicensePlate string  `xml:"nrRemorca2,attr,omitempty"`
-	ChangeData           string  `xml:"dataModificare,attr"`
+	ChangeDate           string  `xml:"dataModificare,attr"`
 	Remarks              string  `xml:"observatii,attr,omitempty"`
 }
