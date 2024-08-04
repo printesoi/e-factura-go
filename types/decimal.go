@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
+package types
 
 import (
 	"github.com/printesoi/xml-go"
@@ -179,9 +179,9 @@ func (d Decimal) AsAmount() Decimal {
 
 // Cmp compares the numbers represented by d and d2 and returns:
 //
-//     -1 if d <  d2
-//      0 if d == d2
-//     +1 if d >  d2
+//	-1 if d <  d2
+//	 0 if d == d2
+//	+1 if d >  d2
 func (d Decimal) Cmp(d2 Decimal) int {
 	return d.Decimal.Cmp(d2.Decimal)
 }

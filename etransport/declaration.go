@@ -17,8 +17,7 @@ package etransport
 import (
 	"errors"
 
-	"github.com/shopspring/decimal"
-
+	"github.com/printesoi/e-factura-go/types"
 	ixml "github.com/printesoi/e-factura-go/xml"
 	"github.com/printesoi/xml-go"
 )
@@ -177,11 +176,11 @@ type PostingDeclarationNotificationTransportedGood struct {
 	OpPurposeCode   OpPurposeCodeType   `xml:"codScopOperatiune,attr"`
 	TariffCode      string              `xml:"codTarifar,attr,omitempty"`
 	GoodName        string              `xml:"denumireMarfa,attr"`
-	Quantity        decimal.Decimal     `xml:"cantitate,attr"`
+	Quantity        types.Decimal       `xml:"cantitate,attr"`
 	UnitMeasureCode UnitMeasureCodeType `xml:"codUnitateMasura,attr"`
-	NetWeight       *decimal.Decimal    `xml:"greutateNeta,attr,omitempty"`
-	GrossWeight     decimal.Decimal     `xml:"greutateBruta,attr"`
-	LeiValueNoVAT   *decimal.Decimal    `xml:"valoareLeiFaraTva,attr,omitempty"`
+	NetWeight       *types.Decimal      `xml:"greutateNeta,attr,omitempty"`
+	GrossWeight     types.Decimal       `xml:"greutateBruta,attr"`
+	LeiValueNoVAT   *types.Decimal      `xml:"valoareLeiFaraTva,attr,omitempty"`
 	DeclarantRef    string              `xml:"refDeclaranti,attr,omitempty"`
 }
 

@@ -17,21 +17,22 @@ package efactura
 import (
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
 	"github.com/printesoi/e-factura-go/internal/ptr"
+	"github.com/printesoi/e-factura-go/types"
 )
 
 // InvoiceLineAllowanceChargeBuilder builds an InvoiceLineAllowanceCharge object
 type InvoiceLineAllowanceChargeBuilder struct {
 	chargeIndicator           bool
 	currencyID                CurrencyCodeType
-	amount                    Decimal
-	baseAmount                *Decimal
+	amount                    types.Decimal
+	baseAmount                *types.Decimal
 	allowanceChargeReasonCode *string
 	allowanceChargeReason     *string
 }
 
 // NewInvoiceLineAllowanceChargeBuilder creates a new generic
 // InvoiceLineAllowanceChargeBuilder.
-func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
 	b := new(InvoiceLineAllowanceChargeBuilder)
 	return b.WithChargeIndicator(chargeIndicator).
 		WithCurrencyID(currencyID).WithAmount(amount)
@@ -40,14 +41,14 @@ func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID Curre
 // NewInvoiceLineAllowanceBuilder creates a new InvoiceLineAllowanceChargeBuilder
 // builder that will build InvoiceLineAllowanceCharge object correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceLineAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineAllowanceBuilder(currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(false, currencyID, amount)
 }
 
 // NewInvoiceLineChargeBuilder creates a new InvoiceLineAllowanceChargeBuilder
 // builder that will build InvoiceLineAllowanceCharge object correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceLineChargeBuilder(currencyID CurrencyCodeType, amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineChargeBuilder(currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(true, currencyID, amount)
 }
 
@@ -61,12 +62,12 @@ func (b *InvoiceLineAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCo
 	return b
 }
 
-func (b *InvoiceLineAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithAmount(amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
 	b.amount = amount
 	return b
 }
 
-func (b *InvoiceLineAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceLineAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithBaseAmount(amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
 	b.baseAmount = amount.Ptr()
 	return b
 }
@@ -118,11 +119,11 @@ type InvoiceLineBuilder struct {
 	note             string
 	currencyID       CurrencyCodeType
 	unitCode         UnitCodeType
-	invoicedQuantity Decimal
-	baseQuantity     *Decimal
+	invoicedQuantity types.Decimal
+	baseQuantity     *types.Decimal
 
-	grossPriceAmount Decimal
-	priceDeduction   Decimal
+	grossPriceAmount types.Decimal
+	priceDeduction   types.Decimal
 
 	invoicePeriod     *InvoiceLinePeriod
 	allowancesCharges []InvoiceLineAllowanceCharge
@@ -161,22 +162,22 @@ func (b *InvoiceLineBuilder) WithUnitCode(unitCode UnitCodeType) *InvoiceLineBui
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithInvoicedQuantity(quantity Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithInvoicedQuantity(quantity types.Decimal) *InvoiceLineBuilder {
 	b.invoicedQuantity = quantity
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithBaseQuantity(quantity Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithBaseQuantity(quantity types.Decimal) *InvoiceLineBuilder {
 	b.baseQuantity = &quantity
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount types.Decimal) *InvoiceLineBuilder {
 	b.grossPriceAmount = priceAmount
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithPriceDeduction(deduction Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithPriceDeduction(deduction types.Decimal) *InvoiceLineBuilder {
 	b.priceDeduction = deduction
 	return b
 }
@@ -261,7 +262,7 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 		Quantity: b.invoicedQuantity,
 		UnitCode: b.unitCode,
 	}
-	var netPriceAmount Decimal
+	var netPriceAmount types.Decimal
 	if b.priceDeduction.IsZero() {
 		netPriceAmount = b.grossPriceAmount
 	} else {
@@ -308,7 +309,7 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 	// Invoiced quantity * (Item net price / item price base quantity)
 	//  + Sum of invoice line charge amount
 	//  - Sum of invoice line allowance amount
-	baseQuantity := D(1)
+	baseQuantity := types.D(1)
 	if b.baseQuantity != nil {
 		baseQuantity = *b.baseQuantity
 	}
@@ -336,16 +337,16 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 type InvoiceDocumentAllowanceChargeBuilder struct {
 	chargeIndicator           bool
 	currencyID                CurrencyCodeType
-	amount                    Decimal
+	amount                    types.Decimal
 	taxCategory               InvoiceTaxCategory
-	baseAmount                *Decimal
+	baseAmount                *types.Decimal
 	allowanceChargeReasonCode *string
 	allowanceChargeReason     *string
 }
 
 // NewInvoiceDocumentAllowanceChargeBuilder creates a new generic
 // InvoiceDocumentAllowanceChargeBuilder.
-func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	b := new(InvoiceDocumentAllowanceChargeBuilder)
 	return b.WithChargeIndicator(chargeIndicator).WithCurrencyID(currencyID).
 		WithAmount(amount).WithTaxCategory(taxCategory)
@@ -354,14 +355,14 @@ func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID C
 // NewInvoiceDocumentAllowanceBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
 // builder that will build InvoiceDocumentAllowanceCharge object correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceDocumentAllowanceBuilder(currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentAllowanceBuilder(currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	return NewInvoiceDocumentAllowanceChargeBuilder(false, currencyID, amount, taxCategory)
 }
 
 // NewInvoiceDocumentChargeBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
 // builder that will build InvoiceDocumentAllowanceCharge object correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceDocumentChargeBuilder(currencyID CurrencyCodeType, amount Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentChargeBuilder(currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	return NewInvoiceDocumentAllowanceChargeBuilder(true, currencyID, amount, taxCategory)
 }
 
@@ -375,7 +376,7 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithCurrencyID(currencyID Curren
 	return b
 }
 
-func (b *InvoiceDocumentAllowanceChargeBuilder) WithAmount(amount Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithAmount(amount types.Decimal) *InvoiceDocumentAllowanceChargeBuilder {
 	b.amount = amount
 	return b
 }
@@ -385,7 +386,7 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithTaxCategory(taxCategory Invo
 	return b
 }
 
-func (b *InvoiceDocumentAllowanceChargeBuilder) WithBaseAmount(amount Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithBaseAmount(amount types.Decimal) *InvoiceDocumentAllowanceChargeBuilder {
 	b.baseAmount = amount.Ptr()
 	return b
 }
@@ -442,13 +443,13 @@ type taxExemptionReason struct {
 // InvoiceBuilder builds an Invoice object
 type InvoiceBuilder struct {
 	id          string
-	issueDate   Date
-	dueDate     *Date
+	issueDate   types.Date
+	dueDate     *types.Date
 	invoiceType InvoiceTypeCodeType
 
 	documentCurrencyID      CurrencyCodeType
 	taxCurrencyID           CurrencyCodeType
-	taxCurrencyExchangeRate Decimal
+	taxCurrencyExchangeRate types.Decimal
 
 	taxExeptionReasons map[TaxCategoryCodeType]taxExemptionReason
 
@@ -467,7 +468,7 @@ type InvoiceBuilder struct {
 	allowancesCharges []InvoiceDocumentAllowanceCharge
 	invoiceLines      []InvoiceLine
 
-	expectedTaxInclusiveAmount *Decimal
+	expectedTaxInclusiveAmount *types.Decimal
 }
 
 func NewInvoiceBuilder(id string) (b *InvoiceBuilder) {
@@ -480,12 +481,12 @@ func (b *InvoiceBuilder) WithID(id string) *InvoiceBuilder {
 	return b
 }
 
-func (b *InvoiceBuilder) WithIssueDate(date Date) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithIssueDate(date types.Date) *InvoiceBuilder {
 	b.issueDate = date
 	return b
 }
 
-func (b *InvoiceBuilder) WithDueDate(date Date) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithDueDate(date types.Date) *InvoiceBuilder {
 	b.dueDate = &date
 	return b
 }
@@ -500,7 +501,7 @@ func (b *InvoiceBuilder) WithDocumentCurrencyCode(currencyID CurrencyCodeType) *
 	return b
 }
 
-func (b *InvoiceBuilder) WithDocumentToTaxCurrencyExchangeRate(rate Decimal) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithDocumentToTaxCurrencyExchangeRate(rate types.Decimal) *InvoiceBuilder {
 	b.taxCurrencyExchangeRate = rate
 	return b
 }
@@ -610,7 +611,7 @@ func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeTy
 // the tax inclusive amount generated is different than the given amount, the
 // BT-114 term will be set (Payable rounding amount) and Payable Amount
 // (BT-115) is adjusted with the difference.
-func (b *InvoiceBuilder) WithExpectedTaxInclusiveAmount(amount Decimal) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithExpectedTaxInclusiveAmount(amount types.Decimal) *InvoiceBuilder {
 	b.expectedTaxInclusiveAmount = amount.Ptr()
 	return b
 }
@@ -671,7 +672,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 
 	// amountToTaxAmount converts an Amount assumed to be in the
 	// DocumentCurrencyCode to an amount in TaxCurrencyCode
-	amountToTaxAmount := func(a Decimal) Decimal {
+	amountToTaxAmount := func(a types.Decimal) types.Decimal {
 		if taxCurrencyID == invoice.DocumentCurrencyCode {
 			return a
 		}
@@ -682,14 +683,14 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	invoice.InvoiceLines = b.invoiceLines
 
 	var (
-		lineExtensionAmount   = Zero
-		allowanceTotalAmount  = Zero
-		chargeTotalAmount     = Zero
-		taxExclusiveAmount    = Zero
-		taxInclusiveAmount    = Zero
-		prepaidAmount         = Zero
-		payableRoundingAmount = Zero
-		payableAmount         = Zero
+		lineExtensionAmount   = types.Zero
+		allowanceTotalAmount  = types.Zero
+		chargeTotalAmount     = types.Zero
+		taxExclusiveAmount    = types.Zero
+		taxInclusiveAmount    = types.Zero
+		prepaidAmount         = types.Zero
+		payableRoundingAmount = types.Zero
+		payableAmount         = types.Zero
 	)
 
 	taxCategoryMap := make(taxCategoryMap)
@@ -707,7 +708,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 		}
 	}
 	for i, allowanceCharge := range invoice.AllowanceCharges {
-		var amount Decimal
+		var amount types.Decimal
 		if allowanceCharge.ChargeIndicator {
 			amount = allowanceCharge.Amount.Amount
 			chargeTotalAmount = chargeTotalAmount.Add(allowanceCharge.Amount.Amount)
@@ -721,7 +722,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 		}
 	}
 
-	taxTotal, taxTotalTaxCurrency := Zero, Zero
+	taxTotal, taxTotalTaxCurrency := types.Zero, types.Zero
 	var taxSubtotals []InvoiceTaxSubtotal
 
 	for _, taxCategorySummary := range taxCategoryMap.getSummaries() {
@@ -854,17 +855,17 @@ func makeTaxCategoryKeyLine(category InvoiceLineTaxCategory) taxCategoryKey {
 
 type taxCategorySummary struct {
 	category   InvoiceTaxCategory
-	baseAmount Decimal
+	baseAmount types.Decimal
 }
 
-func (s taxCategorySummary) getTaxAmount() Decimal {
-	return s.baseAmount.Mul(s.category.Percent.Value()).Div(D(100)).Round(2)
+func (s taxCategorySummary) getTaxAmount() types.Decimal {
+	return s.baseAmount.Mul(s.category.Percent.Value()).Div(types.D(100)).Round(2)
 }
 
 // taxCategoryMap is not concurency-safe
 type taxCategoryMap map[taxCategoryKey]*taxCategorySummary
 
-func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amount Decimal) bool {
+func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amount types.Decimal) bool {
 	if category.TaxScheme.ID == TaxSchemeIDVAT {
 		percent := category.Percent.Value()
 		if !category.ID.TaxRateExempted() {
@@ -889,7 +890,7 @@ func (m *taxCategoryMap) add(k taxCategoryKey, category InvoiceTaxCategory, amou
 	return true
 }
 
-func (m *taxCategoryMap) addDocumentTaxCategory(category InvoiceTaxCategory, amount Decimal) bool {
+func (m *taxCategoryMap) addDocumentTaxCategory(category InvoiceTaxCategory, amount types.Decimal) bool {
 	if m == nil {
 		return false
 	}
@@ -898,7 +899,7 @@ func (m *taxCategoryMap) addDocumentTaxCategory(category InvoiceTaxCategory, amo
 	return m.add(k, category, amount)
 }
 
-func (m *taxCategoryMap) addLineTaxCategory(category InvoiceLineTaxCategory, amount Decimal) bool {
+func (m *taxCategoryMap) addLineTaxCategory(category InvoiceLineTaxCategory, amount types.Decimal) bool {
 	if m == nil {
 		return false
 	}

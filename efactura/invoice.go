@@ -17,6 +17,7 @@ package efactura
 import (
 	"fmt"
 
+	"github.com/printesoi/e-factura-go/types"
 	ixml "github.com/printesoi/e-factura-go/xml"
 	"github.com/printesoi/xml-go"
 )
@@ -54,12 +55,12 @@ type Invoice struct {
 	// Term: Data emiterii facturii
 	// Description: Data la care a fost emisă factura.
 	// Cardinality: 1..1
-	IssueDate Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 IssueDate"`
+	IssueDate types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 IssueDate"`
 	// ID: BT-9
 	// Term: Data scadenţei
 	// Description: Data până la care trebuie făcută plata.
 	// Cardinality: 0..1
-	DueDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 DueDate,omitempty"`
+	DueDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 DueDate,omitempty"`
 	// ID: BT-3
 	// Term: Codul tipului facturii
 	// Description: Un cod care specifică tipul funcţional al facturii.
@@ -248,7 +249,7 @@ type InvoiceDocumentReference struct {
 	// Description: Data emiterii facturii anterioare trebuie furnizată în
 	//     cazul în care identificatorul facturii anterioare nu este unic.
 	// Cardinality: 0..1
-	IssueDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 IssueDate,omitempty"`
+	IssueDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 IssueDate,omitempty"`
 }
 
 type InvoiceSupplier struct {
@@ -604,7 +605,7 @@ type InvoiceDelivery struct {
 	// ID: BT-72
 	// Term: Data reală a livrării
 	// Cardinality: 0..1
-	ActualDeliveryDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ActualDeliveryDate,omitempty"`
+	ActualDeliveryDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ActualDeliveryDate,omitempty"`
 }
 
 type InvoiceDeliveryLocation struct {
@@ -662,12 +663,12 @@ type InvoicePeriod struct {
 	// Term: Data de început a perioadei de facturare
 	// Description: Data la care începe perioada de facturare.
 	// Cardinality: 0..1
-	StartDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 StartDate,omitempty"`
+	StartDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 StartDate,omitempty"`
 	// ID: BT-74
 	// Term: Data de sfârșit a perioadei de facturare
 	// Description: Data la care sfârșește perioada de facturare.
 	// Cardinality: 0..1
-	EndDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 EndDate,omitempty"`
+	EndDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 EndDate,omitempty"`
 }
 
 type InvoicePaymentMeans struct {
@@ -784,7 +785,7 @@ type InvoiceDocumentAllowanceCharge struct {
 	//     taxei suplimentare la nivelul documentului, pentru a calcula
 	//     valoarea taxei suplimentare la nivelul documentului.
 	// Cardinality: 0..1
-	Percent *Decimal `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 MultiplierFactorNumeric,omitempty"`
+	Percent *types.Decimal `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 MultiplierFactorNumeric,omitempty"`
 	// Field: TaxCategory.ID
 	// ID: BT-102
 	// Term: Codul categoriei de TVA pentru taxe suplimentare la nivelul
@@ -855,7 +856,7 @@ type InvoiceTaxSubtotal struct {
 // InvoiceTaxCategory is a struct that encodes a cac:TaxCategory node.
 type InvoiceTaxCategory struct {
 	ID                     TaxCategoryCodeType        `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
-	Percent                Decimal                    `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
+	Percent                types.Decimal              `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
 	TaxExemptionReason     string                     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReason,omitempty"`
 	TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReasonCode,omitempty"`
 	TaxScheme              TaxScheme                  `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
@@ -868,7 +869,7 @@ type InvoiceTaxCategory struct {
 func (c InvoiceTaxCategory) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	type invoiceTaxCategory struct {
 		ID                     TaxCategoryCodeType        `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
-		Percent                *Decimal                   `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
+		Percent                *types.Decimal             `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
 		TaxExemptionReason     string                     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReason,omitempty"`
 		TaxExemptionReasonCode TaxExemptionReasonCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 TaxExemptionReasonCode,omitempty"`
 		TaxScheme              TaxScheme                  `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
@@ -970,7 +971,7 @@ type InvoiceLine struct {
 
 // InvoicedQuantity represents the quantity (of items) on an invoice line.
 type InvoicedQuantity struct {
-	Quantity Decimal `xml:",chardata"`
+	Quantity types.Decimal `xml:",chardata"`
 	// The unit of the quantity.
 	UnitCode UnitCodeType `xml:"unitCode,attr"`
 	// The quantity unit code list.
@@ -986,11 +987,11 @@ type InvoiceLinePeriod struct {
 	// ID: BT-134
 	// Term: Data de început a perioadei de facturare a liniei facturii
 	// Cardinality: 0..1
-	StartDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 StartDate,omitempty"`
+	StartDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 StartDate,omitempty"`
 	// ID: BT-135
 	// Term: Data de sfârșit a perioadei de facturare
 	// Cardinality: 0..1
-	EndDate *Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 EndDate,omitempty"`
+	EndDate *types.Date `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 EndDate,omitempty"`
 }
 
 // InvoiceLineAllowanceCharge is a struct that encodes the cbc:AllowanceCharge
@@ -1121,8 +1122,8 @@ type InvoiceLineTaxCategory struct {
 	// ID: BT-152
 	// Term: Cota TVA pentru articolul facturat
 	// Cardinality: 0..1
-	Percent   Decimal   `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
-	TaxScheme TaxScheme `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
+	Percent   types.Decimal `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent"`
+	TaxScheme TaxScheme     `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
 }
 
 // MarshalXML implements the xml.Marshaler interface. We use a custom
@@ -1132,7 +1133,7 @@ type InvoiceLineTaxCategory struct {
 func (c InvoiceLineTaxCategory) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	type invoiceLineTaxCategory struct {
 		ID        TaxCategoryCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 ID"`
-		Percent   *Decimal            `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
+		Percent   *types.Decimal      `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Percent,omitempty"`
 		TaxScheme TaxScheme           `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 TaxScheme"`
 	}
 	xmlCat := invoiceLineTaxCategory{
