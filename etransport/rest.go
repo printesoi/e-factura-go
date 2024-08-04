@@ -196,13 +196,13 @@ func (c *Client) GetMessageState(
 }
 
 type UploadV2Response struct {
-	DateResponse    string `json:"dateResponse"`
-	ExecutionStatus int32  `json:"ExecutionStatus"`
-	UploadIndex     int64  `json:"index_incarcare"`
-	UIT             string `json:"UIT"`
-	TraceID         string `json:"trace_id"`
-	DeclarantRef    string `json:"ref_declarant"`
-	Attention       string `json:"atentie,omitempty"`
+	DateResponse    string  `json:"dateResponse"`
+	ExecutionStatus int32   `json:"ExecutionStatus"`
+	UploadIndex     int64   `json:"index_incarcare"`
+	UIT             UITType `json:"UIT"`
+	TraceID         string  `json:"trace_id"`
+	DeclarantRef    string  `json:"ref_declarant"`
+	Attention       string  `json:"atentie,omitempty"`
 	Errors          []struct {
 		ErrorMessage string `json:"errorMessage"`
 	} `json:"errors,omitempty"`
@@ -212,6 +212,23 @@ type UploadV2Response struct {
 // was successful.
 func (r *UploadV2Response) IsOk() bool {
 	return r != nil && r.ExecutionStatus == 0
+}
+
+// GetUploadIndex returns the upload index (should only be called when
+// IsOk() == true).
+func (r *UploadV2Response) GetUploadIndex() int64 {
+	if r == nil {
+		return 0
+	}
+	return r.UploadIndex
+}
+
+// GetUIT returns the UIT (should only be called when IsOk() == true).
+func (r *UploadV2Response) GetUIT() UITType {
+	if r == nil {
+		return ""
+	}
+	return r.UIT
 }
 
 type uploadStandard string
