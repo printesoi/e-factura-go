@@ -75,6 +75,15 @@ func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(v, start)
 }
 
+// MarshalXMLAttr implements the xml.MarshalerAttr interface.
+func (d Date) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	v := d.Format(time.DateOnly)
+	return xml.Attr{
+		Name:  name,
+		Value: v,
+	}, nil
+}
+
 // UnmarshalXML implements the xml.Unmarshaler interface.
 func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var sd string
@@ -101,4 +110,32 @@ func (d Date) Ptr() *Date {
 // var declaration with no initialization).
 func (d Date) IsInitialized() bool {
 	return d != Date{}
+}
+
+const (
+	xsDateTimeFmt = "2006-01-02T15:04:05"
+)
+
+type DateTime struct {
+	time.Time
+}
+
+// MakeDateTime creates a DateTime in RoZoneLocation.
+func MakeDateTime(year int, month time.Month, day, hour, min, sec, nsec int) DateTime {
+	return DateTime{Time: itime.Date(year, month, day, hour, min, sec, nsec)}
+}
+
+// MarshalXML implements the xml.Marshaler interface.
+func (d DateTime) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	v := d.Format(xsDateTimeFmt)
+	return e.EncodeElement(v, start)
+}
+
+// MarshalXMLAttr implements the xml.MarshalerAttr interface.
+func (d DateTime) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	v := d.Format(xsDateTimeFmt)
+	return xml.Attr{
+		Name:  name,
+		Value: v,
+	}, nil
 }

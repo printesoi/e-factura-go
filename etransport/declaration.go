@@ -197,7 +197,7 @@ type PostingDeclarationNotificationTransportData struct {
 	TransportOrgCountryCode CountryCodeType `xml:"codTaraOrgTransport,attr"`
 	TransportOrgCode        string          `xml:"codOrgTransport,attr,omitempty"`
 	TransportOrgName        string          `xml:"denumireOrgTransport,attr"`
-	TransportDate           string          `xml:"dataTransport,attr"`
+	TransportDate           types.Date      `xml:"dataTransport,attr"`
 }
 
 type PostingDeclationPlace struct {
@@ -222,7 +222,7 @@ type PostingDeclationLocation struct {
 type PostingDeclarationTransportDocument struct {
 	DocumentType DocumentType `xml:"tipDocument,attr"`
 	DocumentNo   string       `xml:"numarDocument,attr,omitempty"`
-	DocumentDate string       `xml:"dataDocument,attr"`
+	DocumentDate types.Date   `xml:"dataDocument,attr"`
 	Remarks      string       `xml:"observatii,attr,omitempty"`
 }
 
@@ -243,10 +243,10 @@ type PostingDeclarationConfirmation struct {
 }
 
 type PostingDeclarationVehicleChange struct {
-	UIT                  UITType `xml:"uit,attr"`
-	LicensePlate         string  `xml:"nrVehicul,attr"`
-	Trailer1LicensePlate string  `xml:"nrRemorca1,attr,omitempty"`
-	Trailer2LicensePlate string  `xml:"nrRemorca2,attr,omitempty"`
-	ChangeDate           string  `xml:"dataModificare,attr"`
-	Remarks              string  `xml:"observatii,attr,omitempty"`
+	UIT                  UITType        `xml:"uit,attr"`
+	LicensePlate         string         `xml:"nrVehicul,attr"`
+	Trailer1LicensePlate string         `xml:"nrRemorca1,attr,omitempty"`
+	Trailer2LicensePlate string         `xml:"nrRemorca2,attr,omitempty"`
+	ChangeDate           types.DateTime `xml:"dataModificare,attr"`
+	Remarks              string         `xml:"observatii,attr,omitempty"`
 }

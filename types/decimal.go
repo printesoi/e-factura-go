@@ -91,6 +91,14 @@ func (d *Decimal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(d.String(), start)
 }
 
+// MarshalXMLAttr implements the xml.MarshalerAttr interface.
+func (d *Decimal) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  name,
+		Value: d.String(),
+	}, nil
+}
+
 // MarshalText implements the encoding.TextMarshaler interface. This is needed
 // so we can use Decimal as chardata.
 func (d Decimal) MarshalText() (text []byte, err error) {
