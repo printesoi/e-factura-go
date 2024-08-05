@@ -26,7 +26,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "client",
+	Use:   "efactura-cli",
 	Short: "A CLI client for the ANAF e-factura APIs",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
