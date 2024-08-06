@@ -170,6 +170,15 @@ func (r *GetMessageStateResponse) IsInvalidXML() bool {
 	return r != nil && r.State == GetMessageStateCodeInvalidXML
 }
 
+// GetFirstErrorMessage returns the first error message. If no error messages
+// are set for the response, empty string is returned.
+func (r *GetMessageStateResponse) GetFirstErrorMessage() string {
+	if r == nil || len(r.Errors) == 0 {
+		return ""
+	}
+	return r.Errors[0].ErrorMessage
+}
+
 // GetMessageState fetch the state of a message. The uploadIndex must a result
 // from an upload operation.
 func (c *Client) GetMessageState(
