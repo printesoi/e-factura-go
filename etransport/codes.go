@@ -53,73 +53,6 @@ const (
 	OpTypeDIE OpType = "70"
 )
 
-// pentru codTipOperatiune = "10" AIC - Achiziţie intracomunitară:
-//
-//	"101" Comercializare
-//	"201" Producție
-//	"301" Gratuități
-//	"401" Echipament comercial
-//	"501" Mijloace fixe
-//	"601" Consum propriu
-//	"703" Operațiuni de livrare cu instalare
-//	"801" Leasing financiar/operațional
-//	"802" Bunuri în garanție
-//	"901" Operațiuni scutite
-//	"1001" Investiție in curs
-//	"1101" Donații, ajutoare
-//	"9901" Altele
-//
-// pentru codTipOperatiune = "12" LHI - Operațiuni în sistem lohn (UE) - intrare:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "14" SCI - Stocuri la dispoziția clientului (Call-off stock) - intrare:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "20" LIC - Livrare intracomunitară:
-//
-//	"101" Comercializare
-//	"301" Gratuități
-//	"703" Operațiuni de livrare cu instalare
-//	"801" Leasing financiar/operațional
-//	"802" Bunuri în garanție
-//	"9901" Altele
-//
-// pentru codTipOperatiune = "22" LHE - Operațiuni în sistem lohn (UE) - ieşire:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "24" SCE - Stocuri la dispoziția clientului (Call-off stock) - ieşire:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "30" TTN - Transport pe teritoriul naţional:
-//
-//	"101" Comercializare
-//	"704" Transfer între gestiuni
-//	"705" Bunuri puse la dispoziția clientului
-//	"9901" Altele
-//
-// pentru codTipOperatiune = "40" IMP - Import:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "50" EXP - Export:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "60" DIN - Tranzactie intracomunitara - Intrare pentru depozitare/formare nou transport:
-//
-//	"9999" Același cu operațiunea
-//
-// pentru codTipOperatiune = "70" DIE - Tranzactie intracomunitara - Iesire dupa depozitare/formare nou transport:
-//
-//	"9999" Același cu operațiunea
-//
-// TODO: enum
-type OpReason string
-
 type CountryCodeType string
 
 const (
@@ -859,48 +792,69 @@ type OpPurposeCodeType string
 
 const (
 // Câmpul codScopOperatiune ia valori diferite, în funcţie de valoarea câmpului codTipOperatiune, astfel:
-// - pentru codTipOperatiune = "10" AIC - Achiziţie intracomunitară:
-// "101" Comercializare
-// "201" Producție
-// "301" Gratuități
-// "401" Echipament comercial
-// "501" Mijloace fixe
-// "601" Consum propriu
-// "703" Operațiuni de livrare cu instalare
-// "801" Leasing financiar/operațional
-// "802" Bunuri în garanție
-// "901" Operațiuni scutite
-// "1001" Investiție in curs
-// "1101" Donații, ajutoare
-// "9901" Altele
-// - pentru codTipOperatiune = "12" LHI - Operațiuni în sistem lohn (UE) - intrare:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "14" SCI - Stocuri la dispoziția clientului (Call-off stock) - intrare:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "20" LIC - Livrare intracomunitară:
-// "101" Comercializare
-// "301" Gratuități
-// "703" Operațiuni de livrare cu instalare
-// "801" Leasing financiar/operațional
-// "802" Bunuri în garanție
-// "9901" Altele
-// - pentru codTipOperatiune = "22" LHE - Operațiuni în sistem lohn (UE) - ieşire:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "24" SCE - Stocuri la dispoziția clientului (Call-off stock) - ieşire:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "30" TTN - Transport pe teritoriul naţional:
-// "101" Comercializare
-// "704" Transfer între gestiuni
-// "705" Bunuri puse la dispoziția clientului
-// "9901" Altele
-// - pentru codTipOperatiune = "40" IMP - Import:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "50" EXP - Export:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "60" DIN - Tranzactie intracomunitara - Intrare pentru depozitare/formare nou transport:
-// "9999" Același cu operațiunea
-// - pentru codTipOperatiune = "70" DIE - Tranzactie intracomunitara - Iesire dupa depozitare/formare nou transport:
-// "9999" Același cu operațiunea
+// pentru codTipOperatiune = "10" AIC - Achiziţie intracomunitară:
+//
+//	"101" Comercializare
+//	"201" Producție
+//	"301" Gratuități
+//	"401" Echipament comercial
+//	"501" Mijloace fixe
+//	"601" Consum propriu
+//	"703" Operațiuni de livrare cu instalare
+//	"801" Leasing financiar/operațional
+//	"802" Bunuri în garanție
+//	"901" Operațiuni scutite
+//	"1001" Investiție in curs
+//	"1101" Donații, ajutoare
+//	"9901" Altele
+//
+// pentru codTipOperatiune = "12" LHI - Operațiuni în sistem lohn (UE) - intrare:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "14" SCI - Stocuri la dispoziția clientului (Call-off stock) - intrare:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "20" LIC - Livrare intracomunitară:
+//
+//	"101" Comercializare
+//	"301" Gratuități
+//	"703" Operațiuni de livrare cu instalare
+//	"801" Leasing financiar/operațional
+//	"802" Bunuri în garanție
+//	"9901" Altele
+//
+// pentru codTipOperatiune = "22" LHE - Operațiuni în sistem lohn (UE) - ieşire:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "24" SCE - Stocuri la dispoziția clientului (Call-off stock) - ieşire:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "30" TTN - Transport pe teritoriul naţional:
+//
+//	"101" Comercializare
+//	"704" Transfer între gestiuni
+//	"705" Bunuri puse la dispoziția clientului
+//	"9901" Altele
+//
+// pentru codTipOperatiune = "40" IMP - Import:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "50" EXP - Export:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "60" DIN - Tranzactie intracomunitara - Intrare pentru depozitare/formare nou transport:
+//
+//	"9999" Același cu operațiunea
+//
+// pentru codTipOperatiune = "70" DIE - Tranzactie intracomunitara - Iesire dupa depozitare/formare nou transport:
+//
+//	"9999" Același cu operațiunea
 )
 
 // Valori posibile pentru câmpul codUnitateMasura: UN/ECE Recommendation N°20 and UN/ECE Recommendation N°21 — Unit codes
