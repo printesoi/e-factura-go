@@ -772,7 +772,7 @@ const (
 	// "40" Municipiul Bucureşti
 	CountyCodeB CountyCodeType = "40"
 	// "1" Alba
-	CountryCodeAB CountyCodeType = "1"
+	CountyCodeAB CountyCodeType = "1"
 	// "2" Arad
 	CountyCodeAR CountyCodeType = "2"
 	// "3" Argeş
