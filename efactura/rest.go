@@ -120,11 +120,11 @@ type (
 	// MessagesListResponse is the parsed response from the list messages
 	// endpoint.
 	MessagesListResponse struct {
-		Error    string    `json:"eroare"`
-		Title    string    `json:"titlu"`
-		Serial   string    `json:"serial"`
-		CUI      string    `json:"cui"`
-		Messages []Message `json:"mesaje"`
+		Error    string    `json:"eroare,omitempty"`
+		Title    string    `json:"titlu,omitempty"`
+		Serial   string    `json:"serial,omitempty"`
+		CUI      string    `json:"cui,omitempty"`
+		Messages []Message `json:"mesaje,omitempty"`
 	}
 
 	// MessagesListPaginationResponse is the parsed response from the list

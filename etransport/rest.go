@@ -240,6 +240,15 @@ func (r *UploadV2Response) GetUIT() UITType {
 	return r.UIT
 }
 
+// GetFirstErrorMessage returns the first error message. If no error messages
+// are set for the response, empty string is returned.
+func (r *UploadV2Response) GetFirstErrorMessage() string {
+	if r == nil || len(r.Errors) == 0 {
+		return ""
+	}
+	return r.Errors[0].ErrorMessage
+}
+
 type uploadStandard string
 
 const (
