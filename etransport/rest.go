@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
+	"github.com/printesoi/e-factura-go/types"
 	ixml "github.com/printesoi/e-factura-go/xml"
 )
 
@@ -34,14 +35,23 @@ const (
 	apiPathInfo         = apiBase + "info"
 )
 
+type MessageState string
+
+const (
+	MessageStateOK  MessageState = "OK"
+	MessageStateERR MessageState = "ERR"
+)
+
 type Message struct {
 	UIT                          UITType         `json:"uit"`
-	DeclarantCode                string          `json:"cod_decl"`
+	DeclarantCode                int64           `json:"cod_decl"`
 	DeclarantRef                 string          `json:"ref_decl"`
 	Source                       string          `json:"sursa"`
-	UploadID                     string          `json:"id_incarcare"`
+	UploadID                     int64           `json:"id_incarcare"`
 	CreatedDate                  string          `json:"data_creare"`
-	OpType                       string          `json:"tip_op"`
+	State                        MessageState    `json:"stare"`
+	Op                           string          `json:"tip"`
+	OpType                       int             `json:"tip_op,omitempty"`
 	TransportDate                string          `json:"data_transp"`
 	CommercialPartnerCountryCode CountryCodeType `json:"pc_tara,omitempty"`
 	CommercialPartnerCode        string          `json:"pc_cod,omitempty"`
@@ -53,6 +63,11 @@ type Message struct {
 	Trailer1LicensePlate         string          `json:"nr_rem1,omitempty"`
 	Trailer2LicensePlate         string          `json:"nr_rem2,omitempty"`
 	Messages                     []MessageError  `json:"mesaje,omitempty"`
+	GrossTotalWeight             types.Decimal   `json:"gr_tot_bruta,omitempty"`
+	NetTotalWeight               types.Decimal   `json:"gr_tot_neta,omitempty"`
+	TotalValue                   types.Decimal   `json:"val_tot,omitempty"`
+	LineCount                    int64           `json:"nr_linii,omitempty"`
+	PostIncident                 string          `json:"post_avarie,omitempty"`
 }
 
 type MessageErrorType string
@@ -98,6 +113,15 @@ type MessagesListResponse struct {
 // was successful.
 func (r *MessagesListResponse) IsOk() bool {
 	return r != nil && (len(r.Errors) == 0 || len(r.Errors) == 1 && strings.HasPrefix(r.Errors[0].ErrorMessage, "Nu exista mesaje in "))
+}
+
+// GetFirstErrorMessage returns the first error message. If no error messages
+// are set for the response, empty string is returned.
+func (r *MessagesListResponse) GetFirstErrorMessage() string {
+	if r == nil || len(r.Errors) == 0 {
+		return ""
+	}
+	return r.Errors[0].ErrorMessage
 }
 
 // GetMessagesList fetches the list of messages for a provided cif and number
