@@ -548,6 +548,8 @@ const (
 	CountryCodeYE CountryCodeType = "YE"
 	// YT - Mayotte
 	CountryCodeYT CountryCodeType = "YT"
+	// XK - Kosovo
+	CountryCodeXK CountryCodeType = "XK"
 	// ZA - South Africa
 	CountryCodeZA CountryCodeType = "ZA"
 	// ZM - Zambia
@@ -558,9 +560,6 @@ const (
 	CountryCode1A CountryCodeType = "1A"
 )
 
-type BCPCodeType string
-
-const (
 // "1" Petea (HU)
 // "2" Borș (HU)
 // "3" Vărșand (HU)
@@ -600,11 +599,8 @@ const (
 // "37" Nădlac 2 - A1 (HU)
 // "38" Borș 2 - A3 (HU)
 // TODO: enum values
-)
+type BCPCodeType string
 
-type CustomsOfficeCodeType string
-
-const (
 // Valori posibile pentru câmpul codBirouVamal (BVI/F - Birou Vamal de Interior/Frontieră):
 // "12801" BVI Alba Iulia (ROBV0300)
 // "22801" BVI Arad (ROTM0200)
@@ -697,7 +693,7 @@ const (
 // "522801" BVI Giurgiu (ROBU3910)
 // "522901" BVF Zona Liberă Giurgiu (ROBU3980)
 // TODO: enum values
-)
+type CustomsOfficeCodeType string
 
 type CountyCodeType string
 
@@ -788,9 +784,6 @@ const (
 	CountyCodeVN CountyCodeType = "39"
 )
 
-type OpPurposeCodeType string
-
-const (
 // Câmpul codScopOperatiune ia valori diferite, în funcţie de valoarea câmpului codTipOperatiune, astfel:
 // pentru codTipOperatiune = "10" AIC - Achiziţie intracomunitară:
 //
@@ -855,6 +848,41 @@ const (
 // pentru codTipOperatiune = "70" DIE - Tranzactie intracomunitara - Iesire dupa depozitare/formare nou transport:
 //
 //	"9999" Același cu operațiunea
+type OpPurposeCodeType string
+
+const (
+	// "101" Comercializare
+	OpPurposeCodeTypeCommercialization OpPurposeCodeType = "101"
+	// "201" Producție
+	OpPurposeCodeTypeProduction OpPurposeCodeType = "201"
+	// "301" Gratuități
+	OpPurposeCodeTypeGratuities OpPurposeCodeType = "301"
+	// "401" Echipament comercial
+	OpPurposeCodeTypeCommercialEquipment OpPurposeCodeType = "401"
+	// "501" Mijloace fixe
+	OpPurposeCodeTypeFixedAssets OpPurposeCodeType = "501"
+	// "601" Consum propriu
+	OpPurposeCodeOwnConsumption OpPurposeCodeType = "601"
+	// "703" Operațiuni de livrare cu instalare
+	OpPurposeCodeDeliveryWithInstallation OpPurposeCodeType = "703"
+	// "704" Transfer între gestiuni
+	OpPurposeCodeTransfer OpPurposeCodeType = "704"
+	// "705" Bunuri puse la dispoziția clientului
+	OpPurposeGoodsAsCustomersDisposal OpPurposeCodeType = "705"
+	// "801" Leasing financiar/operațional
+	OpPurposeCodeLeasing OpPurposeCodeType = "801"
+	// "802" Bunuri în garanție
+	OpPurposeCodeGoodsUnderWarranty OpPurposeCodeType = "802"
+	// "901" Operațiuni scutite
+	OpPurposeCodeExemptOperations OpPurposeCodeType = "901"
+	// "1001" Investiție in curs
+	OpPurposeCodeOngoingInvestment OpPurposeCodeType = "1001"
+	// "1101" Donații, ajutoare
+	OpPurposeCodeDonations OpPurposeCodeType = "1101"
+	// "9901" Altele
+	OpPurposeCodeOthers OpPurposeCodeType = "9901"
+	// 9999" Același cu operațiunea
+	OpPurposeSameAsOperation OpPurposeCodeType = "9999"
 )
 
 // Valori posibile pentru câmpul codUnitateMasura: UN/ECE Recommendation N°20 and UN/ECE Recommendation N°21 — Unit codes
