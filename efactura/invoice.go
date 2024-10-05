@@ -1193,12 +1193,12 @@ func (n InvoiceNote) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(xmlNote, start)
 }
 
-func (n InvoiceNote) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (n *InvoiceNote) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var xmlNote struct {
 		Note string `xml:",chardata"`
 	}
 	if err := d.DecodeElement(&xmlNote, &start); err != nil {
-		return nil
+		return err
 	}
 	// TODO: implement parsing the code
 	return nil
