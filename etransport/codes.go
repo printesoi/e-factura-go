@@ -14,6 +14,12 @@
 
 package etransport
 
+import (
+	"strings"
+
+	"github.com/printesoi/e-factura-go/text"
+)
+
 type DeclPostIncidentType string
 
 const (
@@ -783,6 +789,98 @@ const (
 	// "39" Vrancea
 	CountyCodeVN CountyCodeType = "39"
 )
+
+// RoCountyNameToCountyCode returns the county code for a Romanian county name.
+// eg. "bucurești" -> "40"
+func RoCountyNameToCountyCode(name string) (_ CountyCodeType, ok bool) {
+	switch strings.ToLower(text.Transliterate(name)) {
+	case "bucuresti", "municipiul bucuresti":
+		return CountyCodeB, true
+	case "alba":
+		return CountyCodeAB, true
+	case "arad":
+		return CountyCodeAR, true
+	case "arges":
+		return CountyCodeAG, true
+	case "bacau":
+		return CountyCodeBC, true
+	case "bihor":
+		return CountyCodeBH, true
+	case "bistrita-nasaud":
+		return CountyCodeBN, true
+	case "botosani":
+		return CountyCodeBT, true
+	case "braila":
+		return CountyCodeBR, true
+	case "brasov":
+		return CountyCodeBV, true
+	case "buzau":
+		return CountyCodeBZ, true
+	case "calarasi":
+		return CountyCodeCL, true
+	case "caras-severin":
+		return CountyCodeCS, true
+	case "cluj":
+		return CountyCodeCJ, true
+	case "constanta":
+		return CountyCodeCT, true
+	case "covasna":
+		return CountyCodeCV, true
+	case "dambovita":
+		return CountyCodeDB, true
+	case "dolj":
+		return CountyCodeDJ, true
+	case "galati":
+		return CountyCodeGL, true
+	case "giurgiu":
+		return CountyCodeGR, true
+	case "gorj":
+		return CountyCodeGJ, true
+	case "harghita":
+		return CountyCodeHR, true
+	case "hunedoara":
+		return CountyCodeHD, true
+	case "ialomita":
+		return CountyCodeIL, true
+	case "iasi":
+		return CountyCodeIS, true
+	case "ilfov":
+		return CountyCodeIF, true
+	case "maramures":
+		return CountyCodeMM, true
+	case "mehedinti":
+		return CountyCodeMH, true
+	case "mures":
+		return CountyCodeMS, true
+	case "neamt":
+		return CountyCodeNT, true
+	case "olt":
+		return CountyCodeOT, true
+	case "prahova":
+		return CountyCodePH, true
+	case "salaj":
+		return CountyCodeSJ, true
+	case "satu mare":
+		return CountyCodeSM, true
+	case "sibiu":
+		return CountyCodeSB, true
+	case "suceava":
+		return CountyCodeSV, true
+	case "teleorman":
+		return CountyCodeTR, true
+	case "timis":
+		return CountyCodeTM, true
+	case "tulcea":
+		return CountyCodeTL, true
+	case "vaslui":
+		return CountyCodeVS, true
+	case "valcea":
+		return CountyCodeVL, true
+	case "vrancea":
+		return CountyCodeVN, true
+	}
+	return
+}
 
 // Câmpul codScopOperatiune ia valori diferite, în funcţie de valoarea câmpului codTipOperatiune, astfel:
 // pentru codTipOperatiune = "10" AIC - Achiziţie intracomunitară:
