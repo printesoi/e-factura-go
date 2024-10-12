@@ -31,7 +31,7 @@ var apiGetMessageStateCmd = &cobra.Command{
 	Short: "Get message state for an upload index",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		client, err := newEfacturaClient(ctx, cmd)
+		client, err := newEtransportClient(ctx, cmd)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return err
@@ -48,13 +48,13 @@ var apiGetMessageStateCmd = &cobra.Command{
 			return fmt.Errorf("get message state failed: %w", err)
 		}
 		if res.IsOk() {
-			fmt.Printf("Message for upload index %d: ok, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: ok\n", fvUploadIndex)
 		} else if res.IsProcessing() {
 			fmt.Printf("Message for upload index %d: processing\n", fvUploadIndex)
 		} else if res.IsInvalidXML() {
-			fmt.Printf("Message for upload index %d: invalid XML, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: invalid XML, message: '%s',\n", fvUploadIndex, res.GetFirstErrorMessage())
 		} else if res.IsNok() {
-			fmt.Printf("Message for upload index %d: nok, download_id=%d\n", fvUploadIndex, res.GetDownloadID())
+			fmt.Printf("Message for upload index %d: nok, message: '%s'\n", fvUploadIndex, res.GetFirstErrorMessage())
 		} else {
 			fmt.Printf("Message for upload index %d: unknown state '%s', message: '%s'\n", fvUploadIndex, res.State, res.GetFirstErrorMessage())
 		}

@@ -1,7 +1,7 @@
 # e-factura-go [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
 
 
-Package efactura provides a client for using the ANAF e-factura API.
+Package e-factura-go provides a client for using the RO e-factura and RO e-transport APIs.
 
 ## NOTICE ##
 
@@ -17,37 +17,17 @@ go get github.com/printesoi/e-factura-go
 
 will resolve and add the package to the current development module, along with its dependencies.
 
-Alternatively the same can be achieved if you use import in a package:
+## oauth2 ##
 
-```go
-import "github.com/printesoi/e-factura-go"
-```
-
-and run `go get` without parameters. 
-
-Finally, to use the top-of-trunk version of this repo, use the following command:
-
-```bash
-go get github.com/printesoi/e-factura-go@main
-```
-
-## Usage ##
-
-This package can be use both for interacting with (calling) the ANAF e-factura
-API via the Client object and for generating an Invoice UBL XML.
+Construct the required OAuth2 config needed for an e-factura or e-transport Client:
 
 ```go
 import (
-    "github.com/printesoi/e-factura-go/efactura"
     efactura_oauth2 "github.com/printesoi/e-factura-go/oauth2"
 )
-```
 
-Construct the required OAuth2 config needed for the Client:
-
-```go
 oauth2Cfg, err := efactura_oauth2.MakeConfig(
-    efactura_oauth2.ConfigCredentials(anafAppClientID, anafApplientSecret),
+    efactura_oauth2.ConfigCredentials(anafAppClientID, anafAppClientSecret),
     efactura_oauth2.ConfigRedirectURL(anafAppRedirectURL),
 )
 if err != nil {
@@ -85,13 +65,21 @@ if err != nil {
 }
 ```
 
+## e-factura ##
+
+This package can be use both for interacting with (calling) the
+[RO e-factura API](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice)
+via the Client object and for generating an Invoice-2 UBL XML.
+
 Construct a new simple client for production environment:
 
 ```go
-client, err := efactura.NewProductionClient(
-	context.Background(),
-    efactura_oauth2.TokenSource(token),
+import (
+    "github.com/printesoi/e-factura-go/efactura"
 )
+
+ctx := context.TODO()
+client, err := efactura.NewProductionClient(ctx, efactura_oauth2.TokenSource(ctx, token))
 if err != nil {
     // Handle error
 }
@@ -100,10 +88,8 @@ if err != nil {
 Construct a new simple client for sandbox (test) environment:
 
 ```go
-client, err := efactura.NewSandboxClient(
-	context.Background(),
-    efactura_oauth2.TokenSource(token),
-)
+ctx := context.TODO()
+client, err := efactura.NewSandboxClient(ctx, efactura_oauth2.TokenSource(ctx, token))
 if err != nil {
     // Handle error
 }
@@ -113,14 +99,13 @@ If you want to store the token in a store/db and update it everytime it
 refreshes use `efactura_oauth2.TokenSourceWithChangedHandler`:
 
 ```go
+ctx := context.TODO()
 onTokenChanged := func(ctx context.Context, token *xoauth.Token) error {
-    fmt.Printf("Token changed...")
+    // Token changed, maybe update/store it in a database/persistent storage.
     return nil
 }
-client, err := efactura.NewSandboxClient(
-    context.Background(),
-    efactura_oauth2.TokenSourceWithChangedHandler(token, onTokenChanged),
-)
+client, err := efactura.NewSandboxClient(ctx,
+    efactura_oauth2.TokenSourceWithChangedHandler(ctx, token, onTokenChanged))
 if err != nil {
     // Handle error
 }
@@ -144,7 +129,7 @@ to load the Go embedded copy of the timezone database.
 ### Upload invoice ###
 
 ```go
-var invoice Invoice
+var invoice efactura.Invoice
 // Build invoice (manually, or with the InvoiceBuilder)
 
 uploadRes, err := client.UploadInvoice(ctx, invoice, "123456789")
@@ -267,7 +252,7 @@ limit:
 
 ```go
 import (
-	efactura_errors "github.com/printesoi/e-factura-go/errors"
+    efactura_errors "github.com/printesoi/e-factura-go/errors"
 )
 
 resp, err := client.GetMessageState(ctx, uploadIndex)
@@ -329,6 +314,92 @@ if err := efactura.UnmarshalInvoice(data, &invoice); err != nil {
 
 **NOTE** Only use efactura.UnmarshalInvoice, because `encoding/xml` package
 cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
+
+## RO e-Transport ##
+
+The `etransport` package can be used for interacting with (calling) the
+[RO e-Transport v2](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) API
+via the Client object or to build a declaration v2 XML using the PostingDeclarationV2 objects.
+
+Construct a new simple client for production environment:
+
+```go
+import (
+    "github.com/printesoi/e-factura-go/etransport"
+)
+
+ctx := context.TODO()
+client, err := etransport.NewProductionClient(ctx, efactura_oauth2.TokenSource(ctx, token))
+if err != nil {
+    // Handle error
+}
+```
+
+Construct a new simple client for sandbox (test) environment:
+
+```go
+ctx := context.TODO()
+client, err := etransport.NewSandboxClient(ctx, efactura_oauth2.TokenSource(ctx, token))
+if err != nil {
+    // Handle error
+}
+```
+
+### Upload declaration ###
+
+```go
+var declaration etransport.PostingDeclarationV2
+// Build posting declaration
+
+uploadRes, err := client.UploadPostingDeclarationV2(ctx, declaration, "123456789")
+if err != nil {
+    // Handle error
+}
+if uploadRes.IsOk() {
+    fmt.Printf("Upload index: %d\n", uploadRes.GetUploadIndex())
+} else {
+    // The upload was not successful, check uploadRes.Errors
+    fmt.Printf("Upload failed: %s\n", uploadRes.GetFirstErrorMessage())
+}
+```
+
+### Get message state ###
+
+Check the message state for an upload index resulted from an upload:
+
+```go
+resp, err := client.GetMessageState(ctx, uploadIndex)
+if err != nil {
+    // Handle error
+}
+switch {
+case resp.IsOk():
+    // Uploaded declaration was processed, we can now use the UIT.
+case resp.IsNok():
+    // Processing failed
+case resp.IsProcessing():
+    // The message/declaration is still processing
+case resp.IsInvalidXML():
+    // The uploaded XML is invalid
+```
+
+### Get messages list ###
+
+```go
+numDays := 7 // Between 1 and 60
+resp, err := client.GetMessagesList(ctx, "123456789", numDays)
+if err != nil {
+    // Handle error
+}
+if resp.IsOk() {
+    for _, message := range resp.Messages {
+        // Process message
+    }
+} else {
+    // Handle error
+    fmt.Printf("GetMessagesList failed: %s\n", resp.GetFirstErrorMessage())
+}
+```
 
 ## Tasks ##
 

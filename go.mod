@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/alexsergivan/transliterator v1.0.0
+	github.com/google/uuid v1.4.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/printesoi/xml-go v1.0.1
 	github.com/shopspring/decimal v1.3.1

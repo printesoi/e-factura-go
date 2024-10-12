@@ -26,8 +26,8 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "efactura-cli",
-	Short: "A CLI client for the ANAF e-factura APIs",
+	Use:   "etransport-cli",
+	Short: "A CLI client for the e-transport APIs",
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
 	},
@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	efacturaCfgFile string
+	etransportCfgFile string
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -53,7 +53,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&efacturaCfgFile, "config", "", "config file (default is $HOME/.e-factura.yaml)")
+	rootCmd.PersistentFlags().StringVar(&etransportCfgFile, "config", "", "config file (default is $HOME/.e-transport.yaml)")
 	rootCmd.PersistentFlags().Bool(flagNameProduction, false, "Production mode (default sandbox)")
 
 	bindViperFlag := func(name string) {
@@ -70,18 +70,18 @@ func init() {
 }
 
 func initConfig() {
-	if efacturaCfgFile != "" {
+	if etransportCfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(efacturaCfgFile)
+		viper.SetConfigFile(etransportCfgFile)
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".e-factura.yaml".
+		// Search config in home directory with name ".e-transport.yaml".
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".e-factura")
+		viper.SetConfigName(".e-transport")
 	}
 
 	viper.AutomaticEnv()

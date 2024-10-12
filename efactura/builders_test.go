@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/printesoi/e-factura-go/text"
+	"github.com/printesoi/e-factura-go/types"
 )
 
 const (
@@ -126,10 +127,10 @@ func getInvoiceCustomerParty() InvoiceCustomerParty {
 func TestInvoiceLineBuilder(t *testing.T) {
 	assert := assert.New(t)
 
-	a := func(d Decimal) string {
+	a := func(d types.Decimal) string {
 		return d.StringFixed(2)
 	}
-	d := func(d Decimal) string {
+	d := func(d types.Decimal) string {
 		return d.String()
 	}
 
@@ -142,16 +143,16 @@ func TestInvoiceLineBuilder(t *testing.T) {
 		ID             string
 		CurrencyID     CurrencyCodeType
 		UnitCode       UnitCodeType
-		Quantity       Decimal
-		BaseQuantity   Decimal
-		GrossPrice     Decimal
-		PriceDeduction Decimal
-		Allowances     []Decimal
-		Charges        []Decimal
+		Quantity       types.Decimal
+		BaseQuantity   types.Decimal
+		GrossPrice     types.Decimal
+		PriceDeduction types.Decimal
+		Allowances     []types.Decimal
+		Charges        []types.Decimal
 		ItemName       string
 		TaxCategory    InvoiceLineTaxCategory
 
-		ExpectedLineAmount Decimal
+		ExpectedLineAmount types.Decimal
 	}
 	tests := []lineTest{
 		{
@@ -159,131 +160,131 @@ func TestInvoiceLineBuilder(t *testing.T) {
 			ID:         "01.1",
 			CurrencyID: CurrencyEUR,
 			UnitCode:   "XGR",
-			Quantity:   D(5),
-			GrossPrice: D(12),
+			Quantity:   types.D(5),
+			GrossPrice: types.D(12),
 			ItemName:   text.Transliterate("Sticle cu vin"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(60),
+			ExpectedLineAmount: types.D(60),
 		},
 		{
 			// A.1.4 Exemplul 1. Linia 2
 			ID:         "01.2",
 			CurrencyID: CurrencyEUR,
 			UnitCode:   "XBX",
-			Quantity:   D(1),
-			GrossPrice: D(90),
+			Quantity:   types.D(1),
+			GrossPrice: types.D(90),
 			ItemName:   text.Transliterate("Vin - cutie de 6"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(90),
+			ExpectedLineAmount: types.D(90),
 		},
 		{
 			// A.1.4 Exemplul 2
 			ID:           "02",
 			CurrencyID:   CurrencyEUR,
 			UnitCode:     "C62",
-			Quantity:     D(10_000),
-			BaseQuantity: D(1_000),
-			GrossPrice:   D(4.5),
+			Quantity:     types.D(10_000),
+			BaseQuantity: types.D(1_000),
+			GrossPrice:   types.D(4.5),
 			ItemName:     text.Transliterate("Șurub"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(45),
+			ExpectedLineAmount: types.D(45),
 		},
 		{
 			// A.1.4 Exemplul 3
 			ID:             "03",
 			CurrencyID:     CurrencyEUR,
 			UnitCode:       "58",
-			Quantity:       D(1.3),
-			GrossPrice:     D(10),
-			PriceDeduction: D(0.5),
+			Quantity:       types.D(1.3),
+			GrossPrice:     types.D(10),
+			PriceDeduction: types.D(0.5),
 			ItemName:       text.Transliterate("Pui"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(12.5),
+				Percent:   types.D(12.5),
 			},
-			ExpectedLineAmount: D(12.35),
+			ExpectedLineAmount: types.D(12.35),
 		},
 		{
 			// A.1.5 Exemplul 4 (Reduceri, deduceri şi taxe suplimentare). Line 1
 			ID:             "04.1",
 			CurrencyID:     CurrencyEUR,
 			UnitCode:       "XBX",
-			Quantity:       D(25),
-			GrossPrice:     D(9.5),
-			PriceDeduction: D(1),
+			Quantity:       types.D(25),
+			GrossPrice:     types.D(9.5),
+			PriceDeduction: types.D(1),
 			ItemName:       text.Transliterate("Stilou"),
-			Charges: []Decimal{
-				D(10),
+			Charges: []types.Decimal{
+				types.D(10),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(222.50),
+			ExpectedLineAmount: types.D(222.50),
 		},
 		{
 			// A.1.5 Exemplul 4 (Reduceri, deduceri şi taxe suplimentare). Line 2
 			ID:         "04.2",
 			CurrencyID: CurrencyEUR,
 			UnitCode:   "RM",
-			Quantity:   D(15),
-			GrossPrice: D(4.5),
+			Quantity:   types.D(15),
+			GrossPrice: types.D(4.5),
 			ItemName:   text.Transliterate("Hârtie"),
-			Allowances: []Decimal{
-				D(3.38),
+			Allowances: []types.Decimal{
+				types.D(3.38),
 			},
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(64.12),
+			ExpectedLineAmount: types.D(64.12),
 		},
 		{
 			// A.1.6 Exemplul 5 (Linie a facturii negativă). Linia 1
 			ID:             "05.1",
 			CurrencyID:     CurrencyEUR,
 			UnitCode:       "XBX",
-			Quantity:       D(25),
-			GrossPrice:     D(9.5),
-			PriceDeduction: D(1),
+			Quantity:       types.D(25),
+			GrossPrice:     types.D(9.5),
+			PriceDeduction: types.D(1),
 			ItemName:       text.Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(212.50),
+			ExpectedLineAmount: types.D(212.50),
 		},
 		{
 			// A.1.6 Exemplul 5 (Linie a facturii negativă). Linia 2
 			ID:             "05.2",
 			CurrencyID:     CurrencyEUR,
 			UnitCode:       "XBX",
-			Quantity:       D(-10),
-			GrossPrice:     D(9.5),
-			PriceDeduction: D(1),
+			Quantity:       types.D(-10),
+			GrossPrice:     types.D(9.5),
+			PriceDeduction: types.D(1),
 			ItemName:       text.Transliterate("Stilou"),
 			TaxCategory: InvoiceLineTaxCategory{
 				TaxScheme: TaxSchemeVAT,
 				ID:        TaxCategoryVATStandardRate,
-				Percent:   D(25),
+				Percent:   types.D(25),
 			},
-			ExpectedLineAmount: D(-85),
+			ExpectedLineAmount: types.D(-85),
 		},
 	}
 	for _, t := range tests {
@@ -332,10 +333,10 @@ func TestInvoiceLineBuilder(t *testing.T) {
 func TestInvoiceBuilder(t *testing.T) {
 	assert := assert.New(t)
 
-	a := func(d Decimal) string {
+	a := func(d types.Decimal) string {
 		return d.StringFixed(2)
 	}
-	d := func(d Decimal) string {
+	d := func(d types.Decimal) string {
 		return d.String()
 	}
 
@@ -353,14 +354,14 @@ func TestInvoiceBuilder(t *testing.T) {
 		standardTaxCategory := InvoiceLineTaxCategory{
 			TaxScheme: TaxSchemeVAT,
 			ID:        TaxCategoryVATStandardRate,
-			Percent:   D(25),
+			Percent:   types.D(25),
 		}
 
 		line1, err := NewInvoiceLineBuilder("1", documentCurrencyID).
 			WithUnitCode("XBX").
-			WithInvoicedQuantity(D(25)).
-			WithGrossPriceAmount(D(9.5)).
-			WithPriceDeduction(D(1)).
+			WithInvoicedQuantity(types.D(25)).
+			WithGrossPriceAmount(types.D(9.5)).
+			WithPriceDeduction(types.D(1)).
 			WithItemName("Stilouri").
 			WithItemTaxCategory(standardTaxCategory).
 			Build()
@@ -370,9 +371,9 @@ func TestInvoiceBuilder(t *testing.T) {
 
 		line2, err := NewInvoiceLineBuilder("2", documentCurrencyID).
 			WithUnitCode("XBX").
-			WithInvoicedQuantity(D(-10)).
-			WithGrossPriceAmount(D(9.5)).
-			WithPriceDeduction(D(1)).
+			WithInvoicedQuantity(types.D(-10)).
+			WithGrossPriceAmount(types.D(9.5)).
+			WithPriceDeduction(types.D(1)).
 			WithItemName("Stilouri").
 			WithItemTaxCategory(standardTaxCategory).
 			Build()
@@ -381,8 +382,8 @@ func TestInvoiceBuilder(t *testing.T) {
 		}
 
 		invoiceBuilder := NewInvoiceBuilder("test.example.05").
-			WithIssueDate(MakeDate(2024, 3, 1)).
-			WithDueDate(MakeDate(2024, 3, 31)).
+			WithIssueDate(types.MakeDate(2024, 3, 1)).
+			WithDueDate(types.MakeDate(2024, 3, 31)).
 			WithInvoiceTypeCode(InvoiceTypeCommercialInvoice).
 			WithDocumentCurrencyCode(documentCurrencyID).
 			WithSupplier(getInvoiceSupplierParty()).
@@ -394,10 +395,10 @@ func TestInvoiceBuilder(t *testing.T) {
 			// Invoice lines
 			if assert.Equal(2, len(invoice.InvoiceLines), "should have correct number of lines") {
 				line1 := invoice.InvoiceLines[0]
-				assert.Equal(a(D(212.5)), a(line1.LineExtensionAmount.Amount))
+				assert.Equal(a(types.D(212.5)), a(line1.LineExtensionAmount.Amount))
 
 				line2 := invoice.InvoiceLines[1]
-				assert.Equal(a(D(-85)), a(line2.LineExtensionAmount.Amount))
+				assert.Equal(a(types.D(-85)), a(line2.LineExtensionAmount.Amount))
 			}
 
 			// VAT details (BG-23)
@@ -405,26 +406,26 @@ func TestInvoiceBuilder(t *testing.T) {
 				if assert.Equal(1, len(invoice.TaxTotal[0].TaxSubtotals)) {
 					subtotal := invoice.TaxTotal[0].TaxSubtotals[0]
 					assert.Equal(TaxCategoryVATStandardRate, subtotal.TaxCategory.ID)
-					assert.Equal(a(D(25)), a(subtotal.TaxCategory.Percent))
-					assert.Equal(a(D(127.5)), a(subtotal.TaxableAmount.Amount))
-					assert.Equal(a(D(31.88)), a(subtotal.TaxAmount.Amount))
+					assert.Equal(a(types.D(25)), a(subtotal.TaxCategory.Percent))
+					assert.Equal(a(types.D(127.5)), a(subtotal.TaxableAmount.Amount))
+					assert.Equal(a(types.D(31.88)), a(subtotal.TaxAmount.Amount))
 				}
 
 				// BT-110
 				if assert.NotNil(invoice.TaxTotal[0].TaxAmount, "BT-110 must exist") {
-					assert.Equal(a(D(31.88)), a(invoice.TaxTotal[0].TaxAmount.Amount), "BT-110 incorrect value")
+					assert.Equal(a(types.D(31.88)), a(invoice.TaxTotal[0].TaxAmount.Amount), "BT-110 incorrect value")
 				}
 			}
 
 			// Document totals (BG-22)
 			// BT-106
-			assert.Equal(a(D(127.5)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
+			assert.Equal(a(types.D(127.5)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
 			// BT-109
-			assert.Equal(a(D(127.5)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
+			assert.Equal(a(types.D(127.5)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
 			// BT-112
-			assert.Equal(a(D(159.38)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
+			assert.Equal(a(types.D(159.38)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
 			// BT-115
-			assert.Equal(a(D(159.38)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
+			assert.Equal(a(types.D(159.38)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
 		}
 	}
 	{
@@ -434,13 +435,13 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			line1, err := NewInvoiceLineBuilder("1", documentCurrencyID).
 				WithUnitCode("H87").
-				WithInvoicedQuantity(D(5)).
-				WithGrossPriceAmount(D(25.0)).
+				WithInvoicedQuantity(types.D(5)).
+				WithGrossPriceAmount(types.D(25.0)).
 				WithItemName(text.Transliterate("Cerneală pentru imprimantă")).
 				WithItemTaxCategory(InvoiceLineTaxCategory{
 					TaxScheme: TaxSchemeVAT,
 					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
+					Percent:   types.D(25),
 				}).
 				Build()
 			if assert.NoError(err) {
@@ -449,13 +450,13 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			line2, err := NewInvoiceLineBuilder("2", documentCurrencyID).
 				WithUnitCode("H87").
-				WithInvoicedQuantity(D(1)).
-				WithGrossPriceAmount(D(24.0)).
+				WithInvoicedQuantity(types.D(1)).
+				WithGrossPriceAmount(types.D(24.0)).
 				WithItemName(text.Transliterate("Imprimare afiș")).
 				WithItemTaxCategory(InvoiceLineTaxCategory{
 					TaxScheme: TaxSchemeVAT,
 					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(10),
+					Percent:   types.D(10),
 				}).
 				Build()
 			if assert.NoError(err) {
@@ -464,13 +465,13 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			line3, err := NewInvoiceLineBuilder("3", documentCurrencyID).
 				WithUnitCode("H87").
-				WithInvoicedQuantity(D(1)).
-				WithGrossPriceAmount(D(136.0)).
+				WithInvoicedQuantity(types.D(1)).
+				WithGrossPriceAmount(types.D(136.0)).
 				WithItemName(text.Transliterate("Scaun de birou")).
 				WithItemTaxCategory(InvoiceLineTaxCategory{
 					TaxScheme: TaxSchemeVAT,
 					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
+					Percent:   types.D(25),
 				}).
 				Build()
 			if assert.NoError(err) {
@@ -479,8 +480,8 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			line4, err := NewInvoiceLineBuilder("4", documentCurrencyID).
 				WithUnitCode("H87").
-				WithInvoicedQuantity(D(1)).
-				WithGrossPriceAmount(D(95.0)).
+				WithInvoicedQuantity(types.D(1)).
+				WithGrossPriceAmount(types.D(95.0)).
 				WithItemName(text.Transliterate("Tastatură fără fir")).
 				WithItemTaxCategory(InvoiceLineTaxCategory{
 					TaxScheme: TaxSchemeVAT,
@@ -493,8 +494,8 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			line5, err := NewInvoiceLineBuilder("5", documentCurrencyID).
 				WithUnitCode("H87").
-				WithInvoicedQuantity(D(1)).
-				WithGrossPriceAmount(D(53.0)).
+				WithInvoicedQuantity(types.D(1)).
+				WithGrossPriceAmount(types.D(53.0)).
 				WithItemName(text.Transliterate("Cablu de adaptare")).
 				WithItemTaxCategory(InvoiceLineTaxCategory{
 					TaxScheme: TaxSchemeVAT,
@@ -506,8 +507,8 @@ func TestInvoiceBuilder(t *testing.T) {
 			}
 
 			invoiceBuilder := NewInvoiceBuilder("test.example.07").
-				WithIssueDate(MakeDate(2024, 3, 1)).
-				WithDueDate(MakeDate(2024, 4, 1)).
+				WithIssueDate(types.MakeDate(2024, 3, 1)).
+				WithDueDate(types.MakeDate(2024, 4, 1)).
 				WithInvoiceTypeCode(InvoiceTypeSelfBilledInvoice).
 				WithDocumentCurrencyCode(documentCurrencyID).
 				WithSupplier(getInvoiceSupplierParty()).
@@ -517,11 +518,11 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			documentAllowance, err := NewInvoiceDocumentAllowanceBuilder(
 				documentCurrencyID,
-				D(15),
+				types.D(15),
 				InvoiceTaxCategory{
 					TaxScheme: TaxSchemeVAT,
 					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
+					Percent:   types.D(25),
 				},
 			).WithAllowanceChargeReason("Motivul C").Build()
 			if assert.NoError(err) {
@@ -530,11 +531,11 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			documentCharge, err := NewInvoiceDocumentChargeBuilder(
 				documentCurrencyID,
-				D(35),
+				types.D(35),
 				InvoiceTaxCategory{
 					TaxScheme: TaxSchemeVAT,
 					ID:        TaxCategoryVATStandardRate,
-					Percent:   D(25),
+					Percent:   types.D(25),
 				},
 			).WithAllowanceChargeReason("Motivul B").Build()
 			if assert.NoError(err) {
@@ -543,7 +544,7 @@ func TestInvoiceBuilder(t *testing.T) {
 
 			if documentCurrencyID != CurrencyRON {
 				invoiceBuilder.WithTaxCurrencyCode(CurrencyRON)
-				invoiceBuilder.WithDocumentToTaxCurrencyExchangeRate(D(4.9691))
+				invoiceBuilder.WithDocumentToTaxCurrencyExchangeRate(types.D(4.9691))
 			}
 			return invoiceBuilder.Build()
 		}
@@ -555,54 +556,54 @@ func TestInvoiceBuilder(t *testing.T) {
 				// Invoice lines
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]
-					assert.Equal(a(D(125.0)), a(line1.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(125.0)), a(line1.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line1.Item.TaxCategory.ID)
-					assert.Equal(d(D(25.0)), d(line1.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(25.0)), d(line1.Item.TaxCategory.Percent))
 
 					line2 := invoice.InvoiceLines[1]
-					assert.Equal(a(D(24.0)), a(line2.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(24.0)), a(line2.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line2.Item.TaxCategory.ID)
-					assert.Equal(d(D(10.0)), d(line2.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(10.0)), d(line2.Item.TaxCategory.Percent))
 
 					line3 := invoice.InvoiceLines[2]
-					assert.Equal(a(D(136.0)), a(line3.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(136.0)), a(line3.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line3.Item.TaxCategory.ID)
-					assert.Equal(d(D(25.0)), d(line3.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(25.0)), d(line3.Item.TaxCategory.Percent))
 
 					line4 := invoice.InvoiceLines[3]
-					assert.Equal(a(D(95.0)), a(line4.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(95.0)), a(line4.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATExempt, line4.Item.TaxCategory.ID)
-					assert.Equal(d(D(0.0)), d(line4.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(0.0)), d(line4.Item.TaxCategory.Percent))
 
 					line5 := invoice.InvoiceLines[4]
-					assert.Equal(a(D(53.0)), a(line5.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(53.0)), a(line5.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATExempt, line5.Item.TaxCategory.ID)
-					assert.Equal(d(D(0.0)), d(line5.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(0.0)), d(line5.Item.TaxCategory.Percent))
 				}
 
 				// Document totals (BG-22)
 				// BT-106
-				assert.Equal(a(D(433.0)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
+				assert.Equal(a(types.D(433.0)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
 				// BT-107
 				if allowanceTotalAmount := invoice.LegalMonetaryTotal.AllowanceTotalAmount; assert.NotNil(allowanceTotalAmount, "BT-107 must be non-nil") {
-					assert.Equal(a(D(15)), a(allowanceTotalAmount.Amount), "BT-107 incorrect value")
+					assert.Equal(a(types.D(15)), a(allowanceTotalAmount.Amount), "BT-107 incorrect value")
 				}
 				// BT-108
 				if chargeTotalAmount := invoice.LegalMonetaryTotal.ChargeTotalAmount; assert.NotNil(chargeTotalAmount, "BT-108 must be non-nil") {
-					assert.Equal(a(D(35)), a(chargeTotalAmount.Amount), "BT-108 incorrect value")
+					assert.Equal(a(types.D(35)), a(chargeTotalAmount.Amount), "BT-108 incorrect value")
 				}
 				// BT-109
-				assert.Equal(a(D(453.0)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
+				assert.Equal(a(types.D(453.0)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
 				// BT-110
 				if assert.Equal(1, len(invoice.TaxTotal), "Must have only one TaxTotal") &&
 					assert.NotNil(invoice.TaxTotal[0].TaxAmount, "BT-110 must exist") {
 
-					assert.Equal(a(D(72.65)), a(invoice.TaxTotal[0].TaxAmount.Amount), "BT-110 incorrect value")
+					assert.Equal(a(types.D(72.65)), a(invoice.TaxTotal[0].TaxAmount.Amount), "BT-110 incorrect value")
 				}
 				// BT-112
-				assert.Equal(a(D(525.65)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
+				assert.Equal(a(types.D(525.65)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
 				// BT-115
-				assert.Equal(a(D(525.65)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
+				assert.Equal(a(types.D(525.65)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
 			}
 		}
 		{
@@ -613,62 +614,62 @@ func TestInvoiceBuilder(t *testing.T) {
 				// Invoice lines
 				if assert.Equal(5, len(invoice.InvoiceLines)) {
 					line1 := invoice.InvoiceLines[0]
-					assert.Equal(a(D(125.0)), a(line1.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(125.0)), a(line1.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line1.Item.TaxCategory.ID)
-					assert.Equal(d(D(25.0)), d(line1.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(25.0)), d(line1.Item.TaxCategory.Percent))
 
 					line2 := invoice.InvoiceLines[1]
-					assert.Equal(a(D(24.0)), a(line2.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(24.0)), a(line2.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line2.Item.TaxCategory.ID)
-					assert.Equal(d(D(10.0)), d(line2.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(10.0)), d(line2.Item.TaxCategory.Percent))
 
 					line3 := invoice.InvoiceLines[2]
-					assert.Equal(a(D(136.0)), a(line3.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(136.0)), a(line3.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATStandardRate, line3.Item.TaxCategory.ID)
-					assert.Equal(d(D(25.0)), d(line3.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(25.0)), d(line3.Item.TaxCategory.Percent))
 
 					line4 := invoice.InvoiceLines[3]
-					assert.Equal(a(D(95.0)), a(line4.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(95.0)), a(line4.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATExempt, line4.Item.TaxCategory.ID)
-					assert.Equal(d(D(0.0)), d(line4.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(0.0)), d(line4.Item.TaxCategory.Percent))
 
 					line5 := invoice.InvoiceLines[4]
-					assert.Equal(a(D(53.0)), a(line5.LineExtensionAmount.Amount))
+					assert.Equal(a(types.D(53.0)), a(line5.LineExtensionAmount.Amount))
 					assert.Equal(TaxCategoryVATExempt, line5.Item.TaxCategory.ID)
-					assert.Equal(d(D(0.0)), d(line5.Item.TaxCategory.Percent))
+					assert.Equal(d(types.D(0.0)), d(line5.Item.TaxCategory.Percent))
 				}
 
 				// Document totals (BG-22)
 				// BT-106
-				assert.Equal(a(D(433.0)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
+				assert.Equal(a(types.D(433.0)), a(invoice.LegalMonetaryTotal.LineExtensionAmount.Amount), "BT-106 incorrect value")
 				// BT-107
 				if allowanceTotalAmount := invoice.LegalMonetaryTotal.AllowanceTotalAmount; assert.NotNil(allowanceTotalAmount, "BT-107 must be non-nil") {
-					assert.Equal(a(D(15)), a(allowanceTotalAmount.Amount), "BT-107 incorrect value")
+					assert.Equal(a(types.D(15)), a(allowanceTotalAmount.Amount), "BT-107 incorrect value")
 				}
 				// BT-108
 				if chargeTotalAmount := invoice.LegalMonetaryTotal.ChargeTotalAmount; assert.NotNil(chargeTotalAmount, "BT-108 must be non-nil") {
-					assert.Equal(a(D(35)), a(chargeTotalAmount.Amount), "BT-108 incorrect value")
+					assert.Equal(a(types.D(35)), a(chargeTotalAmount.Amount), "BT-108 incorrect value")
 				}
 				// BT-109
-				assert.Equal(a(D(453.0)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
+				assert.Equal(a(types.D(453.0)), a(invoice.LegalMonetaryTotal.TaxExclusiveAmount.Amount), "BT-109 incorrect value")
 				// BT-110
 				if assert.Equal(2, len(invoice.TaxTotal), "Must have a TaxTotal for each currency") {
 					taxTotalID := findTaxTotalByCurrency(invoice.TaxTotal, documentCurrencyID)
 					if assert.True(taxTotalID >= 0, "TaxTotal for document currency code(BT-5) not set") &&
 						assert.NotNil(invoice.TaxTotal[taxTotalID].TaxAmount, "BT-110 must be non-nil") {
-						assert.Equal(a(D(72.65)), a(invoice.TaxTotal[taxTotalID].TaxAmount.Amount), "BT-110 incorrect value")
+						assert.Equal(a(types.D(72.65)), a(invoice.TaxTotal[taxTotalID].TaxAmount.Amount), "BT-110 incorrect value")
 					}
 
 					taxTotalTaxCurrencyID := findTaxTotalByCurrency(invoice.TaxTotal, CurrencyRON)
 					if assert.True(taxTotalTaxCurrencyID >= 0, "TaxTotal for tax currency code(BT-6) not set") &&
 						assert.NotNil(invoice.TaxTotal[taxTotalTaxCurrencyID].TaxAmount, "BT-111 must be non-nil") {
-						assert.Equal(a(D(361.01)), a(invoice.TaxTotal[taxTotalTaxCurrencyID].TaxAmount.Amount), "BT-110 incorrect value")
+						assert.Equal(a(types.D(361.01)), a(invoice.TaxTotal[taxTotalTaxCurrencyID].TaxAmount.Amount), "BT-110 incorrect value")
 					}
 				}
 				// BT-112
-				assert.Equal(a(D(525.65)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
+				assert.Equal(a(types.D(525.65)), a(invoice.LegalMonetaryTotal.TaxInclusiveAmount.Amount), "BT-112 incorrect value")
 				// BT-115
-				assert.Equal(a(D(525.65)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
+				assert.Equal(a(types.D(525.65)), a(invoice.LegalMonetaryTotal.PayableAmount.Amount), "BT-115 incorrect value")
 			}
 		}
 	}

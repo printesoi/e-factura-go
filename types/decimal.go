@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
+package types
 
 import (
 	"github.com/printesoi/xml-go"
@@ -89,6 +89,14 @@ func (d *Decimal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		return nil
 	}
 	return e.EncodeElement(d.String(), start)
+}
+
+// MarshalXMLAttr implements the xml.MarshalerAttr interface.
+func (d *Decimal) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
+	return xml.Attr{
+		Name:  name,
+		Value: d.String(),
+	}, nil
 }
 
 // MarshalText implements the encoding.TextMarshaler interface. This is needed
@@ -179,9 +187,9 @@ func (d Decimal) AsAmount() Decimal {
 
 // Cmp compares the numbers represented by d and d2 and returns:
 //
-//     -1 if d <  d2
-//      0 if d == d2
-//     +1 if d >  d2
+//	-1 if d <  d2
+//	 0 if d == d2
+//	+1 if d >  d2
 func (d Decimal) Cmp(d2 Decimal) int {
 	return d.Decimal.Cmp(d2.Decimal)
 }
