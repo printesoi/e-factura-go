@@ -29,6 +29,9 @@ import (
 	ioauth2 "github.com/printesoi/e-factura-go/internal/oauth2"
 )
 
+// TokenChangedHandler is a handler provided to
+// Config.TokenSourceWithChangedHandler or Config.TokenRefresher that is called
+// when the token changes (is refreshed).
 type TokenChangedHandler func(ctx context.Context, t *xoauth2.Token) error
 
 // tokenFromInternal maps an *ioauth2.Token struct into
@@ -125,27 +128,34 @@ func (s *reuseTokenSource) Token() (*xoauth2.Token, error) {
 	return t, nil
 }
 
+// TokenRefresher returns a TokenSource that makes "grant_type"=="refresh_token"
+// HTTP requests to renew a token using a RefreshToken.
+// WARNING: the returned TokenSource is not safe for concurrent access, so you
+// need to protect it with a mutex. It's recommended to use TokenSource instead.
+func (c *Config) TokenRefresher(ctx context.Context, t *xoauth2.Token, onTokenChanged TokenChangedHandler) xoauth2.TokenSource {
+	if t == nil || t.RefreshToken == "" {
+		return nil
+	}
+	return &tokenRefresher{
+		ctx:            ctx,
+		conf:           &c.Config,
+		refreshToken:   t.RefreshToken,
+		onTokenChanged: onTokenChanged,
+	}
+}
+
 // TokenSource returns a TokenSource that returns t until t expires,
-// automatically refreshing it as necessary using the provided context.
+// automatically refreshing it as necessary using the provided context. The
+// returned TokenSource is safe for concurrent access.
 func (c *Config) TokenSource(ctx context.Context, t *xoauth2.Token) xoauth2.TokenSource {
-	tkr := &tokenRefresher{
-		ctx:  ctx,
-		conf: &c.Config,
-	}
-	if t != nil {
-		tkr.refreshToken = t.RefreshToken
-	}
-	return &reuseTokenSource{
-		t:   t,
-		new: tkr,
-	}
+	return c.TokenSourceWithChangedHandler(ctx, t, nil)
 }
 
 // TokenSourceWithChangedHandler returns a TokenSource that returns t until t
 // expires, automatically refreshing it as necessary using the provided
 // context. Every time the access token is refreshed, the onTokenChanged
 // handler is called. This is useful if you need to update the token in a
-// store/db.
+// store/db. The returned TokenSource is safe for concurrent access.
 func (c *Config) TokenSourceWithChangedHandler(ctx context.Context, t *xoauth2.Token, onTokenChanged TokenChangedHandler) xoauth2.TokenSource {
 	tkr := &tokenRefresher{
 		ctx:            ctx,

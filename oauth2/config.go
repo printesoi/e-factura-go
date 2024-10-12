@@ -74,7 +74,7 @@ func ConfigEndpoint(endpoint xoauth2.Endpoint) ConfigOption {
 
 // MakeConfig creates a Config using provided options. At least
 // ConfigCredentials must be provided, otherwise
-// ErrInvoiceOAuth2Credentials will be returned. If an invalid endpoint if
+// ErrInvalidOAuth2Credentials will be returned. If an invalid endpoint if
 // provided using ConfigEndpoint, then ErrInvalidOAuth2Endpoint is
 // returned.
 func MakeConfig(opts ...ConfigOption) (cfg Config, err error) {
