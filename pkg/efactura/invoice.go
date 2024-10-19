@@ -198,9 +198,9 @@ type Invoice struct {
 // Prefill sets the  NS, NScac, NScbc and Comment properties for ensuring that
 // the required attributes and properties are set for a valid UBL XML.
 func (iv *Invoice) Prefill() {
-	iv.Namespace = pxml.XMLNSUBLInvoice2
-	iv.NamespaceCAC = pxml.XMLNSUBLcac
-	iv.NamespaceCBC = pxml.XMLNSUBLcbc
+	iv.Namespace = xmlnsUBLInvoice2
+	iv.NamespaceCAC = xmlnsUBLcac
+	iv.NamespaceCBC = xmlnsUBLcbc
 	iv.UBLVersionID = UBLVersionID
 	iv.CustomizationID = CIUSRO_v101
 	if iv.Comment == "" {
@@ -209,8 +209,9 @@ func (iv *Invoice) Prefill() {
 }
 
 func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	// This allows us to strip the MarshalXML method.
 	type invoice Invoice
-	pxml.SetupUBLXMLEncoder(e)
+	setupUBLXMLEncoder(e)
 	iv.Prefill()
 	return e.EncodeElement(invoice(iv), start)
 }

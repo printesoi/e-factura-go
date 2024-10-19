@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Package xml provides useful functions for marshaling and unmarshaling
+// canonical XML.
 package xml
 
 import (

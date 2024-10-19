@@ -895,14 +895,14 @@ func parseDownloadedInvoiceXML(ctx context.Context, invoiceXML []byte) (invoice 
 		return
 	}
 	switch doc.XMLName.Space {
-	case pxml.XMLNSUBLInvoice2:
+	case xmlnsUBLInvoice2:
 		iv := new(Invoice)
 		if err = pxml.UnmarshalXML(invoiceXML, iv); err != nil {
 			return
 		}
 		invoice = iv
 
-	case XMLNSMsgErrorV1:
+	case xmlnsMsgErrorV1:
 		ie := new(InvoiceErrorMessage)
 		if err = pxml.UnmarshalXML(invoiceXML, &ie); err != nil {
 			return

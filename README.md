@@ -1,4 +1,4 @@
-# e-factura-go [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
+# e-factura-go [![GoDoc](https://godoc.org/github.com/printesoi/e-factura-go?status.svg)](https://godoc.org/github.com/printesoi/e-factura-go) [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
 
 
 Package e-factura-go provides a client for using the RO e-factura and RO e-transport APIs.

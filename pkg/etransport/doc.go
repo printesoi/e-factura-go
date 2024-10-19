@@ -13,11 +13,12 @@
 // limitations under the License
 
 /*
-Package efactura provides a client for using the RO e-Factura API and objects
-and utilities for building, marshaling, and unmarshaling XML invoices.
+Package etransport provides a client for using the RO e-Transport API and
+objects and utilities for building, marshaling, and unmarshaling XML posting
+declarations.
 
 Usage:
 
-	import "github.com/printesoi/e-factura-go/pkg/efactura"
+	import "github.com/printesoi/e-factura-go/pkg/etransport"
 */
-package efactura
+package etransport

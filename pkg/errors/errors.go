@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Package errors defines custom errors returned by various APIs or builders.
 package errors
 
 import (
@@ -27,9 +28,9 @@ var (
 	ErrInvalidOAuth2RedirectURL = errors.New("invalid OAuth2 redirect URL")
 )
 
-// ErrorResponse is an error returns if the HTTP requests was finished (we got
-// a *http.Response from the HTTP client, but it was not a successful response,
-// or it was an error parsing the response.
+// ErrorResponse is an error returned if the HTTP request was finished (we got
+// an *http.Response from the HTTP client, but it was not a successful
+// response, or it was an error parsing the response.
 type ErrorResponse struct {
 	StatusCode   int
 	Status       string

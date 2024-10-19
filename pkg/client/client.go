@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Package client provides clients that provide basic access to ANAF APIs.
 package client
 
 import (

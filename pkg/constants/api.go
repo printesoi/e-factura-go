@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Package contants provides some useful constants that are not bound to any
+// specific API.
 package constants
 
 const (
-	ApiBaseURL       = "https://api.anaf.ro/"
+	// ApiBaseURL is the base URL for the ANAF protected services.
+	ApiBaseURL = "https://api.anaf.ro/"
+
+	ApiBasePathSandbox = "test/"
+	// ApiBaseSandbox points to the sandbox (testing) version of the APIs.
+	ApiBaseSandbox = ApiBaseURL + ApiBasePathSandbox
+
+	ApiBasePathProd = "prod/"
+	// ApiBaseProd points to the production version of the APIs.
+	ApiBaseProd = ApiBaseURL + ApiBasePathProd
+
+	// PublicApiBaseURL is the base URL for the ANAF public (unprotected) APIs.
 	PublicApiBaseURL = "https://webservicesp.anaf.ro/"
 
-	// ApiBaseSandbox points to the sandbox (testing) version of the API
-	ApiBasePathSandbox = "test/"
-	ApiBaseSandbox     = ApiBaseURL + ApiBasePathSandbox
-
-	// ApiBaseProd points to the production version of the API
-	ApiBasePathProd = "prod/"
-	ApiBaseProd     = ApiBaseURL + ApiBasePathProd
-
-	// ApiPublicBaseProd points to the production version of the public
-	// (unprotected) API.
 	PublicApiBasePathProd = "prod/"
-	PublicApiBaseProd     = PublicApiBaseURL + PublicApiBasePathProd
+	// PublicApiBaseProd points to the production version of the public
+	// (unprotected) APIs.
+	PublicApiBaseProd = PublicApiBaseURL + PublicApiBasePathProd
 )

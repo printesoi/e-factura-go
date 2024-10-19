@@ -14,6 +14,8 @@
 
 package efactura
 
+import "github.com/printesoi/xml-go"
+
 // Constants for namespaces and versions
 const (
 	// e-factura: Customization ID implemented CIUS-RO v1.0.1
@@ -21,5 +23,18 @@ const (
 	// e-factura: UBL Version implemented
 	UBLVersionID = "2.1"
 
-	XMLNSMsgErrorV1 = "mfp:anaf:dgti:efactura:mesajEroriFactuta:v1"
+	xmlnsUBLInvoice2 = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+	xmlnsUBLcac      = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+	xmlnsUBLcbc      = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+	xmlnsMsgErrorV1  = "mfp:anaf:dgti:efactura:mesajEroriFactuta:v1"
 )
+
+// setupUBLXMLEncoder will configure the xml.Encoder to make it suitable for
+// marshaling UBL objects to XML.
+func setupUBLXMLEncoder(enc *xml.Encoder) *xml.Encoder {
+	enc.AddNamespaceBinding(xmlnsUBLcac, "cac")
+	enc.AddSkipNamespaceAttrForPrefix(xmlnsUBLcac, "cac")
+	enc.AddNamespaceBinding(xmlnsUBLcbc, "cbc")
+	enc.AddSkipNamespaceAttrForPrefix(xmlnsUBLcbc, "cbc")
+	return enc
+}
