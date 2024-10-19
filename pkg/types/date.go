@@ -116,6 +116,9 @@ const (
 	xsDateTimeFmt = "2006-01-02T15:04:05"
 )
 
+// DateTime is a wrapper of the time.Time type which marshals to XML in the
+// YYYY-MM-DDTHH:MM:SS format and is assumed to be in the Romanian timezone
+// location.
 type DateTime struct {
 	time.Time
 }

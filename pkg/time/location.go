@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+// Package time provides utility functions for dealing with times in Romanian
+// timezone.
 package time
 
 import "time"
