@@ -20,12 +20,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"testing"
 
 	xoauth2 "golang.org/x/oauth2"
 
 	"github.com/printesoi/e-factura-go/pkg/oauth2"
-	"github.com/stretchr/testify/assert"
 )
 
 func getTestCIF() string {
@@ -100,37 +98,4 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 	ctx := context.Background()
 	client, err := NewSandboxClient(ctx, oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged))
 	return client, err
-}
-
-func TestRefresh(t *testing.T) {
-	assert := assert.New(t)
-
-	oauth2Cfg, err := setupTestEnvOAuth2Config(false)
-	if !assert.NoError(err) {
-		return
-	}
-
-	tokenJSON := os.Getenv("EFACTURA_TEST_INITIAL_TOKEN_JSON")
-	if tokenJSON == "" {
-		assert.FailNow("Invalid initial token json")
-		return
-	}
-
-	token, err := oauth2.TokenFromJSON([]byte(tokenJSON))
-	if err != nil {
-		assert.FailNow("Invalid initial token json", err)
-	}
-
-	tr := oauth2Cfg.TokenRefresher(context.Background(), token, nil)
-	if tr != nil {
-		tok, err := tr.Token()
-		if !assert.NoError(err) {
-			return
-		}
-		tj, err := json.Marshal(tok)
-		if !assert.NoError(err) {
-			return
-		}
-		fmt.Printf("%s\n", string(tj))
-	}
 }
