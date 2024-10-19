@@ -15,7 +15,7 @@
 package efactura
 
 import (
-	"github.com/printesoi/e-factura-go/types"
+	"github.com/printesoi/e-factura-go/pkg/types"
 	"github.com/printesoi/xml-go"
 )
 

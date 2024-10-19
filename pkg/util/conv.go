@@ -15,8 +15,8 @@
 package util
 
 import (
-	"github.com/printesoi/e-factura-go/efactura"
-	"github.com/printesoi/e-factura-go/etransport"
+	"github.com/printesoi/e-factura-go/pkg/efactura"
+	"github.com/printesoi/e-factura-go/pkg/etransport"
 )
 
 // EfacturaRoCountrySubentityToEtransportCountyCode convert the given

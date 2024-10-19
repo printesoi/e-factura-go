@@ -20,8 +20,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/printesoi/e-factura-go/text"
-	"github.com/printesoi/e-factura-go/types"
+	"github.com/printesoi/e-factura-go/pkg/text"
+	"github.com/printesoi/e-factura-go/pkg/types"
 )
 
 const (

@@ -17,8 +17,8 @@ package etransport
 import (
 	"errors"
 
-	"github.com/printesoi/e-factura-go/types"
-	ixml "github.com/printesoi/e-factura-go/xml"
+	"github.com/printesoi/e-factura-go/pkg/types"
+	ixml "github.com/printesoi/e-factura-go/pkg/xml"
 	"github.com/printesoi/xml-go"
 )
 

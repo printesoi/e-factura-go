@@ -23,7 +23,7 @@ import (
 
 	xoauth2 "golang.org/x/oauth2"
 
-	"github.com/printesoi/e-factura-go/oauth2"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
 func getTestCIF() string {

@@ -26,10 +26,10 @@ import (
 
 	xoauth2 "golang.org/x/oauth2"
 
-	"github.com/printesoi/e-factura-go/constants"
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
-	"github.com/printesoi/e-factura-go/xml"
+	"github.com/printesoi/e-factura-go/pkg/constants"
+	"github.com/printesoi/e-factura-go/pkg/xml"
 )
 
 const (

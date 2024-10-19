@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/printesoi/e-factura-go/efactura"
+	"github.com/printesoi/e-factura-go/pkg/efactura"
 	"github.com/spf13/cobra"
 )
 

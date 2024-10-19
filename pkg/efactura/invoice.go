@@ -17,8 +17,8 @@ package efactura
 import (
 	"fmt"
 
-	"github.com/printesoi/e-factura-go/types"
-	ixml "github.com/printesoi/e-factura-go/xml"
+	"github.com/printesoi/e-factura-go/pkg/types"
+	pxml "github.com/printesoi/e-factura-go/pkg/xml"
 	"github.com/printesoi/xml-go"
 )
 
@@ -198,9 +198,9 @@ type Invoice struct {
 // Prefill sets the  NS, NScac, NScbc and Comment properties for ensuring that
 // the required attributes and properties are set for a valid UBL XML.
 func (iv *Invoice) Prefill() {
-	iv.Namespace = ixml.XMLNSUBLInvoice2
-	iv.NamespaceCAC = ixml.XMLNSUBLcac
-	iv.NamespaceCBC = ixml.XMLNSUBLcbc
+	iv.Namespace = pxml.XMLNSUBLInvoice2
+	iv.NamespaceCAC = pxml.XMLNSUBLcac
+	iv.NamespaceCBC = pxml.XMLNSUBLcbc
 	iv.UBLVersionID = UBLVersionID
 	iv.CustomizationID = CIUSRO_v101
 	if iv.Comment == "" {
@@ -210,21 +210,21 @@ func (iv *Invoice) Prefill() {
 
 func (iv Invoice) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	type invoice Invoice
-	ixml.SetupUBLXMLEncoder(e)
+	pxml.SetupUBLXMLEncoder(e)
 	iv.Prefill()
 	return e.EncodeElement(invoice(iv), start)
 }
 
 // XML returns the XML encoding of the Invoice
 func (iv Invoice) XML() ([]byte, error) {
-	return ixml.MarshalXMLWithHeader(iv)
+	return pxml.MarshalXMLWithHeader(iv)
 }
 
 // XMLIndent works like XML, but each XML element begins on a new
 // indented line that starts with prefix and is followed by one or more
 // copies of indent according to the nesting depth.
 func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
-	return ixml.MarshalIndentXMLWithHeader(iv, prefix, indent)
+	return pxml.MarshalIndentXMLWithHeader(iv, prefix, indent)
 }
 
 // UnmarshalInvoice unmarshals an Invoice from XML data. Only use this method
@@ -232,7 +232,7 @@ func (iv Invoice) XMLIndent(prefix, indent string) ([]byte, error) {
 // properly unmarshal a struct like Invoice due to namespace prefixes. This
 // method does not check if the unmarshaled Invoice is valid.
 func UnmarshalInvoice(xmlData []byte, invoice *Invoice) error {
-	return ixml.UnmarshalXML(xmlData, invoice)
+	return pxml.UnmarshalXML(xmlData, invoice)
 }
 
 type InvoiceBillingReference struct {

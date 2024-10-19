@@ -17,7 +17,7 @@ package efactura
 import (
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
 	"github.com/printesoi/e-factura-go/internal/ptr"
-	"github.com/printesoi/e-factura-go/types"
+	"github.com/printesoi/e-factura-go/pkg/types"
 )
 
 // InvoiceLineAllowanceChargeBuilder builds an InvoiceLineAllowanceCharge object

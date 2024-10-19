@@ -19,7 +19,7 @@ import (
 
 	xoauth2 "golang.org/x/oauth2"
 
-	"github.com/printesoi/e-factura-go/client"
+	"github.com/printesoi/e-factura-go/pkg/client"
 )
 
 // ClientConfig is the config used to create a Client
