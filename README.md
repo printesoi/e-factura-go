@@ -23,7 +23,7 @@ Construct the required OAuth2 config needed for an e-factura or e-transport Clie
 
 ```go
 import (
-    efactura_oauth2 "github.com/printesoi/e-factura-go/oauth2"
+    efactura_oauth2 "github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
 oauth2Cfg, err := efactura_oauth2.MakeConfig(
@@ -75,7 +75,7 @@ Construct a new simple client for production environment:
 
 ```go
 import (
-    "github.com/printesoi/e-factura-go/efactura"
+    "github.com/printesoi/e-factura-go/pkg/efactura"
 )
 
 ctx := context.TODO()
@@ -252,7 +252,7 @@ limit:
 
 ```go
 import (
-    efactura_errors "github.com/printesoi/e-factura-go/errors"
+    efactura_errors "github.com/printesoi/e-factura-go/pkg/errors"
 )
 
 resp, err := client.GetMessageState(ctx, uploadIndex)
@@ -325,7 +325,7 @@ Construct a new simple client for production environment:
 
 ```go
 import (
-    "github.com/printesoi/e-factura-go/etransport"
+    "github.com/printesoi/e-factura-go/pkg/etransport"
 )
 
 ctx := context.TODO()
@@ -400,19 +400,6 @@ if resp.IsOk() {
     fmt.Printf("GetMessagesList failed: %s\n", resp.GetFirstErrorMessage())
 }
 ```
-
-## Tasks ##
-
-- [ ] e-factura CLI tool
-- [ ] One-stop shop for ANAF APIs: VAT v8 API, E-Transport
-- [ ] Implement all business terms.
-- [ ] Extend the InvoiceBuilder to add all Invoice fields
-- [ ] Implement CreditNote.
-- [ ] Add tests for all REST API calls and more tests for validating generated
-  XML (maybe checking with the tools provided by mfinante).
-- [ ] Validate signature from Invoice zip.
-- [ ] Godoc and more code examples.
-- [ ] Test coverage
 
 ## Contributing ##
 
