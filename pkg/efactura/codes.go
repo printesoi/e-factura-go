@@ -17,7 +17,7 @@ package efactura
 import (
 	"strings"
 
-	"github.com/printesoi/e-factura-go/text"
+	"github.com/printesoi/e-factura-go/pkg/text"
 )
 
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm

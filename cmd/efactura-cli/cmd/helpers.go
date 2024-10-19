@@ -20,10 +20,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	efacturaclient "github.com/printesoi/e-factura-go/client"
-	"github.com/printesoi/e-factura-go/constants"
-	"github.com/printesoi/e-factura-go/efactura"
-	"github.com/printesoi/e-factura-go/oauth2"
+	efacturaclient "github.com/printesoi/e-factura-go/pkg/client"
+	"github.com/printesoi/e-factura-go/pkg/constants"
+	"github.com/printesoi/e-factura-go/pkg/efactura"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
 func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {

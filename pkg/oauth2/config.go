@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/printesoi/e-factura-go/errors"
+	"github.com/printesoi/e-factura-go/pkg/errors"
 	xoauth2 "golang.org/x/oauth2"
 )
 

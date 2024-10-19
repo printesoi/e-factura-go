@@ -18,9 +18,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/printesoi/e-factura-go/efactura"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/printesoi/e-factura-go/pkg/efactura"
+	"github.com/spf13/cobra"
 )
 
 const (

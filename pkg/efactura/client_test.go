@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package etransport
+package efactura
 
 import (
 	"context"
@@ -22,26 +22,25 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	xoauth2 "golang.org/x/oauth2"
 
-	"github.com/printesoi/e-factura-go/oauth2"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
+	"github.com/stretchr/testify/assert"
 )
 
 func getTestCIF() string {
-	return os.Getenv("ETRANSPORT_TEST_CIF")
+	return os.Getenv("EFACTURA_TEST_CIF")
 }
 
 // setupTestEnvOAuth2Config creates a OAuth2Config from the environment.
 // If skipIfEmptyEnv if set to false and the env variables
-// ETRANSPORT_TEST_CLIENT_ID, ETRANSPORT_TEST_CLIENT_SECRET,
-// ETRANSPORT_TEST_REDIRECT_URL are not set, this method returns an error.
+// EFACTURA_TEST_CLIENT_ID, EFACTURA_TEST_CLIENT_SECRET,
+// EFACTURA_TEST_REDIRECT_URL are not set, this method returns an error.
 // If skipIfEmptyEnv is set to true and the env vars
 // are not set, this method returns a nil config.
 func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, err error) {
-	clientID := os.Getenv("ETRANSPORT_TEST_CLIENT_ID")
-	clientSecret := os.Getenv("ETRANSPORT_TEST_CLIENT_SECRET")
+	clientID := os.Getenv("EFACTURA_TEST_CLIENT_ID")
+	clientSecret := os.Getenv("EFACTURA_TEST_CLIENT_SECRET")
 	if clientID == "" || clientSecret == "" {
 		if skipIfEmptyEnv {
 			return
@@ -50,7 +49,7 @@ func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, er
 		return
 	}
 
-	redirectURL := os.Getenv("ETRANSPORT_TEST_REDIRECT_URL")
+	redirectURL := os.Getenv("EFACTURA_TEST_REDIRECT_URL")
 	if redirectURL == "" {
 		err = errors.New("invalid redirect URL")
 		return
@@ -82,7 +81,7 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 		}
 	}
 
-	tokenJSON := os.Getenv("ETRANSPORT_TEST_INITIAL_TOKEN_JSON")
+	tokenJSON := os.Getenv("EFACTURA_TEST_INITIAL_TOKEN_JSON")
 	if tokenJSON == "" {
 		return nil, errors.New("Invalid initial token json")
 	}
@@ -94,7 +93,7 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 
 	onTokenChanged := func(ctx context.Context, token *xoauth2.Token) error {
 		tokenJSON, _ := json.Marshal(token)
-		fmt.Printf("[E-TRANSPORT] token changed: %s\n", string(tokenJSON))
+		fmt.Printf("[E-FACTURA] token changed: %s\n", string(tokenJSON))
 		return nil
 	}
 
@@ -103,48 +102,35 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 	return client, err
 }
 
-func TestGenerateAuthCodeURL(t *testing.T) {
+func TestRefresh(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg, err := setupTestEnvOAuth2Config(true)
-	if !assert.NoError(err) {
-		return
-	}
-	if cfg == nil {
-		t.Skipf("Skipping test, no credentials to create oauth2 config")
-	}
-
-	uuid, err := uuid.NewRandom()
+	oauth2Cfg, err := setupTestEnvOAuth2Config(false)
 	if !assert.NoError(err) {
 		return
 	}
 
-	url := cfg.AuthCodeURL(uuid.String())
-	assert.True(url != "")
-	fmt.Printf("%s\n", url)
-}
-
-func TestExchangeCode(t *testing.T) {
-	assert := assert.New(t)
-
-	cfg, err := setupTestEnvOAuth2Config(true)
-	if !assert.NoError(err) {
-		return
-	}
-	if cfg == nil {
-		t.Skipf("Skipping test, no credentials to create oauth2 config")
-	}
-
-	code := os.Getenv("ETRANSPORT_TEST_EXCHANGE_CODE")
-	if code == "" {
-		t.Skipf("Skipping test, no exchange code")
-	}
-
-	token, err := cfg.Exchange(context.Background(), code)
-	if !assert.NoError(err) {
+	tokenJSON := os.Getenv("EFACTURA_TEST_INITIAL_TOKEN_JSON")
+	if tokenJSON == "" {
+		assert.FailNow("Invalid initial token json")
 		return
 	}
 
-	tj, _ := json.Marshal(token)
-	fmt.Printf("%s\n", string(tj))
+	token, err := oauth2.TokenFromJSON([]byte(tokenJSON))
+	if err != nil {
+		assert.FailNow("Invalid initial token json", err)
+	}
+
+	tr := oauth2Cfg.TokenRefresher(context.Background(), token, nil)
+	if tr != nil {
+		tok, err := tr.Token()
+		if !assert.NoError(err) {
+			return
+		}
+		tj, err := json.Marshal(tok)
+		if !assert.NoError(err) {
+			return
+		}
+		fmt.Printf("%s\n", string(tj))
+	}
 }

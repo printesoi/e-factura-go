@@ -25,9 +25,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/printesoi/e-factura-go/constants"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
-	"github.com/printesoi/e-factura-go/oauth2"
+	"github.com/printesoi/e-factura-go/pkg/constants"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
 	"github.com/stretchr/testify/assert"
 	xoauth2 "golang.org/x/oauth2"
 )

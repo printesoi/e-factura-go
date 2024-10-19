@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/printesoi/e-factura-go/oauth2"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
 func (c *ApiClient) RevokeAccessToken(ctx context.Context, accessToken string) error {

@@ -19,7 +19,7 @@ import (
 
 	"github.com/printesoi/xml-go"
 
-	itime "github.com/printesoi/e-factura-go/time"
+	itime "github.com/printesoi/e-factura-go/pkg/time"
 )
 
 // Date is a wrapper of the time.Time type which marshals to XML in the

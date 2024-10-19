@@ -17,7 +17,7 @@ package etransport
 import (
 	"strings"
 
-	"github.com/printesoi/e-factura-go/text"
+	"github.com/printesoi/e-factura-go/pkg/text"
 )
 
 type DeclPostIncidentType string

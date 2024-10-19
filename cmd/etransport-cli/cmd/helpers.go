@@ -20,8 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/printesoi/e-factura-go/etransport"
-	"github.com/printesoi/e-factura-go/oauth2"
+	"github.com/printesoi/e-factura-go/pkg/etransport"
+	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
 func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {

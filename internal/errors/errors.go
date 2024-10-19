@@ -23,10 +23,10 @@ import (
 	"regexp"
 	"strconv"
 
-	errors "github.com/printesoi/e-factura-go/errors"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
 	"github.com/printesoi/e-factura-go/internal/ptr"
 	iregexp "github.com/printesoi/e-factura-go/internal/regexp"
+	errors "github.com/printesoi/e-factura-go/pkg/errors"
 )
 
 var (

@@ -33,8 +33,8 @@ import (
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
 	"github.com/printesoi/e-factura-go/internal/ptr"
 	iregexp "github.com/printesoi/e-factura-go/internal/regexp"
-	itime "github.com/printesoi/e-factura-go/time"
-	ixml "github.com/printesoi/e-factura-go/xml"
+	ptime "github.com/printesoi/e-factura-go/pkg/time"
+	pxml "github.com/printesoi/e-factura-go/pkg/xml"
 )
 
 type (
@@ -458,7 +458,7 @@ func (m Message) GetBuyerCIF() (buyerCIF string) {
 // GetCreationDate parsed CreationDate and returns a time.Time in
 // RoZoneLocation.
 func (m Message) GetCreationDate() (time.Time, bool) {
-	t, err := itime.ParseInRomania(messageTimeLayout, m.CreationDate)
+	t, err := ptime.ParseInRomania(messageTimeLayout, m.CreationDate)
 	return t, err == nil
 }
 
@@ -514,7 +514,7 @@ func (c *Client) ValidateXML(ctx context.Context, xml io.Reader, st ValidateStan
 
 // ValidateInvoice validate the provided Invoice
 func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*ValidateResponse, error) {
-	xmlReader, err := ixml.MarshalXMLToReader(invoice)
+	xmlReader, err := pxml.MarshalXMLToReader(invoice)
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +573,7 @@ func (c *Client) XMLToPDF(ctx context.Context, xml io.Reader, st ValidateStandar
 // InvoiceToPDF convert the given Invoice to PDF. See XMLToPDF for return
 // values.
 func (c *Client) InvoiceToPDF(ctx context.Context, invoice Invoice, noValidate bool) (response *GeneratePDFResponse, err error) {
-	xmlReader, err := ixml.MarshalXMLToReader(invoice)
+	xmlReader, err := pxml.MarshalXMLToReader(invoice)
 	if err != nil {
 		return nil, err
 	}
@@ -642,7 +642,7 @@ func (c *Client) UploadXML(
 func (c *Client) UploadInvoice(
 	ctx context.Context, invoice Invoice, cif string, opts ...UploadOption,
 ) (response *UploadResponse, err error) {
-	xmlReader, err := ixml.MarshalXMLToReader(invoice)
+	xmlReader, err := pxml.MarshalXMLToReader(invoice)
 	if err != nil {
 		return nil, err
 	}
@@ -654,7 +654,7 @@ func (c *Client) UploadInvoice(
 func (c *Client) UploadRaspMessage(
 	ctx context.Context, msg RaspMessage, cif string,
 ) (response *UploadResponse, err error) {
-	xmlReader, err := ixml.MarshalXMLToReader(msg)
+	xmlReader, err := pxml.MarshalXMLToReader(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -891,20 +891,20 @@ func parseDownloadedInvoiceXML(ctx context.Context, invoiceXML []byte) (invoice 
 		XMLName xml.Name
 	}
 	var doc docName
-	if err = ixml.UnmarshalXML(invoiceXML, &doc); err != nil {
+	if err = pxml.UnmarshalXML(invoiceXML, &doc); err != nil {
 		return
 	}
 	switch doc.XMLName.Space {
-	case ixml.XMLNSUBLInvoice2:
+	case pxml.XMLNSUBLInvoice2:
 		iv := new(Invoice)
-		if err = ixml.UnmarshalXML(invoiceXML, iv); err != nil {
+		if err = pxml.UnmarshalXML(invoiceXML, iv); err != nil {
 			return
 		}
 		invoice = iv
 
 	case XMLNSMsgErrorV1:
 		ie := new(InvoiceErrorMessage)
-		if err = ixml.UnmarshalXML(invoiceXML, &ie); err != nil {
+		if err = pxml.UnmarshalXML(invoiceXML, &ie); err != nil {
 			return
 		}
 		invoiceError = ie
