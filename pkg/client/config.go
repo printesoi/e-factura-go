@@ -114,7 +114,7 @@ type ApiClientConfig struct {
 	// Until this library will support authentication with the SPV certificate,
 	// this must always be provided.
 	TokenSource xoauth2.TokenSource
-	// Unless BaseURL is set, Sandbox controlls whether to use production
+	// Unless BaseURL is set, Sandbox controls whether to use production
 	// endpoints (if set to false) or test endpoints (if set to true).
 	Sandbox bool
 	// Context to use for creating the HTTP client. If not set,

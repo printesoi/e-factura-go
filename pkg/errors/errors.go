@@ -73,7 +73,7 @@ func (e *BuilderError) Error() string {
 }
 
 // ValidateSignatureError is an error returned if the signature cannot be
-// succesfully validated.
+// successfully validated.
 type ValidateSignatureError struct {
 	error
 }

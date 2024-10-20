@@ -523,7 +523,7 @@ func (c *Client) ValidateInvoice(ctx context.Context, invoice Invoice) (*Validat
 }
 
 // XMLToPDF converts the given XML to PDF. To check if the generation is indeed
-// successful and no validation or other invalid request error occured, check
+// successful and no validation or other invalid request error occurred, check
 // if response.IsOk() == true.
 func (c *Client) XMLToPDF(ctx context.Context, xml io.Reader, st ValidateStandard, noValidate bool) (response *GeneratePDFResponse, err error) {
 	path := fmt.Sprintf(publicApiPathXMLToPDF, st)
@@ -588,7 +588,7 @@ type uploadOptions struct {
 
 type UploadOption func(*uploadOptions)
 
-// UploadOptionForeign is an upload option specifiying that the buyer is not a
+// UploadOptionForeign is an upload option specifying that the buyer is not a
 // Romanian entity (no CUI or NIF).
 func UploadOptionForeign() UploadOption {
 	return func(o *uploadOptions) {
