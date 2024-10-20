@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/printesoi/e-factura-go/pkg/text"
+	"github.com/printesoi/e-factura-go/pkg/units"
 )
 
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm
@@ -1120,8 +1121,7 @@ const (
 	CityNameROBSector6 = "SECTOR6"
 )
 
-// TODO: add values
-type UnitCodeType string
+type UnitCodeType = units.UnitCodeType
 
 // https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred4461.htm
 type PaymentMeansCodeType string

@@ -173,15 +173,15 @@ type PostingDeclarationNotificationCorrection struct {
 }
 
 type PostingDeclarationNotificationTransportedGood struct {
-	OpPurposeCode   OpPurposeCodeType   `xml:"codScopOperatiune,attr"`
-	TariffCode      string              `xml:"codTarifar,attr,omitempty"`
-	GoodName        string              `xml:"denumireMarfa,attr"`
-	Quantity        types.Decimal       `xml:"cantitate,attr"`
-	UnitMeasureCode UnitMeasureCodeType `xml:"codUnitateMasura,attr"`
-	NetWeight       *types.Decimal      `xml:"greutateNeta,attr,omitempty"`
-	GrossWeight     types.Decimal       `xml:"greutateBruta,attr"`
-	LeiValueNoVAT   *types.Decimal      `xml:"valoareLeiFaraTva,attr,omitempty"`
-	DeclarantRef    string              `xml:"refDeclaranti,attr,omitempty"`
+	OpPurposeCode   OpPurposeCodeType `xml:"codScopOperatiune,attr"`
+	TariffCode      string            `xml:"codTarifar,attr,omitempty"`
+	GoodName        string            `xml:"denumireMarfa,attr"`
+	Quantity        types.Decimal     `xml:"cantitate,attr"`
+	UnitMeasureCode UnitCodeType      `xml:"codUnitateMasura,attr"`
+	NetWeight       *types.Decimal    `xml:"greutateNeta,attr,omitempty"`
+	GrossWeight     types.Decimal     `xml:"greutateBruta,attr"`
+	LeiValueNoVAT   *types.Decimal    `xml:"valoareLeiFaraTva,attr,omitempty"`
+	DeclarantRef    string            `xml:"refDeclaranti,attr,omitempty"`
 }
 
 type PostingDeclarationNotificationCommercialPartner struct {
