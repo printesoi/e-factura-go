@@ -12,101 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package etransport
+package etransport_test
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/google/uuid"
+	itest "github.com/printesoi/e-factura-go/internal/test/etransport"
 	"github.com/stretchr/testify/assert"
-	xoauth2 "golang.org/x/oauth2"
-
-	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
-
-func getTestCIF() string {
-	return os.Getenv("ETRANSPORT_TEST_CIF")
-}
-
-// setupTestEnvOAuth2Config creates a OAuth2Config from the environment.
-// If skipIfEmptyEnv if set to false and the env variables
-// ETRANSPORT_TEST_CLIENT_ID, ETRANSPORT_TEST_CLIENT_SECRET,
-// ETRANSPORT_TEST_REDIRECT_URL are not set, this method returns an error.
-// If skipIfEmptyEnv is set to true and the env vars
-// are not set, this method returns a nil config.
-func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, err error) {
-	clientID := os.Getenv("ETRANSPORT_TEST_CLIENT_ID")
-	clientSecret := os.Getenv("ETRANSPORT_TEST_CLIENT_SECRET")
-	if clientID == "" || clientSecret == "" {
-		if skipIfEmptyEnv {
-			return
-		}
-		err = errors.New("invalid oauth2 credentials")
-		return
-	}
-
-	redirectURL := os.Getenv("ETRANSPORT_TEST_REDIRECT_URL")
-	if redirectURL == "" {
-		err = errors.New("invalid redirect URL")
-		return
-	}
-
-	if cfg, er := oauth2.MakeConfig(
-		oauth2.ConfigCredentials(clientID, clientSecret),
-		oauth2.ConfigRedirectURL(redirectURL),
-	); er != nil {
-		err = er
-		return
-	} else {
-		oauth2Cfg = &cfg
-	}
-	return
-}
-
-// setupRealClient creates a real sandboxed Client (a client that talks to the
-// ANAF TEST APIs).
-func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, error) {
-	if oauth2Cfg == nil {
-		cfg, err := setupTestEnvOAuth2Config(skipIfEmptyEnv)
-		if err != nil {
-			return nil, err
-		} else if cfg == nil {
-			return nil, nil
-		} else {
-			oauth2Cfg = cfg
-		}
-	}
-
-	tokenJSON := os.Getenv("ETRANSPORT_TEST_INITIAL_TOKEN_JSON")
-	if tokenJSON == "" {
-		return nil, errors.New("Invalid initial token json")
-	}
-
-	token, err := oauth2.TokenFromJSON([]byte(tokenJSON))
-	if err != nil {
-		return nil, err
-	}
-
-	onTokenChanged := func(ctx context.Context, token *xoauth2.Token) error {
-		tokenJSON, _ := json.Marshal(token)
-		fmt.Printf("[E-TRANSPORT] token changed: %s\n", string(tokenJSON))
-		return nil
-	}
-
-	ctx := context.Background()
-	client, err := NewSandboxClient(ctx, oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged))
-	return client, err
-}
 
 func TestGenerateAuthCodeURL(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg, err := setupTestEnvOAuth2Config(true)
+	cfg, err := itest.SetupTestEnvOAuth2Config(true)
 	if !assert.NoError(err) {
 		return
 	}
@@ -127,7 +50,7 @@ func TestGenerateAuthCodeURL(t *testing.T) {
 func TestExchangeCode(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg, err := setupTestEnvOAuth2Config(true)
+	cfg, err := itest.SetupTestEnvOAuth2Config(true)
 	if !assert.NoError(err) {
 		return
 	}

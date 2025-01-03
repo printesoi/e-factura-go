@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
+package helpers
 
 import (
 	"strconv"
+	"strings"
 )
 
-func atoi64(s string) (n int64, ok bool) {
+func Atoi64(s string) (n int64, ok bool) {
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return
@@ -26,6 +27,12 @@ func atoi64(s string) (n int64, ok bool) {
 	return i, true
 }
 
-func itoa64(n int64) string {
+func Itoa64(n int64) string {
 	return strconv.FormatInt(n, 10)
+}
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func EscapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
 }

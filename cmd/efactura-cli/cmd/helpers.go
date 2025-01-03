@@ -16,9 +16,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	xoauth2 "golang.org/x/oauth2"
 
 	efacturaclient "github.com/printesoi/e-factura-go/pkg/client"
 	"github.com/printesoi/e-factura-go/pkg/constants"
@@ -68,7 +70,12 @@ func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactur
 		return nil, fmt.Errorf("error creating oauth2 config: %w", err)
 	}
 
-	tokenSource := oauth2Cfg.TokenSource(ctx, token)
+	onTokenChanged := func(ctx context.Context, token *xoauth2.Token) error {
+		tokenJSON, _ := json.Marshal(token)
+		fmt.Printf("[E-FACTURA] token changed: %s\n", string(tokenJSON))
+		return nil
+	}
+	tokenSource := oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged)
 	if fvProduction {
 		client, err = efactura.NewProductionClient(ctx, tokenSource)
 	} else {

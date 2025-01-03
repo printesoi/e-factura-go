@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
+package efactura_test
 
 import (
 	"encoding/json"
@@ -20,6 +20,8 @@ import (
 	_ "time/tzdata"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/printesoi/e-factura-go/pkg/efactura"
 )
 
 func TestUnmarshalMessage(t *testing.T) {
@@ -28,7 +30,7 @@ func TestUnmarshalMessage(t *testing.T) {
 	type messageTest struct {
 		JSON []byte
 
-		ExpectedMessage             Message
+		ExpectedMessage             efactura.Message
 		ExpectedID                  int64
 		ExpectedUploadIndex         int64
 		ExpectedIsError             bool
@@ -52,9 +54,9 @@ func TestUnmarshalMessage(t *testing.T) {
 				"id_solicitare": "42",
 				"tip": "ERORI FACTURA"
 			}`),
-			ExpectedMessage: Message{
+			ExpectedMessage: efactura.Message{
 				ID:           "128",
-				Type:         MessageTypeError,
+				Type:         efactura.MessageTypeError,
 				UploadIndex:  "42",
 				CIF:          "123456789",
 				Details:      "Erori de validare identificate la factura transmisa cu id_incarcare=42",
@@ -73,9 +75,9 @@ func TestUnmarshalMessage(t *testing.T) {
 				"id_solicitare": "42",
 				"tip": "ERORI FACTURA"
 			}`),
-			ExpectedMessage: Message{
+			ExpectedMessage: efactura.Message{
 				ID:           "128",
-				Type:         MessageTypeError,
+				Type:         efactura.MessageTypeError,
 				UploadIndex:  "42",
 				CIF:          "123456789",
 				Details:      "Erori de validare identificate la factura de tip declarat=AUTOFACTURA, transmisa cu id_incarcare=42",
@@ -95,9 +97,9 @@ func TestUnmarshalMessage(t *testing.T) {
 				"id_solicitare": "42",
 				"tip": "FACTURA TRIMISA"
 			}`),
-			ExpectedMessage: Message{
+			ExpectedMessage: efactura.Message{
 				ID:           "128",
-				Type:         MessageTypeSentInvoice,
+				Type:         efactura.MessageTypeSentInvoice,
 				UploadIndex:  "42",
 				CIF:          "123456789",
 				Details:      "Factura cu id_incarcare=42 emisa de cif_emitent=123456789 pentru cif_beneficiar=987654321",
@@ -118,9 +120,9 @@ func TestUnmarshalMessage(t *testing.T) {
 				"id_solicitare": "42",
 				"tip": "FACTURA PRIMITA"
 			}`),
-			ExpectedMessage: Message{
+			ExpectedMessage: efactura.Message{
 				ID:           "128",
-				Type:         MessageTypeReceivedInvoice,
+				Type:         efactura.MessageTypeReceivedInvoice,
 				UploadIndex:  "42",
 				CIF:          "123456789",
 				Details:      "Factura cu id_incarcare=42 emisa de cif_emitent=987654321 pentru cif_beneficiar=123456789",
@@ -141,9 +143,9 @@ func TestUnmarshalMessage(t *testing.T) {
 				"id_solicitare": "42",
 				"tip": "FACTURA PRIMITA"
 			}`),
-			ExpectedMessage: Message{
+			ExpectedMessage: efactura.Message{
 				ID:           "128",
-				Type:         MessageTypeReceivedInvoice,
+				Type:         efactura.MessageTypeReceivedInvoice,
 				UploadIndex:  "42",
 				CIF:          "123456789",
 				Details:      "Factura cu id_incarcare=42 transmisa de cif=123456789  ca autofactutra in numele cif=987654321",
@@ -160,7 +162,7 @@ func TestUnmarshalMessage(t *testing.T) {
 		// our behalf.
 	}
 	for _, mt := range tests {
-		var um Message
+		var um efactura.Message
 		if !assert.NoError(json.Unmarshal(mt.JSON, &um)) {
 			continue
 		}
@@ -184,9 +186,9 @@ func TestUnmarshalMessage(t *testing.T) {
 		assert.Equal(mt.ExpectedSellerCIF, um.GetSellerCIF())
 		assert.Equal(mt.ExpectedBuyerCIF, um.GetBuyerCIF())
 		if mt.ExpectedMessage.CreationDate != "" {
-			mdate, ok := um.GetCreationDate()
+			assert.Equal(mt.ExpectedMessage.CreationDate, um.CreationDate)
+			_, ok := um.GetCreationDate()
 			assert.True(ok)
-			assert.Equal(mt.ExpectedMessage.CreationDate, mdate.Format(messageTimeLayout))
 		}
 	}
 }

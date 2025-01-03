@@ -20,14 +20,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	xoauth2 "golang.org/x/oauth2"
 
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
+	"github.com/printesoi/e-factura-go/internal/helpers"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
 	"github.com/printesoi/e-factura-go/pkg/constants"
 	"github.com/printesoi/e-factura-go/pkg/xml"
@@ -152,6 +157,12 @@ func (c *baseClient) Wait() {
 // RequestOption represents an option that can modify an http.Request.
 type RequestOption func(req *http.Request)
 
+func RequestOptionHeader(name, value string) RequestOption {
+	return func(req *http.Request) {
+		req.Header.Set(name, value)
+	}
+}
+
 // NewRequest creates an API request. refURL is resolved relative to the client
 // baseURL. The relative URL should always be specified without a preceding slash.
 func (c *baseClient) NewRequest(ctx context.Context, method string,
@@ -266,4 +277,44 @@ func getApiBase(sandbox bool) string {
 		return constants.ApiBaseSandbox
 	}
 	return constants.ApiBaseProd
+}
+
+func createFormFile(w *multipart.Writer, fieldname, filename, contentType string) (io.Writer, error) {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			helpers.EscapeQuotes(fieldname), helpers.EscapeQuotes(filename)))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	h.Set("Content-Type", contentType)
+	return w.CreatePart(h)
+}
+
+// MultipartFormFile adds the multipart file given by path to the
+// multipart.Writer with the given field name.
+func MultipartFormFile(w *multipart.Writer, fieldname, path, contentType string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	part, err := createFormFile(w, fieldname, filepath.Base(path), contentType)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(part, file)
+	return err
+}
+
+// MultipartFormFileData adds the multipart file given by contents to the
+// multipart.Writer with the given field name.
+func MultipartFormFileData(w *multipart.Writer, fieldname, filename string, data []byte, contentType string) error {
+	part, err := createFormFile(w, fieldname, filename, contentType)
+	if err != nil {
+		return err
+	}
+	_, err = part.Write(data)
+	return err
 }

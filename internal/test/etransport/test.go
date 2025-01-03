@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-package efactura
+package etransport
 
 import (
 	"context"
@@ -23,22 +23,24 @@ import (
 
 	xoauth2 "golang.org/x/oauth2"
 
+	"github.com/printesoi/e-factura-go/pkg/etransport"
 	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
-func getTestCIF() string {
-	return os.Getenv("EFACTURA_TEST_CIF")
+func GetTestCIF() string {
+	return os.Getenv("ETRANSPORT_TEST_CIF")
 }
 
-// setupTestEnvOAuth2Config creates a OAuth2Config from the environment.
+// SetupTestEnvOAuth2Config creates a OAuth2Config from the environment
+// suitable for creating an etransport.Client.
 // If skipIfEmptyEnv if set to false and the env variables
-// EFACTURA_TEST_CLIENT_ID, EFACTURA_TEST_CLIENT_SECRET,
-// EFACTURA_TEST_REDIRECT_URL are not set, this method returns an error.
+// ETRANSPORT_TEST_CLIENT_ID, ETRANSPORT_TEST_CLIENT_SECRET,
+// ETRANSPORT_TEST_REDIRECT_URL are not set, this method returns an error.
 // If skipIfEmptyEnv is set to true and the env vars
 // are not set, this method returns a nil config.
-func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, err error) {
-	clientID := os.Getenv("EFACTURA_TEST_CLIENT_ID")
-	clientSecret := os.Getenv("EFACTURA_TEST_CLIENT_SECRET")
+func SetupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, err error) {
+	clientID := os.Getenv("ETRANSPORT_TEST_CLIENT_ID")
+	clientSecret := os.Getenv("ETRANSPORT_TEST_CLIENT_SECRET")
 	if clientID == "" || clientSecret == "" {
 		if skipIfEmptyEnv {
 			return
@@ -47,7 +49,7 @@ func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, er
 		return
 	}
 
-	redirectURL := os.Getenv("EFACTURA_TEST_REDIRECT_URL")
+	redirectURL := os.Getenv("ETRANSPORT_TEST_REDIRECT_URL")
 	if redirectURL == "" {
 		err = errors.New("invalid redirect URL")
 		return
@@ -65,11 +67,11 @@ func setupTestEnvOAuth2Config(skipIfEmptyEnv bool) (oauth2Cfg *oauth2.Config, er
 	return
 }
 
-// setupRealClient creates a real sandboxed Client (a client that talks to the
-// ANAF TEST APIs).
-func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, error) {
+// SetupRealClient creates a real sandboxed etransport.Client (a client that
+// talks to the ANAF TEST API endpoints).
+func SetupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config, onTokenChanged oauth2.TokenChangedHandler) (*etransport.Client, error) {
 	if oauth2Cfg == nil {
-		cfg, err := setupTestEnvOAuth2Config(skipIfEmptyEnv)
+		cfg, err := SetupTestEnvOAuth2Config(skipIfEmptyEnv)
 		if err != nil {
 			return nil, err
 		} else if cfg == nil {
@@ -79,7 +81,7 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 		}
 	}
 
-	tokenJSON := os.Getenv("EFACTURA_TEST_INITIAL_TOKEN_JSON")
+	tokenJSON := os.Getenv("ETRANSPORT_TEST_INITIAL_TOKEN_JSON")
 	if tokenJSON == "" {
 		return nil, errors.New("Invalid initial token json")
 	}
@@ -89,13 +91,15 @@ func setupRealClient(skipIfEmptyEnv bool, oauth2Cfg *oauth2.Config) (*Client, er
 		return nil, err
 	}
 
-	onTokenChanged := func(ctx context.Context, token *xoauth2.Token) error {
-		tokenJSON, _ := json.Marshal(token)
-		fmt.Printf("[E-FACTURA] token changed: %s\n", string(tokenJSON))
-		return nil
+	if onTokenChanged == nil {
+		onTokenChanged = func(ctx context.Context, token *xoauth2.Token) error {
+			tokenJSON, _ := json.Marshal(token)
+			fmt.Printf("[E-TRANSPORT] token changed: %s\n", string(tokenJSON))
+			return nil
+		}
 	}
 
 	ctx := context.Background()
-	client, err := NewSandboxClient(ctx, oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged))
+	client, err := etransport.NewSandboxClient(ctx, oauth2Cfg.TokenSourceWithChangedHandler(ctx, token, onTokenChanged))
 	return client, err
 }

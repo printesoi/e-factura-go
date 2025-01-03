@@ -20,8 +20,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,9 +32,11 @@ import (
 	"github.com/printesoi/xml-go"
 
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
+	"github.com/printesoi/e-factura-go/internal/helpers"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
 	"github.com/printesoi/e-factura-go/internal/ptr"
 	iregexp "github.com/printesoi/e-factura-go/internal/regexp"
+	"github.com/printesoi/e-factura-go/pkg/client"
 	ptime "github.com/printesoi/e-factura-go/pkg/time"
 	pxml "github.com/printesoi/e-factura-go/pkg/xml"
 )
@@ -165,10 +169,15 @@ type (
 		// the ZIP archive. This field is useful for storing the raw invoice
 		// XML.
 		InvoiceXML []byte
+		// InvoiceName is the name of the Invoice/InvoiceErrorMessage file from
+		// the ZIP archive.
+		InvoiceName string
 		// Signature is the XML of the Signature file from the ZIP archive.
 		// This field is useful for manually parsing and verifying the
 		// signature.
 		SignatureXML []byte
+		// Signature is the name of the Signature file from the ZIP archive.
+		SignatureName string
 
 		// Invoice is the parsed Invoice if the InvoiceXML is storing an
 		// invoice.
@@ -190,6 +199,12 @@ type (
 		// Hardcode the namespace here so we don't need a customer marshaling
 		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:mesajEroriFactuta:v1 header"`
+	}
+
+	// ValidateSignatureResponse is the response returned by the validate
+	// signature endpoint.
+	ValidateSignatureResponse struct {
+		Message string `json:"msg"`
 	}
 )
 
@@ -237,6 +252,7 @@ const (
 	apiPathMessageList           = apiBase + "listaMesajeFactura"
 	apiPathMessagePaginationList = apiBase + "listaMesajePaginatieFactura"
 	apiPathDownload              = apiBase + "descarcare"
+	apiPathValidateSignature     = "/api/validate/signature"
 
 	publicApiBase         = "FCTEL/rest/"
 	publicApiPathValidate = publicApiBase + "validare/%s"
@@ -403,14 +419,14 @@ func (m Message) IsBuyerMessage() bool {
 // GetID parses and returns the message ID as int64 (since the API returns it
 // as string).
 func (m Message) GetID() int64 {
-	n, _ := atoi64(m.ID)
+	n, _ := helpers.Atoi64(m.ID)
 	return n
 }
 
 // GetUploadIndex parses and returns the upload index as int64 (since the API
 // returns it as string).
 func (m Message) GetUploadIndex() int64 {
-	n, _ := atoi64(m.UploadIndex)
+	n, _ := helpers.Atoi64(m.UploadIndex)
 	return n
 }
 
@@ -728,9 +744,9 @@ func (c *Client) GetMessagesListPagination(
 ) (response *MessagesListPaginationResponse, err error) {
 	query := url.Values{
 		"cif":       {cif},
-		"startTime": {itoa64(startTs.UnixMilli())},
-		"endTime":   {itoa64(endTs.UnixMilli())},
-		"pagina":    {itoa64(page)},
+		"startTime": {helpers.Itoa64(startTs.UnixMilli())},
+		"endTime":   {helpers.Itoa64(endTs.UnixMilli())},
+		"pagina":    {helpers.Itoa64(page)},
 	}
 	if f := msgType.String(); f != "" {
 		query.Set("filter", f)
@@ -822,10 +838,13 @@ func (c *Client) DownloadInvoiceParseZip(
 		return
 	}
 
-	response.InvoiceXML, response.SignatureXML, err = parseInvoiceZip(ctx, dres.Zip)
+	invoiceXML, signatureXML, err := parseInvoiceZip(ctx, dres.Zip)
 	if err != nil {
 		return
 	}
+
+	response.InvoiceXML, response.InvoiceName = invoiceXML.data, invoiceXML.name
+	response.SignatureXML, response.SignatureName = signatureXML.data, signatureXML.name
 
 	var invoice *Invoice
 	var invoiceError *InvoiceErrorMessage
@@ -838,7 +857,98 @@ func (c *Client) DownloadInvoiceParseZip(
 	return
 }
 
-func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXML, signatureXML []byte, err error) {
+func (c *Client) doValidateSignature(
+	ctx context.Context, body io.Reader, contentType string,
+) (response *ValidateSignatureResponse, err error) {
+	req, er := c.publicApiClient.NewRequest(ctx, http.MethodPost, apiPathValidateSignature, nil, body,
+		client.RequestOptionHeader("Content-Type", contentType))
+	if err = er; err != nil {
+		return
+	}
+
+	eres := new(ValidateSignatureResponse)
+	if err = c.publicApiClient.DoUnmarshalJSON(req, eres, func(r *http.Response, _ any) error {
+		// TODO: check rate limiting
+		return nil
+	}); err == nil {
+		response = eres
+	}
+	return
+}
+
+// ValidateSignatureFiles validate the detached signature applied to an invoice
+// XML. This method accepts the paths corresponding the invoice XML file and to
+// the detached signature XML file (these can be extracted from the invoice
+// zip archive).
+func (c *Client) ValidateSignatureFiles(
+	ctx context.Context, invoiceXmlPath, signatureXmlPath string,
+) (response *ValidateSignatureResponse, err error) {
+	body := &bytes.Buffer{}
+	mw := multipart.NewWriter(body)
+	if err := client.MultipartFormFile(mw, "file", invoiceXmlPath, api_helpers.MediaTypeTextXML); err != nil {
+		return nil, err
+	}
+	if err := client.MultipartFormFile(mw, "signature", signatureXmlPath, api_helpers.MediaTypeTextXML); err != nil {
+		return nil, err
+	}
+	if err = mw.Close(); err != nil {
+		return
+	}
+	return c.doValidateSignature(ctx, body, mw.FormDataContentType())
+}
+
+// ValidateSignature same as ValidateSignatureFiles but provide the binary data
+// of the invoice XML and of the detached signature file (useful if obtaining
+// the files with DownloadInvoiceParseZip).
+func (c *Client) ValidateSignature(
+	ctx context.Context, invoiceXmlData, signatureXmlData []byte,
+) (response *ValidateSignatureResponse, err error) {
+	body := &bytes.Buffer{}
+	mw := multipart.NewWriter(body)
+	if err := client.MultipartFormFileData(mw, "file", "invoice.xml", invoiceXmlData,
+		api_helpers.MediaTypeTextXML); err != nil {
+		return nil, err
+	}
+	if err := client.MultipartFormFileData(mw, "signature", "signature.xml", signatureXmlData,
+		api_helpers.MediaTypeTextXML); err != nil {
+		return nil, err
+	}
+	if err = mw.Close(); err != nil {
+		return
+	}
+	return c.doValidateSignature(ctx, body, mw.FormDataContentType())
+}
+
+// ValidateSignatureZipData validate a zip archive (given by binary data)
+// containing an invoice and a detached signature.
+func (c *Client) ValidateSignatureZipData(
+	ctx context.Context, zipData []byte,
+) (response *ValidateSignatureResponse, err error) {
+	invoiceXml, signatureXml, err := parseInvoiceZip(ctx, zipData)
+	if err != nil {
+		return
+	}
+	return c.ValidateSignature(ctx, invoiceXml.data, signatureXml.data)
+}
+
+// ValidateSignatureZipFile validate a zip archive (given by path) containing
+// an invoice and a detached signature.
+func (c *Client) ValidateSignatureZipFile(
+	ctx context.Context, zipPath string,
+) (response *ValidateSignatureResponse, err error) {
+	zipData, err := os.ReadFile(zipPath)
+	if err != nil {
+		return
+	}
+	return c.ValidateSignatureZipData(ctx, zipData)
+}
+
+type zipFile struct {
+	data []byte
+	name string
+}
+
+func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signatureXml zipFile, err error) {
 	var zr *zip.Reader
 	zr, err = zip.NewReader(bytes.NewReader(zipBody), int64(len(zipBody)))
 	if err != nil {
@@ -859,22 +969,25 @@ func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXML, signature
 		return io.ReadAll(zof)
 	}
 
+	var data []byte
 	for _, f := range zr.File {
 		if regexZipFile.MatchString(f.Name) {
-			invoiceXML, err = readAllZipFile(f)
+			data, err = readAllZipFile(f)
 			if err != nil {
 				return
 			}
+			invoiceXml = zipFile{data: data, name: f.Name}
 
 		} else if regexZipSignatureFile.MatchString(f.Name) {
-			signatureXML, err = readAllZipFile(f)
+			data, err = readAllZipFile(f)
 			if err != nil {
 				return
 			}
+			signatureXml = zipFile{data: data, name: f.Name}
 		}
 	}
 
-	if invoiceXML == nil || signatureXML == nil {
+	if invoiceXml.data == nil || signatureXml.data == nil {
 		err = fmt.Errorf("invoice archive is not complete")
 		return
 	}

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/printesoi/e-factura-go/pkg/efactura"
@@ -95,6 +96,11 @@ var apiGetMessagesCmd = &cobra.Command{
 			}
 			fmt.Printf("%s\n", string(messagesData))
 		} else {
+			// Apparently, ANAF does not return the messages sorted in any way
+			// by CreationDate, so we sort the slices descending for display.
+			sort.SliceStable(res.Messages, func(i, j int) bool {
+				return res.Messages[i].CreationDate > res.Messages[j].CreationDate
+			})
 			fmt.Printf("Got %d messages:\n", len(res.Messages))
 			for i, m := range res.Messages {
 				t, _ := time.Parse("200601021504", m.CreationDate)
