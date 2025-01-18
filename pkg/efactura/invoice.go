@@ -1065,14 +1065,14 @@ type InvoiceLinePrice struct {
 }
 
 type InvoiceLineItem struct {
-	// ID: BT-153
-	// Term: Numele articolului
-	// Cardinality: 1..1
-	Name string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Name"`
 	// ID: BT-154
 	// Term: Descrierea articolului
 	// Cardinality: 0..1
 	Description string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Description,omitempty"`
+	// ID: BT-153
+	// Term: Numele articolului
+	// Cardinality: 1..1
+	Name string `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Name"`
 	// ID: BT-155
 	// Term: Identificatorul Vânzătorului articolului
 	// Cardinality: 0..1
