@@ -712,7 +712,7 @@ func (c *Client) GetMessagesList(
 		"zile": {strconv.Itoa(numDays)},
 	}
 	if msgType != MessageFilterAll {
-		query.Set("filter", msgType.String())
+		query.Set("filtru", msgType.String())
 	}
 	req, er := c.apiClient.NewRequest(ctx, http.MethodGet, apiPathMessageList, query, nil)
 	if err = er; err != nil {
@@ -749,7 +749,7 @@ func (c *Client) GetMessagesListPagination(
 		"pagina":    {helpers.Itoa64(page)},
 	}
 	if f := msgType.String(); f != "" {
-		query.Set("filter", f)
+		query.Set("filtru", f)
 	}
 
 	req, er := c.apiClient.NewRequest(ctx, http.MethodGet, apiPathMessagePaginationList, query, nil)
