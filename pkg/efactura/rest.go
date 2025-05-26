@@ -165,19 +165,13 @@ type (
 	DownloadInvoiceParseZipResponse struct {
 		DownloadResponse *DownloadInvoiceResponse
 
-		// InvoiceXML is the XML of the Invoice/InvoiceErrorMessage file from
-		// the ZIP archive. This field is useful for storing the raw invoice
-		// XML.
-		InvoiceXML []byte
-		// InvoiceName is the name of the Invoice/InvoiceErrorMessage file from
-		// the ZIP archive.
-		InvoiceName string
-		// Signature is the XML of the Signature file from the ZIP archive.
-		// This field is useful for manually parsing and verifying the
-		// signature.
-		SignatureXML []byte
-		// Signature is the name of the Signature file from the ZIP archive.
-		SignatureName string
+		// InvoiceXML is the XML file corresponding to the
+		// Invoice/InvoiceErrorMessage file from the ZIP archive.
+		InvoiceXML ZipFile
+		// Signature is the XML file corresponding to the Signature file from
+		// the ZIP archive. This field is useful for manually parsing and
+		// verifying the signature.
+		SignatureXML ZipFile
 
 		// Invoice is the parsed Invoice if the InvoiceXML is storing an
 		// invoice.
@@ -838,17 +832,16 @@ func (c *Client) DownloadInvoiceParseZip(
 		return
 	}
 
-	invoiceXML, signatureXML, err := parseInvoiceZip(ctx, dres.Zip)
+	invoiceXML, signatureXML, err := ParseInvoiceZip(ctx, dres.Zip)
 	if err != nil {
 		return
 	}
 
-	response.InvoiceXML, response.InvoiceName = invoiceXML.data, invoiceXML.name
-	response.SignatureXML, response.SignatureName = signatureXML.data, signatureXML.name
+	response.InvoiceXML, response.SignatureXML = invoiceXML, signatureXML
 
 	var invoice *Invoice
 	var invoiceError *InvoiceErrorMessage
-	invoice, invoiceError, err = parseDownloadedInvoiceXML(ctx, response.InvoiceXML)
+	invoice, invoiceError, err = UnmarshalDownloadedInvoiceXML(ctx, response.InvoiceXML.Data)
 	if err != nil {
 		return
 	}
@@ -924,11 +917,11 @@ func (c *Client) ValidateSignature(
 func (c *Client) ValidateSignatureZipData(
 	ctx context.Context, zipData []byte,
 ) (response *ValidateSignatureResponse, err error) {
-	invoiceXml, signatureXml, err := parseInvoiceZip(ctx, zipData)
+	invoiceXml, signatureXml, err := ParseInvoiceZip(ctx, zipData)
 	if err != nil {
 		return
 	}
-	return c.ValidateSignature(ctx, invoiceXml.data, signatureXml.data)
+	return c.ValidateSignature(ctx, invoiceXml.Data, signatureXml.Data)
 }
 
 // ValidateSignatureZipFile validate a zip archive (given by path) containing
@@ -943,12 +936,16 @@ func (c *Client) ValidateSignatureZipFile(
 	return c.ValidateSignatureZipData(ctx, zipData)
 }
 
-type zipFile struct {
-	data []byte
-	name string
+// ZipFile is a parsed file from a ZIP archive downloaded from e-factura
+// and stores the name of the file and data contents.
+type ZipFile struct {
+	Name string
+	Data []byte
 }
 
-func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signatureXml zipFile, err error) {
+// ParseInvoiceZip parses a ZIP archive downloaded from e-factura and returns
+// the invoice/error XML file and the signature XML file.
+func ParseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signatureXml ZipFile, err error) {
 	var zr *zip.Reader
 	zr, err = zip.NewReader(bytes.NewReader(zipBody), int64(len(zipBody)))
 	if err != nil {
@@ -976,18 +973,18 @@ func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signature
 			if err != nil {
 				return
 			}
-			invoiceXml = zipFile{data: data, name: f.Name}
+			invoiceXml = ZipFile{Data: data, Name: f.Name}
 
 		} else if regexZipSignatureFile.MatchString(f.Name) {
 			data, err = readAllZipFile(f)
 			if err != nil {
 				return
 			}
-			signatureXml = zipFile{data: data, name: f.Name}
+			signatureXml = ZipFile{Data: data, Name: f.Name}
 		}
 	}
 
-	if invoiceXml.data == nil || signatureXml.data == nil {
+	if invoiceXml.Data == nil || signatureXml.Data == nil {
 		err = fmt.Errorf("invoice archive is not complete")
 		return
 	}
@@ -995,7 +992,9 @@ func parseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signature
 	return
 }
 
-func parseDownloadedInvoiceXML(ctx context.Context, invoiceXML []byte) (invoice *Invoice, invoiceError *InvoiceErrorMessage, err error) {
+// UnmarshalDownloadedInvoiceXML unmarshals a downloaded invoice XML file data
+// to either an Invoice or InvoiceErrorMessage.
+func UnmarshalDownloadedInvoiceXML(ctx context.Context, invoiceXML []byte) (invoice *Invoice, invoiceError *InvoiceErrorMessage, err error) {
 	// This is a trick for optimizing the unmarshaling: since the xml
 	// can be either an Invoice or an InvoiceErrorMessage, we create a
 	// struct with just an xml.Name, and based on the namespace we
