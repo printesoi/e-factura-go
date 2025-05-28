@@ -34,7 +34,6 @@ import (
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
 	"github.com/printesoi/e-factura-go/internal/helpers"
 	api_helpers "github.com/printesoi/e-factura-go/internal/helpers/api"
-	"github.com/printesoi/e-factura-go/internal/ptr"
 	iregexp "github.com/printesoi/e-factura-go/internal/regexp"
 	"github.com/printesoi/e-factura-go/pkg/client"
 	ptime "github.com/printesoi/e-factura-go/pkg/time"
@@ -242,6 +241,7 @@ const (
 const (
 	apiBase                      = "FCTEL/rest/"
 	apiPathUpload                = apiBase + "upload"
+	apiPathUploadB2C             = apiBase + "uploadb2c"
 	apiPathMessageState          = apiBase + "stareMesaj"
 	apiPathMessageList           = apiBase + "listaMesajeFactura"
 	apiPathMessagePaginationList = apiBase + "listaMesajePaginatieFactura"
@@ -592,8 +592,8 @@ func (c *Client) InvoiceToPDF(ctx context.Context, invoice Invoice, noValidate b
 }
 
 type uploadOptions struct {
-	extern      *string
-	autofactura *string
+	query *url.Values
+	b2c   bool
 }
 
 type UploadOption func(*uploadOptions)
@@ -602,7 +602,7 @@ type UploadOption func(*uploadOptions)
 // Romanian entity (no CUI or NIF).
 func UploadOptionForeign() UploadOption {
 	return func(o *uploadOptions) {
-		o.extern = ptr.String("DA")
+		o.query.Set("extern", "DA")
 	}
 }
 
@@ -611,7 +611,22 @@ func UploadOptionForeign() UploadOption {
 // supplier.
 func UploadOptionSelfBilled() UploadOption {
 	return func(o *uploadOptions) {
-		o.autofactura = ptr.String("DA")
+		o.query.Set("extern", "DA")
+	}
+}
+
+// UploadOptionEnforcement is an upload option specifying that the invoice it's
+// uploaded by the enforcement authority on behalf of the debtor.
+func UploadOptionEnforcement() UploadOption {
+	return func(o *uploadOptions) {
+		o.query.Set("executare", "DA")
+	}
+}
+
+// UploadOptionB2C is an upload options specifying it's a B2C upload.
+func UploadOptionB2C() UploadOption {
+	return func(o *uploadOptions) {
+		o.b2c = true
 	}
 }
 
@@ -620,23 +635,20 @@ func UploadOptionSelfBilled() UploadOption {
 func (c *Client) UploadXML(
 	ctx context.Context, xml io.Reader, st UploadStandard, cif string, opts ...UploadOption,
 ) (response *UploadResponse, err error) {
-	uploadOptions := uploadOptions{}
-	for _, opt := range opts {
-		opt(&uploadOptions)
-	}
-
 	query := url.Values{
 		"standard": {st.String()},
 		"cif":      {cif},
 	}
-	if uploadOptions.autofactura != nil {
-		query.Set("autofactura", *uploadOptions.autofactura)
-	}
-	if uploadOptions.extern != nil {
-		query.Set("extern", *uploadOptions.extern)
+	uploadOptions := uploadOptions{query: &query}
+	for _, opt := range opts {
+		opt(&uploadOptions)
 	}
 
-	req, er := c.apiClient.NewRequest(ctx, http.MethodPost, apiPathUpload, query, xml)
+	path := apiPathUpload
+	if uploadOptions.b2c {
+		path = apiPathUploadB2C
+	}
+	req, er := c.apiClient.NewRequest(ctx, http.MethodPost, path, query, xml)
 	if err = er; err != nil {
 		return
 	}
