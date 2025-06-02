@@ -74,7 +74,7 @@ type (
 		UploadIndex int64  `xml:"index_incarcare,attr"`
 		Message     string `xml:"message,attr"`
 
-		// Hardcode the namespace here so we don't need a customer marshaling
+		// Hardcode the namespace here so we don't need a custom marshaling
 		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:reqMesaj:v1 header"`
 	}
@@ -88,7 +88,7 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
-		// Hardcode the namespace here so we don't need a customer marshaling
+		// Hardcode the namespace here so we don't need a custom marshaling
 		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:spv:respUploadFisier:v1 header"`
 	}
@@ -104,7 +104,7 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Errors,omitempty"`
 
-		// Hardcode the namespace here so we don't need a customer marshaling
+		// Hardcode the namespace here so we don't need a custom marshaling
 		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:stareMesajFactura:v1 header"`
 	}
@@ -189,7 +189,7 @@ type (
 			ErrorMessage string `xml:"errorMessage,attr"`
 		} `xml:"Error,omitempty"`
 
-		// Hardcode the namespace here so we don't need a customer marshaling
+		// Hardcode the namespace here so we don't need a custom marshaling
 		// method.
 		XMLName xml.Name `xml:"mfp:anaf:dgti:efactura:mesajEroriFactuta:v1 header"`
 	}
