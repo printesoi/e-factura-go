@@ -53,7 +53,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&etransportCfgFile, "config", "", "config file (default is $HOME/.e-transport.yaml)")
+	rootCmd.PersistentFlags().StringVar(&etransportCfgFile, "config", "", "config file (default is $XDG_CONFIG_DIR/e-transport.yaml)")
 	rootCmd.PersistentFlags().Bool(flagNameProduction, false, "Production mode (default sandbox)")
 
 	bindViperFlag := func(name string) {
@@ -74,14 +74,14 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(etransportCfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
+		// Find user config directory (on Unix systems - $XDG_CONFIG_DIR)
+		config, err := os.UserConfigDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".e-transport.yaml".
-		viper.AddConfigPath(home)
+		// Search config in user config directory with name "e-transport.yaml".
+		viper.AddConfigPath(config)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".e-transport")
+		viper.SetConfigName("e-transport")
 	}
 
 	viper.AutomaticEnv()

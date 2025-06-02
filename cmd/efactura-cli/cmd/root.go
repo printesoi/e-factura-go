@@ -53,7 +53,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&efacturaCfgFile, "config", "", "config file (default is $HOME/.e-factura.yaml)")
+	rootCmd.PersistentFlags().StringVar(&efacturaCfgFile, "config", "", "config file (default is $HOME/.config/e-factura.yaml)")
 	rootCmd.PersistentFlags().Bool(flagNameProduction, false, "Production mode (default sandbox)")
 
 	bindViperFlag := func(name string) {
@@ -74,14 +74,14 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(efacturaCfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
+		// Find user config directory (on Unix systems - $XDG_CONFIG_DIR)
+		config, err := os.UserConfigDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".e-factura.yaml".
-		viper.AddConfigPath(home)
+		// Search config in user config directory with name "e-factura.yaml".
+		viper.AddConfigPath(config)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".e-factura")
+		viper.SetConfigName("e-factura")
 	}
 
 	viper.AutomaticEnv()
