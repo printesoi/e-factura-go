@@ -25,7 +25,7 @@ const (
 	flagNameValidateSignatureZip = "zip"
 )
 
-// apiValidateSignatureZipCmd represents the `api download` command
+// apiValidateSignatureZipCmd represents the `api validate-signature-zip` command
 var apiValidateSignatureZipCmd = &cobra.Command{
 	Use:   "validate-signature-zip",
 	Short: "Validate e-factura signature ZIP archive",

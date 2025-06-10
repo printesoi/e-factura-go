@@ -25,17 +25,17 @@ import (
 )
 
 const (
-	flagNameUploadInvoiceXML = "invoice-xml"
+	flagNameValidateInvoiceXML = "invoice-xml"
 )
 
-// apiValidateInvoiceCmd represents the `api download` command
+// apiValidateInvoiceCmd represents the `api validate-invoice` command
 var apiValidateInvoiceCmd = &cobra.Command{
 	Use:   "validate-invoice",
 	Short: "Validate Invoice UBL XML",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
-		fvInvoiceXML, err := cmd.Flags().GetString(flagNameUploadInvoiceXML)
+		fvInvoiceXML, err := cmd.Flags().GetString(flagNameValidateInvoiceXML)
 		if err != nil {
 			return err
 		}
@@ -69,8 +69,8 @@ var apiValidateInvoiceCmd = &cobra.Command{
 }
 
 func init() {
-	apiValidateInvoiceCmd.Flags().String(flagNameUploadInvoiceXML, "", "Path of the Invoice XML file to validate")
-	_ = apiValidateInvoiceCmd.MarkFlagRequired(flagNameUploadInvoiceXML)
+	apiValidateInvoiceCmd.Flags().String(flagNameValidateInvoiceXML, "", "Path of the Invoice XML file to validate")
+	_ = apiValidateInvoiceCmd.MarkFlagRequired(flagNameValidateInvoiceXML)
 
 	apiCmd.AddCommand(apiValidateInvoiceCmd)
 }

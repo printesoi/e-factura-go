@@ -26,7 +26,7 @@ const (
 	flagNameValidateSignatureXML        = "signature-xml"
 )
 
-// apiValidateSignatureCmd represents the `api download` command
+// apiValidateSignatureCmd represents the `api validate-signature` command
 var apiValidateSignatureCmd = &cobra.Command{
 	Use:   "validate-signature",
 	Short: "Validate e-factura signature",
