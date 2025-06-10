@@ -844,7 +844,7 @@ func (c *Client) DownloadInvoiceParseZip(
 		return
 	}
 
-	invoiceXML, signatureXML, err := ParseInvoiceZip(ctx, dres.Zip)
+	invoiceXML, signatureXML, err := UnzipInvoiceArchive(ctx, dres.Zip)
 	if err != nil {
 		return
 	}
@@ -929,7 +929,7 @@ func (c *Client) ValidateSignature(
 func (c *Client) ValidateSignatureZipData(
 	ctx context.Context, zipData []byte,
 ) (response *ValidateSignatureResponse, err error) {
-	invoiceXml, signatureXml, err := ParseInvoiceZip(ctx, zipData)
+	invoiceXml, signatureXml, err := UnzipInvoiceArchive(ctx, zipData)
 	if err != nil {
 		return
 	}
@@ -955,9 +955,9 @@ type ZipFile struct {
 	Data []byte
 }
 
-// ParseInvoiceZip parses a ZIP archive downloaded from e-factura and returns
-// the invoice/error XML file and the signature XML file.
-func ParseInvoiceZip(ctx context.Context, zipBody []byte) (invoiceXml, signatureXml ZipFile, err error) {
+// UnzipInvoiceArchive unzips a ZIP archive downloaded from e-factura and
+// returns the invoice/error XML file and the signature XML file.
+func UnzipInvoiceArchive(ctx context.Context, zipBody []byte) (invoiceXml, signatureXml ZipFile, err error) {
 	var zr *zip.Reader
 	zr, err = zip.NewReader(bytes.NewReader(zipBody), int64(len(zipBody)))
 	if err != nil {
