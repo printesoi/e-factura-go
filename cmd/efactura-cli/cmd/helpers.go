@@ -28,6 +28,10 @@ import (
 	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
+var (
+	clientCtxKey = struct{}{}
+)
+
 func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {
 	fvClientID, err := cmd.InheritedFlags().GetString(flagNameOauthClientID)
 	if err != nil {
@@ -49,7 +53,26 @@ func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {
 	return
 }
 
+func getContextClient(ctx context.Context) (client *efactura.Client) {
+	ctxValue := ctx.Value(clientCtxKey)
+	if ctxValue == nil {
+		return nil
+	}
+	if client, ok := ctxValue.(*efactura.Client); ok {
+		return client
+	}
+	return nil
+}
+
+func contextWithClient(ctx context.Context, client *efactura.Client) context.Context {
+	return context.WithValue(ctx, clientCtxKey, client)
+}
+
 func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactura.Client, err error) {
+	if client = getContextClient(ctx); client != nil {
+		return
+	}
+
 	fvProduction, err := cmd.InheritedFlags().GetBool(flagNameProduction)
 	if err != nil {
 		return nil, err
@@ -84,7 +107,7 @@ func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactur
 	return
 }
 
-func newEfacturaPublicClient(cmd *cobra.Command) (client *efactura.Client, err error) {
+func newEfacturaPublicClient(_ *cobra.Command) (client *efactura.Client, err error) {
 	publicApiClient, err := efacturaclient.NewPublicApiClient(
 		efacturaclient.PublicApiClientBaseURL(constants.PublicApiBaseProd),
 	)

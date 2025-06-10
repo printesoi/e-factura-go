@@ -24,6 +24,10 @@ import (
 	"github.com/printesoi/e-factura-go/pkg/oauth2"
 )
 
+var (
+	clientCtxKey = struct{}{}
+)
+
 func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {
 	fvClientID, err := cmd.InheritedFlags().GetString(flagNameOauthClientID)
 	if err != nil {
@@ -45,7 +49,26 @@ func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {
 	return
 }
 
+func getContextClient(ctx context.Context) (client *etransport.Client) {
+	ctxValue := ctx.Value(clientCtxKey)
+	if ctxValue == nil {
+		return nil
+	}
+	if client, ok := ctxValue.(*etransport.Client); ok {
+		return client
+	}
+	return nil
+}
+
+func contextWithClient(ctx context.Context, client *etransport.Client) context.Context {
+	return context.WithValue(ctx, clientCtxKey, client)
+}
+
 func newEtransportClient(ctx context.Context, cmd *cobra.Command) (client *etransport.Client, err error) {
+	if client = getContextClient(ctx); client != nil {
+		return
+	}
+
 	fvProduction, err := cmd.InheritedFlags().GetBool(flagNameProduction)
 	if err != nil {
 		return nil, err
