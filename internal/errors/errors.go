@@ -113,12 +113,11 @@ func NewLimitExceededError(r *http.Response, limit int64, err error) *errors.Lim
 }
 
 var (
+	// download limit exceeded: S-au facut deja (\\d+) descarcari la mesajul cu id_descarcare=(\\d+)\\s* in cursul zilei
+	// get messages limit exceeded: S-au facut deja (\\d+) de interogari de tip lista mesaje .* de catre CUI=\\s*(\\d+)\\s* in cursul zilei
 	regexLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) .* in cursul zilei")
 	regexDownloadID       = regexp.MustCompile("id_descarcare=(\\d+)")
 	regexCUI              = regexp.MustCompile("CUI=\\s*(\\d+)")
-
-	// regexDownloadLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) descarcari la mesajul cu id_descarcare=(\\d+)\\s* in cursul zilei")
-	// regexGetMessagesLimitExceededMsg = regexp.MustCompile("S-au facut deja (\\d+) de interogari de tip lista mesaje .* de catre CUI=\\s*(\\d+)\\s* in cursul zilei")
 )
 
 func ErrorMessageMatchLimitExceeded(err string) (limit int64, match bool) {
