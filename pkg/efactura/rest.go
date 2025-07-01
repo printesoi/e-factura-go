@@ -611,7 +611,7 @@ func UploadOptionForeign() UploadOption {
 // supplier.
 func UploadOptionSelfBilled() UploadOption {
 	return func(o *uploadOptions) {
-		o.query.Set("extern", "DA")
+		o.query.Set("autofactura", "DA")
 	}
 }
 
