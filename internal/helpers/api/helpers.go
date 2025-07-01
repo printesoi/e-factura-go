@@ -17,6 +17,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -93,6 +94,12 @@ func UnmarshalReaderJSON(r io.Reader, v any) error {
 }
 
 func BuildURL(base *url.URL, refUrl string, query url.Values) (string, error) {
+	if base == nil {
+		return "", fmt.Errorf("nil base URL")
+	}
+	if base.Scheme == "" || base.Host == "" {
+		return "", fmt.Errorf("empty base URL")
+	}
 	u, err := base.Parse(refUrl)
 	if err != nil {
 		return "", err
