@@ -33,6 +33,7 @@ func Itoa64(n int64) string {
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
+// EscapeQuotes escapes the '"' (quote) and '\' (backslash).
 func EscapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
 }
