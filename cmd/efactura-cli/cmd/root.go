@@ -50,7 +50,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().String(flagNameConfig, "", "config file (default is $HOME/.config/e-factura.yaml)")
+	rootCmd.PersistentFlags().String(flagNameConfig, "", "config file (default is $XDG_CONFIG_DIR/e-factura.yaml)")
 	rootCmd.PersistentFlags().Bool(flagNameProduction, false, "Production mode (default sandbox)")
 
 	bindViperFlag := func(name string) {

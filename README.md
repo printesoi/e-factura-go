@@ -2,15 +2,50 @@
 
 Package e-factura-go provides clients for using the RO e-factura and RO e-transport APIs.
 
+Features of this library:
+
+- Support for all actions of [e-Factura](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice) APIs (as defined by RO_CIUS version **1.0.9**)
+  (upload B2B XML invoice, upload B2C XML
+  invoice, get message (invoice) state, get messages (invoices) list, get
+  messages list paginated, download invoice zip, validate XML, transform invoice
+  XML to PDF, validate XML signature).
+- Support for most actions of [e-Transport](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) (v2) APIs
+  (upload V2 declaration, list
+  declarations, get declaration state).
+- Support for generating authorization links and exchange an authorization code
+  for an access token (USB signature required).
+- CLI commands for both e-Factura and e-Transport APIs.
+- e-Factura Invoice-2 building via native Go structs.
+- e-Transport v2 XML building via native Go structs.
+
 ## Installation ##
 
-e-factura-go requires Go version >= 1.21. With Go installed:
+e-factura-go requires Go version >= 1.24. With Go installed:
 
 ```bash
 go get github.com/printesoi/e-factura-go
 ```
 
 will resolve and add the package to the current development module, along with its dependencies.
+
+This package has also cli commands for the e-Factura and e-Transport API (the
+commands implement most of the APIs).
+
+To install `efactura-cli`:
+
+```bash
+go install github.com/printesoi/e-factura-go/cmd/efactura-cli@latest
+```
+
+then run `efactura-cli help` for options (this assumes $GOPATH/bin is in your $PATH).
+
+To install `etransport-cli`:
+
+```bash
+go install github.com/printesoi/e-factura-go/cmd/etransport-cli@latest
+```
+
+then run `etransport-cli help` for options (this assumes $GOPATH/bin is in your $PATH).
 
 ## oauth2 ##
 
