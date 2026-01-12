@@ -34,11 +34,8 @@ var rootCmd = &cobra.Command{
 }
 
 const (
+	flagNameConfig     = "config"
 	flagNameProduction = "production"
-)
-
-var (
-	etransportCfgFile string
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -53,16 +50,15 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&etransportCfgFile, "config", "", "config file (default is $XDG_CONFIG_DIR/e-transport.yaml)")
+	rootCmd.PersistentFlags().String(flagNameConfig, "", "config file (default is $XDG_CONFIG_DIR/e-transport.yaml)")
 	rootCmd.PersistentFlags().Bool(flagNameProduction, false, "Production mode (default sandbox)")
 
 	bindViperFlag := func(name string) {
 		viper.BindPFlag(name, rootCmd.PersistentFlags().Lookup(name))
 		viper.BindEnv(name)
 	}
-	viper.SetEnvPrefix("EFACTURA")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	for _, flagName := range []string{
+		flagNameConfig,
 		flagNameProduction,
 	} {
 		bindViperFlag(flagName)
@@ -70,9 +66,13 @@ func init() {
 }
 
 func initConfig() {
-	if etransportCfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(etransportCfgFile)
+	viper.SetEnvPrefix("EFACTURA")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
+
+	if vpConfig := viper.GetString("config"); vpConfig != "" {
+		// Use config file from env/flag.
+		viper.SetConfigFile(vpConfig)
 	} else {
 		// Find user config directory (on Unix systems - $XDG_CONFIG_DIR)
 		config, err := os.UserConfigDir()
@@ -84,7 +84,6 @@ func initConfig() {
 		viper.SetConfigName("e-transport")
 	}
 
-	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
