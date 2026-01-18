@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"os"
 	"strings"
 
+	icmd "github.com/printesoi/e-factura-go/cmd/internal/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -63,10 +64,12 @@ func init() {
 	} {
 		bindViperFlag(flagName)
 	}
+
+	rootCmd.AddCommand(icmd.AuthCmd)
 }
 
 func initConfig() {
-	viper.SetEnvPrefix("EFACTURA")
+	viper.SetEnvPrefix("ETRANSPORT")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.AutomaticEnv()
 

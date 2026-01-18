@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ var authExchangeCodeCmd = &cobra.Command{
 	Short: "Exchange an OAuth device code for a token",
 	Long:  `Exchange an OAuth device code for a token`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		oauth2Cfg, err := newOAuth2Config(cmd)
+		oauth2Cfg, err := NewOAuth2Config(cmd)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return err
@@ -64,5 +64,5 @@ func init() {
 	authExchangeCodeCmd.Flags().String(flagNameOAuthDeviceCode, "", "OAuth2 device code to be exchanged for a token")
 	_ = authExchangeCodeCmd.MarkFlagRequired(flagNameOAuthDeviceCode)
 
-	authCmd.AddCommand(authExchangeCodeCmd)
+	AuthCmd.AddCommand(authExchangeCodeCmd)
 }

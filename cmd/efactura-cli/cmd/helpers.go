@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	xoauth2 "golang.org/x/oauth2"
 
+	icmd "github.com/printesoi/e-factura-go/cmd/internal/cmd"
 	efacturaclient "github.com/printesoi/e-factura-go/pkg/client"
 	"github.com/printesoi/e-factura-go/pkg/constants"
 	"github.com/printesoi/e-factura-go/pkg/efactura"
@@ -31,27 +32,6 @@ import (
 var (
 	clientCtxKey = struct{}{}
 )
-
-func newOAuth2Config(cmd *cobra.Command) (cfg oauth2.Config, err error) {
-	fvClientID, err := cmd.InheritedFlags().GetString(flagNameOauthClientID)
-	if err != nil {
-		return cfg, err
-	}
-	fvClientSecret, err := cmd.InheritedFlags().GetString(flagNameOauthClientSecret)
-	if err != nil {
-		return cfg, err
-	}
-	fvRedirectURL, err := cmd.Flags().GetString(flagNameOAuthRedirectURL)
-	if err != nil {
-		return cfg, err
-	}
-
-	cfg, err = oauth2.MakeConfig(
-		oauth2.ConfigCredentials(fvClientID, fvClientSecret),
-		oauth2.ConfigRedirectURL(fvRedirectURL),
-	)
-	return
-}
 
 func getContextClient(ctx context.Context) (client *efactura.Client) {
 	ctxValue := ctx.Value(clientCtxKey)
@@ -78,7 +58,7 @@ func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactur
 		return nil, err
 	}
 
-	fvToken, err := cmd.InheritedFlags().GetString(flagNameOAuthToken)
+	fvToken, err := cmd.InheritedFlags().GetString(icmd.FlagNameAccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +68,7 @@ func newEfacturaClient(ctx context.Context, cmd *cobra.Command) (client *efactur
 		return nil, fmt.Errorf("error loading token from JSON: %w", err)
 	}
 
-	oauth2Cfg, err := newOAuth2Config(cmd)
+	oauth2Cfg, err := icmd.NewOAuth2Config(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error creating oauth2 config: %w", err)
 	}

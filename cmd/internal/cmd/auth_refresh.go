@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ var authRefreshTokenCmd = &cobra.Command{
 	Short: "Refresh an access token",
 	Long:  `Refresh an access token`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		oauth2Cfg, err := newOAuth2Config(cmd)
+		oauth2Cfg, err := NewOAuth2Config(cmd)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return err
@@ -71,5 +71,5 @@ func init() {
 	authRefreshTokenCmd.Flags().String(flagNameAuthAccessToken, "", "Access token")
 	_ = authRefreshTokenCmd.MarkFlagRequired(flagNameAuthAccessToken)
 
-	authCmd.AddCommand(authRefreshTokenCmd)
+	AuthCmd.AddCommand(authRefreshTokenCmd)
 }

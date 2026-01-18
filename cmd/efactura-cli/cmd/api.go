@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+
+	icmd "github.com/printesoi/e-factura-go/cmd/internal/cmd"
 )
 
 // apiCmd represents the api command
@@ -25,14 +27,6 @@ var apiCmd = &cobra.Command{
 }
 
 func init() {
-	apiCmd.PersistentFlags().String(flagNameOauthClientID, "", "OAuth2 client ID")
-	_ = apiCmd.MarkPersistentFlagRequired(flagNameOauthClientID)
-	apiCmd.PersistentFlags().String(flagNameOauthClientSecret, "", "OAuth2 client secret")
-	_ = apiCmd.MarkPersistentFlagRequired(flagNameOauthClientSecret)
-	apiCmd.PersistentFlags().String(flagNameOAuthRedirectURL, "", "OAuth2 redirect URL. This needs to match one of the URLs for the OAuth2 app in SPV.")
-	_ = apiCmd.MarkPersistentFlagRequired(flagNameOAuthRedirectURL)
-	apiCmd.PersistentFlags().String(flagNameOAuthToken, "", "JSON-encoded OAuth2 token. The access token should not necessarily be valid, but rather only the refresh token.")
-	_ = apiCmd.MarkPersistentFlagRequired(flagNameOAuthToken)
-
+	icmd.RegisterAuthFlags(apiCmd)
 	rootCmd.AddCommand(apiCmd)
 }

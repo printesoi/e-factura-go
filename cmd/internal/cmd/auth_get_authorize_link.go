@@ -1,4 +1,4 @@
-// Copyright 2024 Victor Dodon
+// Copyright 2024-2026 Victor Dodon
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ var authGetAuthorizeLinkCmd = &cobra.Command{
 	Short: "Get OAuth2 authorize link",
 	Long:  `Get OAuth2 authorize link`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		oauth2Cfg, err := newOAuth2Config(cmd)
+		oauth2Cfg, err := NewOAuth2Config(cmd)
 		if err != nil {
 			cmd.SilenceUsage = true
 			return err
@@ -69,5 +69,5 @@ func init() {
 	authGetAuthorizeLinkCmd.Flags().String(flagNameAuthGetAuthorizeLinkState, "", "OAuth2 state param")
 	authGetAuthorizeLinkCmd.Flags().Bool(flagNameAuthGetAuthorizeLinkOpen, false, "Open the authorize link in the default browser")
 
-	authCmd.AddCommand(authGetAuthorizeLinkCmd)
+	AuthCmd.AddCommand(authGetAuthorizeLinkCmd)
 }
