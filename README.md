@@ -26,13 +26,8 @@ Features of this library:
 
 ## Installation ##
 
-e-factura-go requires Go version >= 1.24. With Go installed:
-
-```bash
-go get github.com/printesoi/e-factura-go
-```
-
-will resolve and add the package to the current development module, along with its dependencies.
+e-factura-go requires Go version >= 1.24. See [RO e-Factura](#ro-e-factura) and
+[RO e-Transport](#ro-e-transport) sections for using each package.
 
 This package has also cli commands for the e-Factura and e-Transport API (the
 commands implement most of the APIs).
@@ -101,11 +96,14 @@ if err != nil {
 }
 ```
 
-## e-factura ##
+## RO e-Factura ##
 
 This package can be use both for interacting with (calling) the
 [RO e-factura API](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice)
 via the Client object and for generating an Invoice-2 UBL XML.
+
+> [!IMPORTANT]
+> In order to use the `efactura.Client`, a valid OAuth2 token is needed.
 
 Construct a new simple client for production environment:
 
@@ -196,7 +194,7 @@ To upload an Invoice XML:
 uploadRes, err := client.UploadXML(ctx, xml, UploadStandardUBL, "123456789")
 ```
 
-### Upload message ###
+### Upload message for invoice ###
 
 ```go
 msg := efactura.RaspMessage{
@@ -306,7 +304,7 @@ if err != nil {
 }
 ```
 
-## Generating an Invoice ##
+### Generating an Invoice ##
 
 TODO: See TestInvoiceBuilder() from builders_test.go for an example of using
 InvoiceBuilder for creating an Invoice.
@@ -335,8 +333,8 @@ if err != nil {
 }
 ```
 
-
-**NOTE** Don't use the standard `encoding/xml` package for generating the XML
+> [!CAUTION]
+> Don't use the standard `encoding/xml` package for generating the XML
 encoding, since it does not produce Canonical XML [XML-C14N]!
 
 ### Unmarshal XML to invoice ##
@@ -348,7 +346,8 @@ if err := efactura.UnmarshalInvoice(data, &invoice); err != nil {
 }
 ```
 
-**NOTE** Only use efactura.UnmarshalInvoice, because `encoding/xml` package
+> [!CAUTION]
+> Only use `efactura.UnmarshalInvoice`, because `encoding/xml` package
 cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
 
 ## RO e-Transport ##
@@ -356,6 +355,9 @@ cannot unmarshal a struct like efactura.Invoice due to namespace prefixes!
 The `etransport` package can be used for interacting with (calling) the
 [RO e-Transport v2](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) API
 via the Client object or to build a declaration v2 XML using the PostingDeclarationV2 objects.
+
+> [!IMPORTANT]
+> In order to use the `etransport.Client`, a valid OAuth2 token is needed.
 
 Construct a new simple client for production environment:
 
