@@ -152,7 +152,7 @@ func NewErrorResponseDetectType(resp *http.Response) error {
 
 func typeNameAddrPtr(v any) string {
 	rt := reflect.TypeOf(v)
-	if rt.Kind() == reflect.Pointer {
+	for rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}
 	return rt.Name()

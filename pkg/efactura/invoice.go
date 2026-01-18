@@ -66,6 +66,10 @@ type Invoice struct {
 	// Description: Un cod care specifică tipul funcţional al facturii.
 	// Cardinality: 1..1
 	InvoiceTypeCode InvoiceTypeCodeType `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 InvoiceTypeCode"`
+	// ID: BG-1
+	// Term: COMENTARIU ÎN FACTURĂ
+	// Cardinality: 0..n
+	Note []InvoiceNote `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Note,omitempty"`
 	// ID: BT-5
 	// Term: Codul monedei facturii
 	// Description: Moneda în care sunt exprimate toate sumele din factură,
@@ -89,10 +93,6 @@ type Invoice struct {
 	// Cardinality: 0..1
 	BuyerReference string                 `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 BuyerReference,omitempty"`
 	OrderReference *InvoiceOrderReference `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2 OrderReference,omitempty"`
-	// ID: BG-1
-	// Term: COMENTARIU ÎN FACTURĂ
-	// Cardinality: 0..n
-	Note []InvoiceNote `xml:"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2 Note,omitempty"`
 	// ID: BG-14
 	// Term: Perioada de facturare
 	// Description: Un grup de termeni operaţionali care furnizează informaţii
@@ -1173,14 +1173,14 @@ type InvoiceOrderReference struct {
 }
 
 type InvoiceNote struct {
-	// ID: BT-21
-	// Term: Codul subiectului comentariului din factură
-	// Cardinality: 0..1
-	SubjectCode InvoiceNoteSubjectCodeType
 	// ID: BT-22
 	// Term: Comentariu în factură
 	// Cardinality: 1..1
 	Note string `xml:",chardata"`
+	// ID: BT-21
+	// Term: Codul subiectului comentariului din factură
+	// Cardinality: 0..1
+	SubjectCode InvoiceNoteSubjectCodeType
 }
 
 func (n InvoiceNote) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -1201,6 +1201,7 @@ func (n *InvoiceNote) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error
 	if err := d.DecodeElement(&xmlNote, &start); err != nil {
 		return err
 	}
+	n.Note = xmlNote.Note
 	// TODO: implement parsing the code
 	return nil
 }

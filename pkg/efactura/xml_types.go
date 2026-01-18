@@ -23,7 +23,7 @@ import (
 // chardata and the currency ID as the currencyID attribute. The name of the
 // node must be controlled by the parent type.
 type AmountWithCurrency struct {
-	Amount     types.Decimal    `xml:",chardata"`
+	Amount     types.Amount     `xml:",chardata"`
 	CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
 }
 
@@ -36,7 +36,7 @@ func (a AmountWithCurrency) MarshalXML(e *xml.Encoder, start xml.StartElement) e
 		CurrencyID CurrencyCodeType `xml:"currencyID,attr,omitempty"`
 	}
 	xmlAmount := amountWithCurrency{
-		Amount:     a.Amount.StringFixed(2),
+		Amount:     a.Amount.String(),
 		CurrencyID: a.CurrencyID,
 	}
 	return e.EncodeElement(xmlAmount, start)

@@ -15,40 +15,48 @@
 package efactura
 
 import (
+	"slices"
+
 	ierrors "github.com/printesoi/e-factura-go/internal/errors"
 	"github.com/printesoi/e-factura-go/internal/ptr"
 	"github.com/printesoi/e-factura-go/pkg/types"
 )
 
-// InvoiceLineAllowanceChargeBuilder builds an InvoiceLineAllowanceCharge object
+// Builder is a generic interface for builders that construct values of type T.
+type Builder[T any] interface {
+	Build() (T, error)
+}
+
+// InvoiceLineAllowanceChargeBuilder builds an InvoiceLineAllowanceCharge
+// struct.
 type InvoiceLineAllowanceChargeBuilder struct {
 	chargeIndicator           bool
 	currencyID                CurrencyCodeType
-	amount                    types.Decimal
-	baseAmount                *types.Decimal
+	amount                    types.Amount
+	baseAmount                *types.Amount
 	allowanceChargeReasonCode *string
 	allowanceChargeReason     *string
 }
 
 // NewInvoiceLineAllowanceChargeBuilder creates a new generic
 // InvoiceLineAllowanceChargeBuilder.
-func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Amount) *InvoiceLineAllowanceChargeBuilder {
 	b := new(InvoiceLineAllowanceChargeBuilder)
 	return b.WithChargeIndicator(chargeIndicator).
 		WithCurrencyID(currencyID).WithAmount(amount)
 }
 
 // NewInvoiceLineAllowanceBuilder creates a new InvoiceLineAllowanceChargeBuilder
-// builder that will build InvoiceLineAllowanceCharge object correspoding to an
+// builder that will build InvoiceLineAllowanceCharge struct correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceLineAllowanceBuilder(currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineAllowanceBuilder(currencyID CurrencyCodeType, amount types.Amount) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(false, currencyID, amount)
 }
 
 // NewInvoiceLineChargeBuilder creates a new InvoiceLineAllowanceChargeBuilder
-// builder that will build InvoiceLineAllowanceCharge object correspoding to a
+// builder that will build InvoiceLineAllowanceCharge struct correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceLineChargeBuilder(currencyID CurrencyCodeType, amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
+func NewInvoiceLineChargeBuilder(currencyID CurrencyCodeType, amount types.Amount) *InvoiceLineAllowanceChargeBuilder {
 	return NewInvoiceLineAllowanceChargeBuilder(true, currencyID, amount)
 }
 
@@ -62,12 +70,12 @@ func (b *InvoiceLineAllowanceChargeBuilder) WithCurrencyID(currencyID CurrencyCo
 	return b
 }
 
-func (b *InvoiceLineAllowanceChargeBuilder) WithAmount(amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithAmount(amount types.Amount) *InvoiceLineAllowanceChargeBuilder {
 	b.amount = amount
 	return b
 }
 
-func (b *InvoiceLineAllowanceChargeBuilder) WithBaseAmount(amount types.Decimal) *InvoiceLineAllowanceChargeBuilder {
+func (b *InvoiceLineAllowanceChargeBuilder) WithBaseAmount(amount types.Amount) *InvoiceLineAllowanceChargeBuilder {
 	b.baseAmount = amount.Ptr()
 	return b
 }
@@ -111,8 +119,8 @@ func (b InvoiceLineAllowanceChargeBuilder) Build() (allowanceCharge InvoiceLineA
 	return
 }
 
-// InvoiceLineBuilder builds an InvoiceLine object. The only (useful) role of
-// this builder is to help build a complex InvoiceLine object while ensuring
+// InvoiceLineBuilder builds an InvoiceLine struct. The only (useful) role of
+// this builder is to help build a complex InvoiceLine struct while ensuring
 // the amounts are calculated correctly.
 type InvoiceLineBuilder struct {
 	id               string
@@ -122,8 +130,8 @@ type InvoiceLineBuilder struct {
 	invoicedQuantity types.Decimal
 	baseQuantity     *types.Decimal
 
-	grossPriceAmount types.Decimal
-	priceDeduction   types.Decimal
+	grossPriceAmount types.Amount
+	priceDeduction   types.Amount
 
 	invoicePeriod     *InvoiceLinePeriod
 	allowancesCharges []InvoiceLineAllowanceCharge
@@ -172,12 +180,12 @@ func (b *InvoiceLineBuilder) WithBaseQuantity(quantity types.Decimal) *InvoiceLi
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount types.Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithGrossPriceAmount(priceAmount types.Amount) *InvoiceLineBuilder {
 	b.grossPriceAmount = priceAmount
 	return b
 }
 
-func (b *InvoiceLineBuilder) WithPriceDeduction(deduction types.Decimal) *InvoiceLineBuilder {
+func (b *InvoiceLineBuilder) WithPriceDeduction(deduction types.Amount) *InvoiceLineBuilder {
 	b.priceDeduction = deduction
 	return b
 }
@@ -256,6 +264,15 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 		return
 	}
 
+	baseQuantity := types.D(1)
+	if b.baseQuantity != nil {
+		baseQuantity = *b.baseQuantity
+	}
+	if baseQuantity.IsZero() {
+		err = ierrors.NewBuilderErrorf(b, "", "base quantity cannot be zero")
+		return
+	}
+
 	line.ID = b.id
 	line.Note = b.note
 	line.InvoicedQuantity = InvoicedQuantity{
@@ -264,11 +281,11 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 	}
 	var netPriceAmount types.Decimal
 	if b.priceDeduction.IsZero() {
-		netPriceAmount = b.grossPriceAmount
+		netPriceAmount = b.grossPriceAmount.D()
 	} else {
-		netPriceAmount = b.grossPriceAmount.Sub(b.priceDeduction)
+		netPriceAmount = b.grossPriceAmount.D().Sub(b.priceDeduction.D())
 		line.Price.PriceAmount = AmountWithCurrency{
-			Amount:     netPriceAmount,
+			Amount:     types.NewAmount(netPriceAmount),
 			CurrencyID: b.currencyID,
 		}
 		line.Price.AllowanceCharge = &InvoiceLinePriceAllowanceCharge{
@@ -284,7 +301,7 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 		}
 	}
 	line.Price.PriceAmount = AmountWithCurrency{
-		Amount:     netPriceAmount,
+		Amount:     types.NewPrice(netPriceAmount),
 		CurrencyID: b.currencyID,
 	}
 	if b.baseQuantity != nil {
@@ -309,60 +326,53 @@ func (b InvoiceLineBuilder) Build() (line InvoiceLine, err error) {
 	// Invoiced quantity * (Item net price / item price base quantity)
 	//  + Sum of invoice line charge amount
 	//  - Sum of invoice line allowance amount
-	baseQuantity := types.D(1)
-	if b.baseQuantity != nil {
-		baseQuantity = *b.baseQuantity
-	}
-	if baseQuantity.IsZero() {
-		err = ierrors.NewBuilderErrorf(b, "", "base quantity cannot be zero")
-		return
-	}
 	netAmount := b.invoicedQuantity.Mul(netPriceAmount).Div(baseQuantity)
 	for _, charge := range line.AllowanceCharges {
 		if charge.ChargeIndicator {
-			netAmount = netAmount.Add(charge.Amount.Amount)
+			netAmount = netAmount.Add(charge.Amount.Amount.D())
 		} else {
-			netAmount = netAmount.Sub(charge.Amount.Amount)
+			netAmount = netAmount.Sub(charge.Amount.Amount.D())
 		}
 	}
 
 	line.LineExtensionAmount = AmountWithCurrency{
-		Amount:     netAmount.AsAmount(),
+		Amount:     types.NewAmount(netAmount),
 		CurrencyID: b.currencyID,
 	}
 	return
 }
 
-// InvoiceDocumentAllowanceChargeBuilder builds an InvoiceDocumentAllowanceCharge object
+// InvoiceDocumentAllowanceChargeBuilder builds an
+// InvoiceDocumentAllowanceCharge struct
 type InvoiceDocumentAllowanceChargeBuilder struct {
 	chargeIndicator           bool
 	currencyID                CurrencyCodeType
-	amount                    types.Decimal
+	amount                    types.Amount
+	baseAmount                *types.Amount
 	taxCategory               InvoiceTaxCategory
-	baseAmount                *types.Decimal
 	allowanceChargeReasonCode *string
 	allowanceChargeReason     *string
 }
 
 // NewInvoiceDocumentAllowanceChargeBuilder creates a new generic
 // InvoiceDocumentAllowanceChargeBuilder.
-func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentAllowanceChargeBuilder(chargeIndicator bool, currencyID CurrencyCodeType, amount types.Amount, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	b := new(InvoiceDocumentAllowanceChargeBuilder)
 	return b.WithChargeIndicator(chargeIndicator).WithCurrencyID(currencyID).
 		WithAmount(amount).WithTaxCategory(taxCategory)
 }
 
 // NewInvoiceDocumentAllowanceBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
-// builder that will build InvoiceDocumentAllowanceCharge object correspoding to an
+// builder that will build InvoiceDocumentAllowanceCharge struct correspoding to an
 // allowance (ChargeIndicator = false)
-func NewInvoiceDocumentAllowanceBuilder(currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentAllowanceBuilder(currencyID CurrencyCodeType, amount types.Amount, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	return NewInvoiceDocumentAllowanceChargeBuilder(false, currencyID, amount, taxCategory)
 }
 
 // NewInvoiceDocumentChargeBuilder creates a new InvoiceDocumentAllowanceChargeBuilder
-// builder that will build InvoiceDocumentAllowanceCharge object correspoding to a
+// builder that will build InvoiceDocumentAllowanceCharge struct correspoding to a
 // charge (ChargeIndicator = true)
-func NewInvoiceDocumentChargeBuilder(currencyID CurrencyCodeType, amount types.Decimal, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
+func NewInvoiceDocumentChargeBuilder(currencyID CurrencyCodeType, amount types.Amount, taxCategory InvoiceTaxCategory) *InvoiceDocumentAllowanceChargeBuilder {
 	return NewInvoiceDocumentAllowanceChargeBuilder(true, currencyID, amount, taxCategory)
 }
 
@@ -376,7 +386,7 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithCurrencyID(currencyID Curren
 	return b
 }
 
-func (b *InvoiceDocumentAllowanceChargeBuilder) WithAmount(amount types.Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithAmount(amount types.Amount) *InvoiceDocumentAllowanceChargeBuilder {
 	b.amount = amount
 	return b
 }
@@ -386,7 +396,7 @@ func (b *InvoiceDocumentAllowanceChargeBuilder) WithTaxCategory(taxCategory Invo
 	return b
 }
 
-func (b *InvoiceDocumentAllowanceChargeBuilder) WithBaseAmount(amount types.Decimal) *InvoiceDocumentAllowanceChargeBuilder {
+func (b *InvoiceDocumentAllowanceChargeBuilder) WithBaseAmount(amount types.Amount) *InvoiceDocumentAllowanceChargeBuilder {
 	b.baseAmount = amount.Ptr()
 	return b
 }
@@ -440,7 +450,7 @@ type taxExemptionReason struct {
 	code   TaxExemptionReasonCodeType
 }
 
-// InvoiceBuilder builds an Invoice object
+// InvoiceBuilder builds an Invoice struct
 type InvoiceBuilder struct {
 	id          string
 	issueDate   types.Date
@@ -468,7 +478,7 @@ type InvoiceBuilder struct {
 	allowancesCharges []InvoiceDocumentAllowanceCharge
 	invoiceLines      []InvoiceLine
 
-	expectedTaxInclusiveAmount *types.Decimal
+	expectedTaxInclusiveAmount *types.Amount
 }
 
 func NewInvoiceBuilder(id string) (b *InvoiceBuilder) {
@@ -564,6 +574,11 @@ func (b *InvoiceBuilder) WithOrderReference(orderReference InvoiceOrderReference
 	return b
 }
 
+func (b *InvoiceBuilder) WithNote(note InvoiceNote) *InvoiceBuilder {
+	b.notes = []InvoiceNote{note}
+	return b
+}
+
 func (b *InvoiceBuilder) WithNotes(notes []InvoiceNote) *InvoiceBuilder {
 	b.notes = notes
 	return b
@@ -611,7 +626,7 @@ func (b *InvoiceBuilder) AddTaxExemptionReason(taxCategoryCode TaxCategoryCodeTy
 // the tax inclusive amount generated is different than the given amount, the
 // BT-114 term will be set (Payable rounding amount) and Payable Amount
 // (BT-115) is adjusted with the difference.
-func (b *InvoiceBuilder) WithExpectedTaxInclusiveAmount(amount types.Decimal) *InvoiceBuilder {
+func (b *InvoiceBuilder) WithExpectedTaxInclusiveAmount(amount types.Amount) *InvoiceBuilder {
 	b.expectedTaxInclusiveAmount = amount.Ptr()
 	return b
 }
@@ -676,7 +691,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 		if taxCurrencyID == invoice.DocumentCurrencyCode {
 			return a
 		}
-		return a.Mul(b.taxCurrencyExchangeRate).AsAmount()
+		return a.Mul(b.taxCurrencyExchangeRate).RoundAmount()
 	}
 
 	invoice.AllowanceCharges = b.allowancesCharges
@@ -700,7 +715,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 			return
 		}
 
-		lineAmount := line.LineExtensionAmount.Amount
+		lineAmount := line.LineExtensionAmount.Amount.D()
 		lineExtensionAmount = lineExtensionAmount.Add(lineAmount)
 		if !taxCategoryMap.addLineTaxCategory(line.Item.TaxCategory, lineAmount) {
 			err = ierrors.NewBuilderErrorf(b, "", "invoice line %d: invalid tax category", i)
@@ -710,11 +725,13 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	for i, allowanceCharge := range invoice.AllowanceCharges {
 		var amount types.Decimal
 		if allowanceCharge.ChargeIndicator {
-			amount = allowanceCharge.Amount.Amount
-			chargeTotalAmount = chargeTotalAmount.Add(allowanceCharge.Amount.Amount)
+			d := allowanceCharge.Amount.Amount.D()
+			amount = d
+			chargeTotalAmount = chargeTotalAmount.Add(d)
 		} else {
-			amount = allowanceCharge.Amount.Amount.Neg()
-			allowanceTotalAmount = allowanceTotalAmount.Add(allowanceCharge.Amount.Amount)
+			d := allowanceCharge.Amount.Amount.D()
+			amount = d.Neg()
+			allowanceTotalAmount = allowanceTotalAmount.Add(d)
 		}
 		if !taxCategoryMap.addDocumentTaxCategory(allowanceCharge.TaxCategory, amount) {
 			err = ierrors.NewBuilderErrorf(b, "", "invoice allowance/charge %d: invalid tax category", i)
@@ -725,7 +742,11 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	taxTotal, taxTotalTaxCurrency := types.Zero, types.Zero
 	var taxSubtotals []InvoiceTaxSubtotal
 
-	for _, taxCategorySummary := range taxCategoryMap.getSummaries() {
+	taxCategoriesSummaries := taxCategoryMap.getSummaries()
+	slices.SortFunc(taxCategoriesSummaries, func(a, b taxCategorySummary) int {
+		return a.category.Percent.Cmp(b.category.Percent)
+	})
+	for _, taxCategorySummary := range taxCategoriesSummaries {
 		taxAmount := taxCategorySummary.getTaxAmount()
 		taxAmountTaxCurrency := amountToTaxAmount(taxAmount)
 
@@ -734,11 +755,11 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 
 		subtotal := InvoiceTaxSubtotal{
 			TaxableAmount: AmountWithCurrency{
-				Amount:     taxCategorySummary.baseAmount,
+				Amount:     types.NewAmount(taxCategorySummary.baseAmount),
 				CurrencyID: invoice.DocumentCurrencyCode,
 			},
 			TaxAmount: AmountWithCurrency{
-				Amount:     taxAmount,
+				Amount:     types.NewAmount(taxAmount),
 				CurrencyID: invoice.DocumentCurrencyCode,
 			},
 			TaxCategory: taxCategorySummary.category,
@@ -759,15 +780,15 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 
 	taxExclusiveAmount = lineExtensionAmount.Add(chargeTotalAmount).Sub(allowanceTotalAmount)
 	taxInclusiveAmount = taxExclusiveAmount.Add(taxTotal)
-	if b.expectedTaxInclusiveAmount != nil && !b.expectedTaxInclusiveAmount.Equal(taxInclusiveAmount) {
-		payableRoundingAmount = b.expectedTaxInclusiveAmount.Sub(taxInclusiveAmount)
+	if b.expectedTaxInclusiveAmount != nil && !b.expectedTaxInclusiveAmount.D().Equal(taxInclusiveAmount) {
+		payableRoundingAmount = b.expectedTaxInclusiveAmount.D().Sub(taxInclusiveAmount)
 	}
 	payableAmount = taxInclusiveAmount.Sub(prepaidAmount).Add(payableRoundingAmount)
 
 	if len(taxSubtotals) > 0 {
 		taxTotalNode := InvoiceTaxTotal{
 			TaxAmount: &AmountWithCurrency{
-				Amount:     taxTotal,
+				Amount:     types.NewAmount(taxTotal),
 				CurrencyID: invoice.DocumentCurrencyCode,
 			},
 			TaxSubtotals: taxSubtotals,
@@ -777,7 +798,7 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	if taxCurrencyID != invoice.DocumentCurrencyCode {
 		taxTotalNode := InvoiceTaxTotal{
 			TaxAmount: &AmountWithCurrency{
-				Amount:     taxTotalTaxCurrency,
+				Amount:     types.NewAmount(taxTotalTaxCurrency),
 				CurrencyID: taxCurrencyID,
 			},
 		}
@@ -785,43 +806,43 @@ func (b InvoiceBuilder) Build() (retInvoice Invoice, err error) {
 	}
 
 	invoice.LegalMonetaryTotal.LineExtensionAmount = AmountWithCurrency{
-		Amount:     lineExtensionAmount,
+		Amount:     types.NewAmount(lineExtensionAmount),
 		CurrencyID: b.documentCurrencyID,
 	}
 	if !allowanceTotalAmount.IsZero() {
 		invoice.LegalMonetaryTotal.AllowanceTotalAmount = &AmountWithCurrency{
-			Amount:     allowanceTotalAmount,
+			Amount:     types.NewAmount(allowanceTotalAmount),
 			CurrencyID: b.documentCurrencyID,
 		}
 	}
 	if !chargeTotalAmount.IsZero() {
 		invoice.LegalMonetaryTotal.ChargeTotalAmount = &AmountWithCurrency{
-			Amount:     chargeTotalAmount,
+			Amount:     types.NewAmount(chargeTotalAmount),
 			CurrencyID: b.documentCurrencyID,
 		}
 	}
 	invoice.LegalMonetaryTotal.TaxExclusiveAmount = AmountWithCurrency{
-		Amount:     taxExclusiveAmount,
+		Amount:     types.NewAmount(taxExclusiveAmount),
 		CurrencyID: b.documentCurrencyID,
 	}
 	invoice.LegalMonetaryTotal.TaxInclusiveAmount = AmountWithCurrency{
-		Amount:     taxInclusiveAmount,
+		Amount:     types.NewAmount(taxInclusiveAmount),
 		CurrencyID: b.documentCurrencyID,
 	}
 	if !prepaidAmount.IsZero() {
 		invoice.LegalMonetaryTotal.PrepaidAmount = &AmountWithCurrency{
-			Amount:     prepaidAmount,
+			Amount:     types.NewAmount(prepaidAmount),
 			CurrencyID: b.documentCurrencyID,
 		}
 	}
 	if !payableRoundingAmount.IsZero() {
 		invoice.LegalMonetaryTotal.PayableRoundingAmount = &AmountWithCurrency{
-			Amount:     payableRoundingAmount,
+			Amount:     types.NewAmount(payableRoundingAmount),
 			CurrencyID: b.documentCurrencyID,
 		}
 	}
 	invoice.LegalMonetaryTotal.PayableAmount = AmountWithCurrency{
-		Amount:     payableAmount,
+		Amount:     types.NewAmount(payableAmount),
 		CurrencyID: b.documentCurrencyID,
 	}
 
@@ -920,5 +941,72 @@ func (m taxCategoryMap) getSummaries() (summaries []taxCategorySummary) {
 			baseAmount: v.baseAmount,
 		})
 	}
+	return
+}
+
+// InvoiceNoteBuilder builds an InvoiceNote struct.
+type InvoiceNoteBuilder struct {
+	subjectCode InvoiceNoteSubjectCodeType
+	note        string
+}
+
+var _ Builder[InvoiceNote] = (*InvoiceNoteBuilder)(nil)
+
+// NewInvoiceNoteBuilder creates a new InvoiceNoteBuilder
+func NewInvoiceNoteBuilder(note string) *InvoiceNoteBuilder {
+	b := new(InvoiceNoteBuilder)
+	return b.WithNote(note)
+}
+
+func (b *InvoiceNoteBuilder) WithSubjectCode(subjectCode InvoiceNoteSubjectCodeType) *InvoiceNoteBuilder {
+	b.subjectCode = subjectCode
+	return b
+}
+
+func (b *InvoiceNoteBuilder) WithNote(note string) *InvoiceNoteBuilder {
+	b.note = note
+	return b
+}
+
+func (b InvoiceNoteBuilder) Build() (invoiceNote InvoiceNote, err error) {
+	if b.note == "" {
+		err = ierrors.NewBuilderErrorf(b, "", "note not set")
+		return
+	}
+	invoiceNote.Note = b.note
+	invoiceNote.SubjectCode = b.subjectCode
+	return
+}
+
+// InvoicePeriodBuilder builds an InvoicePeriod struct
+type InvoicePeriodBuilder struct {
+	startDate *types.Date
+	endDate   *types.Date
+}
+
+var _ Builder[InvoicePeriod] = (*InvoicePeriodBuilder)(nil)
+
+// NewInvoicePeriodBuilder creates a new InvoicePeriodBuilder
+func NewInvoicePeriodBuilder() *InvoicePeriodBuilder {
+	return new(InvoicePeriodBuilder)
+}
+
+func (b *InvoicePeriodBuilder) WithStartDate(date types.Date) *InvoicePeriodBuilder {
+	b.startDate = &date
+	return b
+}
+
+func (b *InvoicePeriodBuilder) WithEndDate(date types.Date) *InvoicePeriodBuilder {
+	b.endDate = &date
+	return b
+}
+
+func (b InvoicePeriodBuilder) Build() (invoicePeriod InvoicePeriod, err error) {
+	if b.startDate == nil && b.endDate == nil {
+		err = ierrors.NewBuilderErrorf(b, "", "at least one of startDate or endDate must be set")
+		return
+	}
+	invoicePeriod.StartDate = b.startDate
+	invoicePeriod.EndDate = b.endDate
 	return
 }
