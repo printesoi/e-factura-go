@@ -1,22 +1,28 @@
-# e-factura-go [![Go Reference](https://pkg.go.dev/badge/github.com/printesoi/e-factura-go@main.svg)](https://pkg.go.dev/github.com/printesoi/e-factura-go@main) [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
+# e-factura-go [![Go Reference](https://pkg.go.dev/badge/github.com/printesoi/e-factura-go@main.svg)](https://pkg.go.dev/github.com/printesoi/e-factura-go@main) [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
 
 Package e-factura-go provides clients for using the RO e-factura and RO e-transport APIs.
 
 Features of this library:
 
-- Support for all actions of [e-Factura](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice) APIs (as defined by RO_CIUS version **1.0.9**)
-  (upload B2B XML invoice, upload B2C XML
-  invoice, get message (invoice) state, get messages (invoices) list, get
-  messages list paginated, download invoice zip, validate XML, transform invoice
-  XML to PDF, validate XML signature).
-- Support for most actions of [e-Transport](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) (v2) APIs
-  (upload V2 declaration, list
-  declarations, get declaration state).
+- Support for all [e-Factura](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice) API endpoints (update 2025-02-04)
+    - upload B2B XML invoice (`/upload`)
+    - upload B2C XML invoice (`/uploadb2c`)
+    - get message (invoice) state (`/stareMesaj`)
+    - get messages (invoices) list (`/listaMesajeFactura`)
+    - get messages list paginated (`/listaMesajePaginatieFactura`)
+    - download invoice zip (`/download`)
+    - validate XML (`/validare/{standard}`)
+    - transform invoice XML to PDF (`/transformare/{standard}`)
+    - validate XML signature (`/api/validate/signature`)
+- Support for most [e-Transport](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) API endpoints (update 2024-07-29)
+    - upload V2 declaration (`/upload/{standard}/{cif}/2`)
+    - list declarations (`/lista/{zile}/{cif}`)
+    - get declaration state (`/stareMesaj/{id}`)
 - Support for generating authorization links and exchange an authorization code
   for an access token (USB signature required).
 - CLI commands for both e-Factura and e-Transport APIs.
-- e-Factura Invoice-2 building via native Go structs.
-- e-Transport v2 XML building via native Go structs.
+- e-Factura Invoice-2 UBL (as defined by RO16931, CIUS-RO version [1.0.9](https://mfinante.gov.ro/static/10/eFactura/ro16931-ubl-1.0.9.zip)) building via native Go structs (`CreditNote` not yet supported).
+- e-Transport v2 declaration XML building via native Go structs.
 
 ## Installation ##
 
