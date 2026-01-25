@@ -86,3 +86,26 @@ func TestMarshal(t *testing.T) {
 	assert.Equal(doc0.ID, doc1.ID)
 	assert.Equal(doc0.Payload.Data, doc1.Payload.Data)
 }
+
+func TestUnmarshalCharsetWindow1252(t *testing.T) {
+	assert := assert.New(t)
+
+	var doc0 Doc
+	doc0.ID = "123"
+	doc0.Payload.Data = "FDT"
+	xmlData, err := pkgxml.MarshalXML(doc0)
+
+	if !assert.NoError(err) {
+		return
+	}
+
+	windows1252Header := `<?xml version="1.0" encoding="Windows-1252"?>` + "\n"
+
+	var doc1 Doc
+	if !assert.NoError(pkgxml.UnmarshalXML(append([]byte(windows1252Header), xmlData...), &doc1)) {
+		return
+	}
+
+	assert.Equal(doc0.ID, doc1.ID)
+	assert.Equal(doc0.Payload.Data, doc1.Payload.Data)
+}

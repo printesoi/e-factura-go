@@ -19,6 +19,7 @@ import (
 	"io"
 
 	"github.com/printesoi/xml-go"
+	"golang.org/x/net/html/charset"
 )
 
 // MarshalXML returns the XML encoding of v in Canonical XML form [XML-C14N].
@@ -62,17 +63,15 @@ func MarshalIndentXMLWithHeader(v any, prefix, indent string) ([]byte, error) {
 // discarded. This method must be used for unmarshaling objects from this
 // library, instead of encoding/xml.
 func UnmarshalXML(data []byte, v any) error {
-	return xml.Unmarshal(data, v)
+	return UnmarshalReaderXML(bytes.NewBuffer(data), v)
 }
 
 // UnmarshalReaderXML reads all the content from the given reader r and
 // unmarshals the data as XML into the value v.
 func UnmarshalReaderXML(r io.Reader, v any) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	return UnmarshalXML(data, v)
+	decoder := xml.NewDecoder(r)
+	decoder.CharsetReader = charset.NewReaderLabel
+	return decoder.Decode(v)
 }
 
 // MarshalXMLToReader returns the XML encoding of v as a io.Reader.
