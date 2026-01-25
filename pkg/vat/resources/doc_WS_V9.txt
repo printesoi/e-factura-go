@@ -1,0 +1,156 @@
+﻿Serviciu web pentru verificarea contribuabililor care sunt înregistrați conform art. 316 din Codul Fiscal, conform Registrului persoanelor impozabile care aplică sistemul Tva la încasare, conform Registrului contribuabililor inactivi/reactivi, conform Registrului persoanelor care aplica plata defalcată a TVA si respectiv Registrului RO e-Factura.
+ 
+Trimiteti request-ul continand datele de procesat la urmatoarea adresa:
+
+Web Service URL (POST): 
+
+https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva
+
+
+            Request-ul trebuie sa fie trimis prin POST iar formatul este similar cu exemplul de mai jos:
+
+Post Body: 
+			[
+				{
+		    		"cui": _Numar_, "data":"_Data interogarii_"	    
+				},
+				{
+			    	"cui": _Numar_, "data":"_Data interogarii_"	    
+				}		
+			]
+
+unde ”Data interogarii” este data pentru care se efectuează căutarea.
+			
+exemplu: 
+            Content-Type: application/json
+
+            [
+
+                {
+
+                    "cui": 1234,
+
+                    "data": "2015-02-14"
+
+                },
+
+                {
+
+                    "cui": 5678,
+
+                    "data": "2015-02-14"
+
+                }
+
+            ]
+
+ 
+
+            Datele din exemplu sunt fictive.
+
+Raspunsul va avea urmatoarea structura: 
+			{
+			"cod":200,
+			"message":"SUCCESS",
+			"found":[
+			  {
+				"date_generale": {
+					"cui": "-- codul fiscal --",
+            		   		"data": "-- data pentru care se efectueaza cautarea --",
+              		 		"denumire": "-- denumire --",
+             		  		"adresa": "-- Adresa domiciliu fiscal --",
+					"nrRegCom": "-- numar de inmatriculare la Registrul Comertului --",
+					"telefon": "-- Telefon domiciliu fiscal --",
+            				"fax": "-- Fax domiciliu fiscal --",
+            				"codPostal": "-- Codul Postal domiciliu fiscal --",
+            				"act": "-- Act autorizare --",
+            				"stare_inregistrare": "-- Stare Societate --",
+					"data_inregistrare": "-- Data inregistrare --",
+					"cod_CAEN": "-- Cod CAEN --",
+					"iban": "-- contul IBAN --",
+                			"statusRO_e_Factura": "-- true - figureaza in Registrul RO e-Factura / false - nu figureaza in Registrul RO e-Factura la data cautata --",
+                                        "organFiscalCompetent": "-- organul fiscal competent --",
+                			"forma_de_proprietate": "-- forma de proprietate --",
+               				"forma_organizare": "-- forma de organizare --",
+                			"forma_juridica": "-- forma juridica --"
+				},
+				"inregistrare_scop_Tva": {
+            				"scpTVA": " -- true -pentru platitor in scopuri de tva / false in cazul in care nu e platitor in scopuri de TVA la data cautata  --", 
+            				"perioade_TVA": {
+                                        "data_inceput_ScpTVA": " -- Data inregistrarii in scopuri de TVA anterioara --",
+            				"data_sfarsit_ScpTVA": " -- Data anularii inregistrarii in scopuri de TVA --", 
+            				"data_anul_imp_ScpTVA": "-- Data operarii anularii inregistrarii in scopuri de TVA --",
+            				"mesaj_ScpTVA": "-- Temeiul legal al anularii inregistrarii în scopuri de TVA --",
+				},
+				"inregistrare_RTVAI": {
+            				"dataInceputTvaInc": " -- Data de la care aplica sistemul TVA la incasare -- ", 
+            				"dataSfarsitTvaInc": " -- Data pana la care aplica sistemul TVA la încasare --", 
+            				"dataActualizareTvaInc": "-- Data actualizarii --", 
+            				"dataPublicareTvaInc": "-- Data publicarii --""
+            				"tipActTvaInc": " --Tip actualizare --",  
+            				"statusTvaIncasare": " -- true -pentru platitor TVA la incasare/ false in cazul in care nu e platitor de TVA la incasare la data cautata --",
+				},
+				"stare_inactiv": {
+            				"dataInactivare": " --     -- ", 
+            				"dataReactivare": " --     -- ",
+            				"dataPublicare": " --     -- ",
+            				"dataRadiere": " -- Data radiere -- ",
+            				"statusInactivi": " -- true -pentru inactiv / false in cazul in care nu este inactiv la data cautata -- ",
+ 				},
+				"inregistrare_SplitTVA": {
+					"dataInceputSplitTVA": "--     --",
+            				"dataAnulareSplitTVA": "--     --",
+            				"statusSplitTVA": "-- true -aplica plata defalcata a Tva / false - nu aplica plata defalcata a TVA la data cautata  --",
+				},
+				"adresa_sediu_social": {
+					"sdenumire_Strada": "-- Denumire strada sediu --",
+					"snumar_Strada": "-- Numar strada sediu --",
+					"sdenumire_Localitate": "-- Denumire localitate sediu --",
+					"scod_Localitate": "-- Cod localitate sediu --",
+					"sdenumire_Judet": "-- Denumire judet sediu --",
+					"scod_Judet": "-- Cod judet sediu --",
+					"scod_JudetAuto": "-- Cod judet sediu auto --",
+					"stara": "-- Denumire tara sediu -- ",
+					"sdetalii_Adresa": "-- Detalii adresa sediu --",
+					"scod_Postal": "-- Cod postal sediu --",
+            			},
+ 				"adresa_domiciliu_fiscal": {
+                			"ddenumire_Strada":  -- Denumire strada domiciliu fiscal --",
+					"dnumar_Strada": "-- Numar strada domiciliu fiscal --",
+					"ddenumire_Localitate": "-- Denumire localitate domiciliu fiscal 								--",
+					"dcod_Localitate": "-- Cod localitate domiciliu fiscal --",
+					"ddenumire_Judet": "-- Denumire judet domiciliu fiscal --",
+					"dcod_Judet": "-- Cod judet domiciliu fiscal --",
+					"dcod_JudetAuto": "-- Cod judet domiciliu fiscal auto--",
+					"dtara": "-- Denumire tara domiciliu fiscal --",
+					"ddetalii_Adresa": "-- Detalii adresa domiciliu fiscal --",
+					"dcod_Postal": "-- Cod postal domiciliu fiscal --",
+					
+            			}
+ 			}
+    		],
+    "notFound": []
+}
+Variabila "notFound" este de forma lista, compusa din cui-urile care nu au fost gasite in lista.""
+			
+	 Campurile care se refera la calitatea de platitor in scopuri de Tva: 
+	 	scpTVA, data_sfarsit_ScpTVA, data_anul_imp_ScpTVA, mesaj_ScpTVA  
+	 Campurile care se refera la calitatea de platitor Tva la incasare: 
+	 	dataInceputTvaInc, dataSfarsitTvaInc, dataActualizareTvaInc, dataPublicareTvaInc, tipActTvaInc, statusTvaIncasare
+	 Campurile care se refera la calitatea de inactiv/reactiv: 
+	 	dataInactivare, dataReactivare, dataPublicare, dataRadiere, statusInactivi
+	 Campurile referitoare la plata defalcata a TVA: 
+	 	dataInceputSplitTVA, dataAnulareSplitTVA, statusSplitTVA, iban
+         Campul referitor la RO e-Factura:
+                statusRO_e_Factura
+	 	
+	
+Folosirea serviciului este supusa urmatoarelor reguli:
+
+            a) Un request poate contine maxim 100 de CUI-uri. Un client poate executa maxim 1 request pe secunda.
+
+ 
+
+            b) Orice tentativa de suprasolicitare a serverului va fi pedepsita conform reglementarilor in vigoare.
+
+ 

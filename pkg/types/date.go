@@ -15,6 +15,7 @@
 package types
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/printesoi/xml-go"
@@ -69,34 +70,58 @@ func NewDateFromString(str string) (*Date, error) {
 	return d.Ptr(), nil
 }
 
+// String returns the ISO 8601 reprezentation of d
+func (d Date) String() string {
+	return d.Format(time.DateOnly)
+}
+
 // MarshalXML implements the xml.Marshaler interface.
 func (d Date) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	v := d.Format(time.DateOnly)
-	return e.EncodeElement(v, start)
+	return e.EncodeElement(d.String(), start)
 }
 
 // MarshalXMLAttr implements the xml.MarshalerAttr interface.
 func (d Date) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
-	v := d.Format(time.DateOnly)
 	return xml.Attr{
 		Name:  name,
-		Value: v,
+		Value: d.String(),
 	}, nil
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface.
-func (dt *Date) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (d *Date) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
 	var sd string
-	if err := d.DecodeElement(&sd, &start); err != nil {
+	if err := decoder.DecodeElement(&sd, &start); err != nil {
 		return err
 	}
 
-	t, err := itime.ParseInRomania(time.DateOnly, sd)
+	pd, err := MakeDateFromString(sd)
 	if err != nil {
 		return err
 	}
 
-	*dt = Date{Time: t}
+	*d = pd
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (d Date) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.String())
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *Date) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	pd, err := MakeDateFromString(str)
+	if err != nil {
+		return err
+	}
+
+	*d = pd
 	return nil
 }
 
@@ -110,6 +135,25 @@ func (d Date) Ptr() *Date {
 // var declaration with no initialization).
 func (d Date) IsInitialized() bool {
 	return d != Date{}
+}
+
+func (d Date) asInt() int {
+	years, months, days := d.Date()
+	return years*10000 + int(months)*100 + days
+}
+
+// Compares the dates and returns:
+//
+//	-1 if d  < other
+//	 0 if d == other
+//	 1 if d  > 1
+func (d Date) Cmp(other Date) int {
+	return d.asInt() - other.asInt()
+}
+
+// Equal returns wether the two date are equal.
+func (d Date) Equal(other Date) bool {
+	return d.Cmp(other) == 0
 }
 
 const (

@@ -1,10 +1,12 @@
 # e-factura-go [![Go Reference](https://pkg.go.dev/badge/github.com/printesoi/e-factura-go@main.svg)](https://pkg.go.dev/github.com/printesoi/e-factura-go@main) [![Tests](https://github.com/printesoi/e-factura-go/actions/workflows/tests.yml/badge.svg)](https://github.com/printesoi/e-factura-go/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/github/printesoi/e-factura-go/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/printesoi/e-factura-go) [![Go Report Card](https://goreportcard.com/badge/github.com/printesoi/e-factura-go)](https://goreportcard.com/report/github.com/printesoi/e-factura-go)
 
-Package e-factura-go provides clients for using the RO e-factura and RO e-transport APIs.
+Package e-factura-go aims to be your one-stop shop for ANAF VAT, RO
+e-Factura and e-Transport APIs.
 
 Features of this library:
 
 - Support for all [e-Factura](https://mfinante.gov.ro/ro/web/efactura/informatii-tehnice) API endpoints (update 2025-02-04)
+  via `*efactura.Client`:
     - upload B2B XML invoice (`/upload`)
     - upload B2C XML invoice (`/uploadb2c`)
     - get message (invoice) state (`/stareMesaj`)
@@ -15,9 +17,11 @@ Features of this library:
     - transform invoice XML to PDF (`/transformare/{standard}`)
     - validate XML signature (`/api/validate/signature`)
 - Support for most [e-Transport](https://mfinante.gov.ro/ro/web/etransport/informatii-tehnice) API endpoints (update 2024-07-29)
+  via `*etransport.Client`:
     - upload V2 declaration (`/upload/{standard}/{cif}/2`)
     - list declarations (`/lista/{zile}/{cif}`)
     - get declaration state (`/stareMesaj/{id}`)
+- Support ANAF [VAT v9 API](https://static.anaf.ro/static/10/Anaf/Informatii_R/Servicii_web/doc_WS_V9.txt) via `*vat.Client`.
 - Support for generating authorization links and exchange an authorization code
   for an access token (USB signature required).
 - CLI commands for both e-Factura and e-Transport APIs.
@@ -26,8 +30,8 @@ Features of this library:
 
 ## Installation ##
 
-e-factura-go requires Go version >= 1.24. See [RO e-Factura](#ro-e-factura) and
-[RO e-Transport](#ro-e-transport) sections for using each package.
+e-factura-go requires Go version >= 1.24. See [RO e-Factura](#ro-e-factura),
+[RO e-Transport](#ro-e-transport), [ANAF VAT](#anaf-vat) sections for using each package.
 
 This package has also cli commands for the e-Factura and e-Transport API (the
 commands implement most of the APIs).
@@ -436,6 +440,44 @@ if resp.IsOk() {
 } else {
     // Handle error
     fmt.Printf("GetMessagesList failed: %s\n", resp.GetFirstErrorMessage())
+}
+```
+
+## ANAF VAT ##
+
+The `vat` (`github.com/printesoi/e-factura-go/pkg/vat`) package can be used for interacting with (calling) the
+[ANAF TVA v9](https://static.anaf.ro/static/10/Anaf/Informatii_R/Servicii_web/doc_WS_V9.txt) API
+via the Client object.
+
+```
+import (
+	"log"
+	"github.com/printesoi/e-factura-go/pkg/vat"
+	"github.com/printesoi/e-factura-go/pkg/types"
+)
+func main() {
+	client, err := vat.NewClient()
+	// Query current status (current date in Romania)
+	res1, err := client.CheckVatV9(context.TODO(), MakeCheckVatRequest(CIF(12345678)))
+	if err != nil {
+		// Handle error
+	}
+	// Query status for multiple companies for specific dates
+	res2, err := client.CheckVatV9(context.TODO(), MakeCheckVatRequestFromItems(
+		vat.MakeCheckVatRequestItem(CIF(12345678), types.MakeDate(2025, 12, 31)),
+		vat.MakeCheckVatRequestItem(CIF(98765432), types.MakeDate(2025, 1, 1)),
+	))
+	if err != nil {
+		// Handle error
+	}
+	if len(res2.Found) == 0 {
+		// None of the provides CIFs are valid.
+	} else {
+		for _, data := range res2.Found {
+			log.Printf("CIF: %s, Name: %s, VAT enabled: %v\n",
+				data.GeneralData.CIF, data.GeneralData.Name, data.HasVat())
+		}
+	}
 }
 ```
 
