@@ -11,6 +11,10 @@ supported by your browser (this is usually best supported on Windows, although
 I use a DigiSign Token with [SafeNet Authentication Client 10.9](https://www.digicert.com/StaticFiles/Linux_SAC_10.9_GA.zip)
 for Linux it's working great so far).
 
+The `auth` subcommand is identical for both `efactura-cli` and `etransport-cli`,
+so for the purposes of this guide, the two commands are completely interchangable
+(as long as both of them are installed from the same version / git commit hash).
+
 1. ANAF OAuth Apps registered in the ANAF portal need a callback URL - a valid
    HTTPS URL where you will be redirected during OAuth2
    [Authorization Code flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow)
@@ -79,7 +83,7 @@ will te reverse proxied to your `localhost` on port `5000`.
    in YAML) and `--oauth-redirect-url` (the callback URL):
 
 ```
-efactura-cli auth --addr localhost:5001 authorize-server --callback-path /callback
+efactura-cli auth [...] --addr localhost:5001 authorize-server --callback-path /callback
 ```
 
 Replace `localhost:5000` with the host and port you use for the `localtun`
@@ -90,7 +94,7 @@ created the ANAF OAuth app.
    and you can provide them via one of the ways decribed above):
 
 ```
-efactura-cli auth get-authorize-link
+efactura-cli auth get-authorize-link [...]
 ```
 
 For now, this command does not automatically open your browser (for various
@@ -108,7 +112,7 @@ access token.
 If, for any reason this did not work, but you have a valid authorization code,
 you change manually exchange it for an access token using:
 ```
-efactura-cli auth exchange-code --oauth-device-code $code
+efactura-cli auth exchange-code [...] --oauth-device-code $code
 ```
 
 6. After you've generated an access token (it should look like `{"access_token":....`),

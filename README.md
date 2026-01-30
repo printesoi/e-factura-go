@@ -100,6 +100,9 @@ if err != nil {
 }
 ```
 
+For a quick guide on how to use the CLI tools to get an access token for
+testing, check this [documentation](https://github.com/printesoi/e-factura-go/blob/main/docs/auth.md)
+
 ## RO e-Factura ##
 
 This package can be use both for interacting with (calling) the
