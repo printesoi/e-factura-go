@@ -78,7 +78,7 @@ var authAuthorizeServerCmd = &cobra.Command{
 				return
 			}
 
-			log.Printf(string(tokenJSON))
+			log.Printf("Access token: %s", string(tokenJSON))
 
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
