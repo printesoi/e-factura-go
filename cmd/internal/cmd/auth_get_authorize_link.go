@@ -27,7 +27,7 @@ const (
 	flagNameAuthGetAuthorizeLinkOpen  = "open"
 )
 
-// authGetAuthorizeLinkCmd represents the `accounts get-list` command
+// authGetAuthorizeLinkCmd represents the `auth get-authorize-link` command
 var authGetAuthorizeLinkCmd = &cobra.Command{
 	Use:   "get-authorize-link",
 	Short: "Get OAuth2 authorize link",

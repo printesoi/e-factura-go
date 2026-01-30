@@ -27,7 +27,7 @@ const (
 	flagNameAuthAccessToken = "access-token"
 )
 
-// authRefreshTokenCmd represents the `accounts get-list` command
+// authRefreshTokenCmd represents the `auth refresh-token` command
 var authRefreshTokenCmd = &cobra.Command{
 	Use:   "refresh-token",
 	Short: "Refresh an access token",

@@ -449,7 +449,7 @@ The `vat` (`github.com/printesoi/e-factura-go/pkg/vat`) package can be used for 
 [ANAF TVA v9](https://static.anaf.ro/static/10/Anaf/Informatii_R/Servicii_web/doc_WS_V9.txt) API
 via the Client object.
 
-```
+```go
 import (
 	"log"
 	"github.com/printesoi/e-factura-go/pkg/vat"
@@ -458,14 +458,14 @@ import (
 func main() {
 	client, err := vat.NewClient()
 	// Query current status (current date in Romania)
-	res1, err := client.CheckVatV9(context.TODO(), MakeCheckVatRequest(CIF(12345678)))
+	res1, err := client.CheckVatV9(context.TODO(), MakeCheckVatRequest(vat.CIF(12345678)))
 	if err != nil {
 		// Handle error
 	}
 	// Query status for multiple companies for specific dates
 	res2, err := client.CheckVatV9(context.TODO(), MakeCheckVatRequestFromItems(
-		vat.MakeCheckVatRequestItem(CIF(12345678), types.MakeDate(2025, 12, 31)),
-		vat.MakeCheckVatRequestItem(CIF(98765432), types.MakeDate(2025, 1, 1)),
+		vat.MakeCheckVatRequestItem(vat.CIF(12345678), types.MakeDate(2025, 12, 31)),
+		vat.MakeCheckVatRequestItem(vat.CIF(98765432), types.MakeDate(2025, 1, 1)),
 	))
 	if err != nil {
 		// Handle error

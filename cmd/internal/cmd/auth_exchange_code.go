@@ -26,7 +26,7 @@ const (
 	flagNameOAuthDeviceCode = "oauth-device-code"
 )
 
-// authExchangeCodeCmd represents the `accounts get-list` command
+// authExchangeCodeCmd represents the `auth exchange-code` command
 var authExchangeCodeCmd = &cobra.Command{
 	Use:   "exchange-code",
 	Short: "Exchange an OAuth device code for a token",
